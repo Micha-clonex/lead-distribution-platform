@@ -30,7 +30,13 @@ router.get('/', async (req, res) => {
             partners: result.rows,
             title: 'Partner Management',
             countries: ['germany', 'austria', 'spain', 'canada', 'italy', 'uk', 'norway'],
-            niches: ['forex', 'recovery']
+            niches: ['forex', 'recovery'],
+            // Pass current query parameters for filter selection
+            currentFilters: {
+                country: country || '',
+                niche: niche || '',
+                status: status || ''
+            }
         });
     } catch (error) {
         console.error('Partners fetch error:', error);

@@ -16,7 +16,7 @@
                 <select name="country" class="form-select">
                     <option value="">All Countries</option>
                     <% countries.forEach(country => { %>
-                        <option value="<%= country %>" <%= (req && req.query && req.query.country === country) ? 'selected' : '' %>><%= country.charAt(0).toUpperCase() + country.slice(1) %></option>
+                        <option value="<%= country %>" <%= (currentFilters.country === country) ? 'selected' : '' %>><%= country.charAt(0).toUpperCase() + country.slice(1) %></option>
                     <% }) %>
                 </select>
             </div>
@@ -25,7 +25,7 @@
                 <select name="niche" class="form-select">
                     <option value="">All Niches</option>
                     <% niches.forEach(niche => { %>
-                        <option value="<%= niche %>" <%= (req && req.query && req.query.niche === niche) ? 'selected' : '' %>><%= niche.charAt(0).toUpperCase() + niche.slice(1) %></option>
+                        <option value="<%= niche %>" <%= (currentFilters.niche === niche) ? 'selected' : '' %>><%= niche.charAt(0).toUpperCase() + niche.slice(1) %></option>
                     <% }) %>
                 </select>
             </div>
@@ -33,9 +33,9 @@
                 <label class="form-label">Status</label>
                 <select name="status" class="form-select">
                     <option value="">All Status</option>
-                    <option value="active" <%= (req && req.query && req.query.status === 'active') ? 'selected' : '' %>>Active</option>
-                    <option value="inactive" <%= (req && req.query && req.query.status === 'inactive') ? 'selected' : '' %>>Inactive</option>
-                    <option value="paused" <%= (req && req.query && req.query.status === 'paused') ? 'selected' : '' %>>Paused</option>
+                    <option value="active" <%= (currentFilters.status === 'active') ? 'selected' : '' %>>Active</option>
+                    <option value="inactive" <%= (currentFilters.status === 'inactive') ? 'selected' : '' %>>Inactive</option>
+                    <option value="paused" <%= (currentFilters.status === 'paused') ? 'selected' : '' %>>Paused</option>
                 </select>
             </div>
             <div class="col-md-3">
