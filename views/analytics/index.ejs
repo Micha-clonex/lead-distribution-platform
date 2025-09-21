@@ -1,0 +1,265 @@
+<% layout('../layout') -%>
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Analytics Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <form method="GET" class="d-flex">
+                <input type="date" class="form-control me-2" name="start_date" value="<%= startDate %>">
+                <input type="date" class="form-control me-2" name="end_date" value="<%= endDate %>">
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="fas fa-search me-1"></i>Update
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Overview -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Leads
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            <%= dailyStats.reduce((sum, day) => sum + parseInt(day.total_leads || 0), 0) %>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-plus fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Total Conversions
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            <%= dailyStats.reduce((sum, day) => sum + parseInt(day.conversions || 0), 0) %>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-trophy fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Total Revenue
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            $<%= dailyStats.reduce((sum, day) => sum + parseFloat(day.revenue || 0), 0).toFixed(2) %>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Conversion Rate
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            <% const totalLeads = dailyStats.reduce((sum, day) => sum + parseInt(day.total_leads || 0), 0); %>
+                            <% const totalConversions = dailyStats.reduce((sum, day) => sum + parseInt(day.conversions || 0), 0); %>
+                            <%= totalLeads > 0 ? ((totalConversions / totalLeads) * 100).toFixed(1) : 0 %>%
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Daily Performance
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="dailyChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-globe me-2"></i>Countries Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="countryChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Tables -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>Partner Performance
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th>Partner</th>
+                                <th>Country</th>
+                                <th>Leads</th>
+                                <th>Conv.</th>
+                                <th>Rate</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% partnerStats.forEach(partner => { %>
+                                <tr>
+                                    <td><%= partner.name %></td>
+                                    <td>
+                                        <span class="badge bg-info text-xs">
+                                            <%= partner.country.toUpperCase() %>
+                                        </span>
+                                    </td>
+                                    <td><%= partner.total_leads %></td>
+                                    <td><%= partner.conversions %></td>
+                                    <td><%= partner.conversion_rate %>%</td>
+                                    <td>$<%= parseFloat(partner.revenue || 0).toFixed(2) %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-plug me-2"></i>Webhook Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Count</th>
+                                <th>Avg. Attempts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% webhookStats.forEach(stat => { %>
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-<%= stat.status === 'success' ? 'success' : (stat.status === 'failed' ? 'danger' : 'warning') %>">
+                                            <%= stat.status.charAt(0).toUpperCase() + stat.status.slice(1) %>
+                                        </span>
+                                    </td>
+                                    <td><%= stat.count %></td>
+                                    <td><%= stat.avg_attempts %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Daily Chart
+const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+const dailyChart = new Chart(dailyCtx, {
+    type: 'line',
+    data: {
+        labels: [<% dailyStats.forEach((day, index) => { %>'<%= new Date(day.date).toLocaleDateString() %>'<%= index < dailyStats.length - 1 ? ',' : '' %><% }) %>],
+        datasets: [{
+            label: 'Leads',
+            data: [<% dailyStats.forEach((day, index) => { %><%= day.total_leads || 0 %><%= index < dailyStats.length - 1 ? ',' : '' %><% }) %>],
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+        }, {
+            label: 'Conversions',
+            data: [<% dailyStats.forEach((day, index) => { %><%= day.conversions || 0 %><%= index < dailyStats.length - 1 ? ',' : '' %><% }) %>],
+            borderColor: 'rgb(255, 99, 132)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Country Chart
+const countryCtx = document.getElementById('countryChart').getContext('2d');
+const countryChart = new Chart(countryCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [<% countryStats.forEach((country, index) => { %>'<%= country.country.toUpperCase() %>'<%= index < countryStats.length - 1 ? ',' : '' %><% }) %>],
+        datasets: [{
+            data: [<% countryStats.forEach((country, index) => { %><%= country.total_leads %><%= index < countryStats.length - 1 ? ',' : '' %><% }) %>],
+            backgroundColor: [
+                '#FF6384',
+                '#36A2EB',
+                '#FFCE56',
+                '#4BC0C0',
+                '#9966FF',
+                '#FF9F40',
+                '#FF6384'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+</script>

@@ -1,0 +1,55 @@
+<% layout('layout') -%>
+
+<div class="container-fluid d-flex align-items-center justify-content-center" style="min-height: 80vh;">
+    <div class="text-center">
+        <div class="error-icon mb-4">
+            <i class="fas fa-exclamation-triangle text-warning" style="font-size: 4rem;"></i>
+        </div>
+        <h1 class="display-4 text-muted mb-3">Oops! Something went wrong</h1>
+        
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-danger mx-auto" style="max-width: 500px;">
+                <i class="fas fa-bug me-2"></i>
+                <%= error %>
+            </div>
+        <% } else { %>
+            <p class="lead text-muted mb-4">
+                We encountered an unexpected error while processing your request.
+            </p>
+        <% } %>
+        
+        <div class="mt-4">
+            <a href="/" class="btn btn-primary me-3">
+                <i class="fas fa-home me-2"></i>Go to Dashboard
+            </a>
+            <button onclick="history.back()" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Go Back
+            </button>
+        </div>
+        
+        <div class="mt-5">
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                If this problem persists, please contact your system administrator.
+            </small>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-icon {
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+</style>
