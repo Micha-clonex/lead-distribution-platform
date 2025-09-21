@@ -71,7 +71,7 @@
                         <th>Country</th>
                         <th>Niche</th>
                         <th>Daily Limit</th>
-                        <th>Premium %</th>
+                        <th>Premium/Raw Split</th>
                         <th>Status</th>
                         <th>Created</th>
                         <th>Actions</th>
@@ -94,7 +94,30 @@
                                 </span>
                             </td>
                             <td><%= partner.daily_limit %></td>
-                            <td><%= Math.round(partner.premium_ratio * 100) %>%</td>
+                            <td>
+                                <% 
+                                    const premiumPct = Math.max(0, Math.min(100, Math.round(partner.premium_ratio * 100)));
+                                    const rawPct = 100 - premiumPct;
+                                %>
+                                <div class="ratio-display">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <small class="text-muted me-2">Premium:</small>
+                                        <span class="badge bg-primary me-2"><%= premiumPct %>%</span>
+                                        <small class="text-muted me-2">Raw:</small>
+                                        <span class="badge bg-secondary"><%= rawPct %>%</span>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-primary" role="progressbar" 
+                                             style="width: <%= premiumPct %>%"
+                                             title="<%= premiumPct %>% Premium leads">
+                                        </div>
+                                        <div class="progress-bar bg-secondary" role="progressbar"
+                                             style="width: <%= rawPct %>%"
+                                             title="<%= rawPct %>% Raw leads">
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
                             <td>
                                 <span class="badge bg-<%= partner.status === 'active' ? 'success' : (partner.status === 'paused' ? 'warning' : 'danger') %>">
                                     <%= partner.status.charAt(0).toUpperCase() + partner.status.slice(1) %>
@@ -333,6 +356,9 @@ document.getElementById('editPartnerForm').addEventListener('submit', function(e
     const formData = new FormData(this);
     const id = formData.get('id');
     
+    // Normalize premium_ratio to ensure it's clamped between 0-100
+    const premiumRatio = Math.max(0, Math.min(100, parseFloat(formData.get('premium_ratio')) || 0));
+    
     const data = {
         name: formData.get('name'),
         email: formData.get('email'),
@@ -340,7 +366,7 @@ document.getElementById('editPartnerForm').addEventListener('submit', function(e
         niche: formData.get('niche'),
         webhook_url: formData.get('webhook_url'),
         daily_limit: formData.get('daily_limit'),
-        premium_ratio: formData.get('premium_ratio'),
+        premium_ratio: premiumRatio,
         status: formData.get('status'),
         timezone: formData.get('timezone')
     };
@@ -367,3 +393,17 @@ document.getElementById('editPartnerForm').addEventListener('submit', function(e
     });
 });
 </script>
+
+<style>
+.ratio-display {
+    min-width: 200px;
+}
+.progress {
+    border-radius: 3px;
+    overflow: hidden;
+}
+.ratio-display .badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+}
+</style>
