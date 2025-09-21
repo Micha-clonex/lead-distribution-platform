@@ -49,10 +49,13 @@ router.post('/', async (req, res) => {
     try {
         const { name, email, country, niche, webhook_url, daily_limit, premium_ratio, timezone } = req.body;
         
+        // Convert percentage input to decimal (70 -> 0.70)
+        const ratioDecimal = premium_ratio ? (parseFloat(premium_ratio) / 100) : 0.70;
+        
         await pool.query(`
             INSERT INTO partners (name, email, country, niche, webhook_url, daily_limit, premium_ratio, timezone)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        `, [name, email, country, niche, webhook_url, daily_limit || 50, premium_ratio || 0.70, timezone || 'UTC']);
+        `, [name, email, country, niche, webhook_url, daily_limit || 50, ratioDecimal, timezone || 'UTC']);
         
         res.redirect('/partners?success=Partner added successfully');
     } catch (error) {
@@ -67,12 +70,15 @@ router.put('/:id', async (req, res) => {
         const { id } = req.params;
         const { name, email, country, niche, webhook_url, daily_limit, premium_ratio, status, timezone } = req.body;
         
+        // Convert percentage input to decimal (70 -> 0.70)
+        const ratioDecimal = premium_ratio ? (parseFloat(premium_ratio) / 100) : null;
+        
         await pool.query(`
             UPDATE partners 
             SET name = $1, email = $2, country = $3, niche = $4, webhook_url = $5, 
                 daily_limit = $6, premium_ratio = $7, status = $8, timezone = $9, updated_at = CURRENT_TIMESTAMP
             WHERE id = $10
-        `, [name, email, country, niche, webhook_url, daily_limit, premium_ratio, status, timezone, id]);
+        `, [name, email, country, niche, webhook_url, daily_limit, ratioDecimal, status, timezone, id]);
         
         res.json({ success: true, message: 'Partner updated successfully' });
     } catch (error) {
