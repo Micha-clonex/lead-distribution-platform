@@ -38,7 +38,8 @@ const authenticatePartner = async (req, res, next) => {
 const rateLimitStore = new Map();
 const rateLimit = (maxRequests = 50, windowMs = 60000) => {
     return (req, res, next) => {
-        const key = req.ip + ':' + req.partner?.partner_id;
+        // Use partner ID for authenticated endpoints, IP for unauthenticated
+        const key = req.partner ? `partner:${req.partner.partner_id}` : `ip:${req.ip}`;
         const now = Date.now();
         const windowStart = now - windowMs;
         
@@ -59,8 +60,32 @@ const rateLimit = (maxRequests = 50, windowMs = 60000) => {
     };
 };
 
+// Webhook-specific rate limiting (per token)
+const webhookRateLimit = (maxRequests = 200, windowMs = 60000) => {
+    return (req, res, next) => {
+        const key = 'webhook:' + (req.params.token || req.ip);
+        const now = Date.now();
+        const windowStart = now - windowMs;
+        
+        if (!rateLimitStore.has(key)) {
+            rateLimitStore.set(key, []);
+        }
+        
+        const requests = rateLimitStore.get(key);
+        const recentRequests = requests.filter(time => time > windowStart);
+        
+        if (recentRequests.length >= maxRequests) {
+            return res.status(429).json({ error: 'Webhook rate limit exceeded. Try again later.' });
+        }
+        
+        recentRequests.push(now);
+        rateLimitStore.set(key, recentRequests);
+        next();
+    };
+};
+
 // Inbound webhook endpoint for receiving leads
-router.post('/webhook/:token', async (req, res) => {
+router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
     try {
         const { token } = req.params;
         
@@ -143,41 +168,79 @@ router.post('/webhook/:token', async (req, res) => {
     }
 });
 
-// Postback endpoint for conversion tracking
-router.post('/postback/:partner_id', async (req, res) => {
+// Legacy postback endpoint for conversion tracking (SECURED)
+router.post('/postback/:partner_id', authenticatePartner, rateLimit(30), async (req, res) => {
     try {
         const { partner_id } = req.params;
         const { lead_id, status, value, data } = req.body;
         
-        // Verify partner exists
-        const partnerResult = await pool.query('SELECT * FROM partners WHERE id = $1', [partner_id]);
-        if (partnerResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Partner not found' });
+        // Verify partner matches authenticated partner
+        if (parseInt(partner_id) !== req.partner.partner_id) {
+            return res.status(403).json({ error: 'Cannot report conversions for other partners' });
         }
         
-        // Update lead status if converted
+        // Verify lead exists and belongs to this partner
+        const leadResult = await pool.query(
+            'SELECT * FROM leads WHERE id = $1 AND assigned_partner_id = $2',
+            [lead_id, partner_id]
+        );
+        
+        if (leadResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Lead not found or not assigned to this partner' });
+        }
+        
+        // Update lead status if converted with atomic DB-level idempotency
         if (status === 'converted') {
-            await pool.query(`
-                UPDATE leads 
-                SET status = 'converted', converted_at = CURRENT_TIMESTAMP 
-                WHERE id = $1 AND assigned_partner_id = $2
-            `, [lead_id, partner_id]);
-            
-            // Record conversion
-            await pool.query(`
-                INSERT INTO conversions (lead_id, partner_id, conversion_value, conversion_data, postback_url)
-                VALUES ($1, $2, $3, $4, $5)
-            `, [lead_id, partner_id, value || 0, JSON.stringify(data || {}), req.url]);
-            
-            // Update distribution stats
-            await pool.query(`
-                UPDATE distribution_stats 
-                SET conversions = conversions + 1, revenue = revenue + $1
-                WHERE partner_id = $2 AND date = CURRENT_DATE
-            `, [value || 0, partner_id]);
+            const client = await pool.connect();
+            try {
+                // Use dedicated client for true atomicity
+                await client.query('BEGIN');
+                
+                // Update lead status
+                await client.query(`
+                    UPDATE leads 
+                    SET status = 'converted', converted_at = CURRENT_TIMESTAMP 
+                    WHERE id = $1 AND assigned_partner_id = $2
+                `, [lead_id, partner_id]);
+                
+                // Record conversion with DB-level uniqueness constraint
+                await client.query(`
+                    INSERT INTO conversions (lead_id, partner_id, conversion_value, conversion_data, postback_url)
+                    VALUES ($1, $2, $3, $4, $5)
+                `, [lead_id, partner_id, value || 0, JSON.stringify(data || {}), req.url]);
+                
+                // Update distribution stats only after proven unique conversion
+                await client.query(`
+                    INSERT INTO distribution_stats (partner_id, date, conversions, revenue)
+                    VALUES ($1, CURRENT_DATE, 1, $2)
+                    ON CONFLICT (partner_id, date) 
+                    DO UPDATE SET conversions = distribution_stats.conversions + 1, 
+                                  revenue = distribution_stats.revenue + $2
+                `, [partner_id, value || 0]);
+                
+                await client.query('COMMIT');
+                
+            } catch (duplicateError) {
+                await client.query('ROLLBACK');
+                
+                if (duplicateError.code === '23505') { // Unique constraint violation
+                    return res.json({ 
+                        success: true, 
+                        message: 'Conversion already recorded (idempotent)',
+                        legacy_warning: 'Please migrate to /api/conversion/{partnerId} for enhanced features'
+                    });
+                }
+                throw duplicateError;
+            } finally {
+                client.release();
+            }
         }
         
-        res.json({ success: true, message: 'Postback processed successfully' });
+        res.json({ 
+            success: true, 
+            message: 'Postback processed successfully',
+            legacy_warning: 'This endpoint is deprecated. Please migrate to /api/conversion/{partnerId} for enhanced features.'
+        });
         
     } catch (error) {
         console.error('Postback processing error:', error);

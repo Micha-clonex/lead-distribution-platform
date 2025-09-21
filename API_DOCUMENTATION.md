@@ -167,6 +167,17 @@ If the same `external_transaction_id` is sent multiple times for the same lead/p
 ### Legacy Postback: POST `/api/postback/{partner_id}`
 Simple conversion tracking (maintained for backwards compatibility)
 
+#### Headers
+```
+Authorization: Bearer {partner_api_key}
+# OR: x-api-key: {partner_api_key}
+```
+
+#### Security
+- ✅ **Authenticated**: Requires partner API key (updated for security)
+- ✅ **Partner-scoped**: Only allows conversions for authenticated partner's leads
+- ✅ **Rate limited**: 30 requests per minute per partner
+
 #### Request Body
 ```json
 {
@@ -176,6 +187,8 @@ Simple conversion tracking (maintained for backwards compatibility)
   "data": {}
 }
 ```
+
+**⚠️ DEPRECATION NOTICE**: This endpoint is maintained for backwards compatibility. New integrations should use `/api/conversion/{partnerId}` for enhanced features.
 
 ---
 
@@ -351,10 +364,11 @@ Use tools like:
 - **500 Server Error**: Check payload format and required fields
 
 ### Rate Limits
-- **Inbound Webhooks**: No rate limit (token-based verification)
+- **Inbound Webhooks**: 200 requests/minute per webhook token
 - **Conversion Tracking**: 50 requests/minute per partner API key
 - **Lead Status**: 100 requests/minute per partner API key  
 - **Analytics API**: 20 requests/minute per partner API key
+- **Legacy Postback**: 30 requests/minute per partner API key
 
 ### Security Features
 - ✅ **Partner API Keys**: Secure authentication for all CPA endpoints
