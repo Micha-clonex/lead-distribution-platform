@@ -30,13 +30,13 @@ router.get('/', async (req, res) => {
 // Create new webhook source
 router.post('/sources', async (req, res) => {
     try {
-        const { name, source_type } = req.body;
+        const { name, source_type, country, niche, description } = req.body;
         const webhook_token = crypto.randomBytes(32).toString('hex');
         
         await pool.query(`
-            INSERT INTO webhook_sources (name, source_type, webhook_token)
-            VALUES ($1, $2, $3)
-        `, [name, source_type, webhook_token]);
+            INSERT INTO webhook_sources (name, source_type, country, niche, description, webhook_token)
+            VALUES ($1, $2, $3, $4, $5, $6)
+        `, [name, source_type, country, niche, description, webhook_token]);
         
         res.redirect('/webhooks?success=Webhook source created successfully');
     } catch (error) {

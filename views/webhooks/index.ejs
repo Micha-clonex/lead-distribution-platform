@@ -22,6 +22,8 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Country</th>
+                                <th>Niche</th>
                                 <th>Token</th>
                                 <th>Webhook URL</th>
                                 <th>Status</th>
@@ -33,7 +35,22 @@
                         <tbody>
                             <% sources.forEach(source => { %>
                                 <tr>
-                                    <td><%= source.name %></td>
+                                    <td>
+                                        <strong><%= source.name %></strong>
+                                        <% if (source.description) { %>
+                                            <br><small class="text-muted"><%= source.description %></small>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            <%= source.country ? source.country.charAt(0).toUpperCase() + source.country.slice(1) : 'N/A' %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-<%= source.niche === 'forex' ? 'success' : 'warning' %>">
+                                            <%= source.niche ? source.niche.charAt(0).toUpperCase() + source.niche.slice(1) : 'N/A' %>
+                                        </span>
+                                    </td>
                                     <td>
                                         <code class="text-muted">
                                             <%= source.webhook_token.substring(0, 8) %>...
@@ -198,6 +215,29 @@
                             <option value="api">API Integration</option>
                             <option value="other">Other</option>
                         </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Country *</label>
+                            <select class="form-control" name="country" required>
+                                <option value="">Select Country</option>
+                                <option value="germany">Germany</option>
+                                <option value="austria">Austria</option>
+                                <option value="spain">Spain</option>
+                                <option value="canada">Canada</option>
+                                <option value="italy">Italy</option>
+                                <option value="uk">United Kingdom</option>
+                                <option value="norway">Norway</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Niche *</label>
+                            <select class="form-control" name="niche" required>
+                                <option value="">Select Niche</option>
+                                <option value="forex">Forex</option>
+                                <option value="recovery">Recovery</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Description</label>
