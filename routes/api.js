@@ -445,4 +445,128 @@ router.get('/analytics/cpa', authenticatePartner, rateLimit(20), async (req, res
     }
 });
 
+// NEW: Partner postback endpoint for lead status updates
+router.post('/postback/status/:token', webhookRateLimit(100), async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { lead_id, status, conversion_value, quality_score, partner_feedback, partner_reference } = req.body;
+        
+        // Verify postback token and get partner info
+        const configResult = await pool.query(
+            'SELECT * FROM partner_postback_config WHERE postback_token = $1 AND is_active = true',
+            [token]
+        );
+        
+        if (configResult.rows.length === 0) {
+            return res.status(401).json({ error: 'Invalid postback token' });
+        }
+        
+        const config = configResult.rows[0];
+        
+        // Optional: Check allowed IPs if configured
+        if (config.allowed_ips && config.allowed_ips.length > 0) {
+            const clientIP = req.ip || req.connection.remoteAddress;
+            if (!config.allowed_ips.includes(clientIP)) {
+                return res.status(403).json({ error: 'IP not allowed' });
+            }
+        }
+        
+        // Verify lead exists and belongs to this partner
+        const leadResult = await pool.query(
+            'SELECT * FROM leads WHERE id = $1 AND assigned_partner_id = $2',
+            [lead_id, config.partner_id]
+        );
+        
+        if (leadResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Lead not found or not assigned to this partner' });
+        }
+        
+        // Map status fields if configured
+        let mappedStatus = status;
+        if (config.status_field_mapping && config.status_field_mapping[status]) {
+            mappedStatus = config.status_field_mapping[status];
+        }
+        
+        // Record status update
+        await pool.query(`
+            INSERT INTO lead_status_updates 
+            (lead_id, partner_id, status, conversion_value, conversion_currency, quality_score, 
+             partner_feedback, update_source, partner_reference, raw_data)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `, [
+            lead_id,
+            config.partner_id,
+            mappedStatus,
+            conversion_value,
+            'USD', // Default currency
+            quality_score,
+            partner_feedback,
+            'postback',
+            partner_reference,
+            JSON.stringify(req.body)
+        ]);
+        
+        // Update lead record with latest status
+        await pool.query(`
+            UPDATE leads 
+            SET status = CASE 
+                WHEN $2 IN ('converted', 'qualified') THEN $2
+                ELSE status 
+            END,
+            conversion_value = CASE 
+                WHEN $3 IS NOT NULL THEN COALESCE(conversion_value, 0) + $3
+                ELSE conversion_value 
+            END,
+            quality_score = COALESCE($4, quality_score),
+            converted_at = CASE 
+                WHEN $2 = 'converted' AND converted_at IS NULL THEN CURRENT_TIMESTAMP
+                ELSE converted_at 
+            END
+            WHERE id = $1
+        `, [lead_id, mappedStatus, conversion_value, quality_score]);
+        
+        res.json({
+            success: true,
+            message: 'Lead status update received',
+            lead_id: lead_id,
+            status: mappedStatus
+        });
+        
+    } catch (error) {
+        console.error('Postback status update error:', error);
+        res.status(500).json({ error: 'Failed to process status update' });
+    }
+});
+
+// NEW: Get lead status updates for a partner
+router.get('/partner/:partnerId/leads/:leadId/status-history', authenticatePartner, rateLimit(50), async (req, res) => {
+    try {
+        const { partnerId, leadId } = req.params;
+        
+        // Verify partner matches authenticated partner
+        if (parseInt(partnerId) !== req.partner.partner_id) {
+            return res.status(403).json({ error: 'Cannot access other partner data' });
+        }
+        
+        // Get status history for the lead
+        const statusResult = await pool.query(`
+            SELECT lsu.*, l.first_name, l.last_name, l.email
+            FROM lead_status_updates lsu
+            JOIN leads l ON lsu.lead_id = l.id
+            WHERE lsu.lead_id = $1 AND lsu.partner_id = $2
+            ORDER BY lsu.created_at ASC
+        `, [leadId, partnerId]);
+        
+        res.json({
+            success: true,
+            lead_id: leadId,
+            status_updates: statusResult.rows
+        });
+        
+    } catch (error) {
+        console.error('Status history error:', error);
+        res.status(500).json({ error: 'Failed to get status history' });
+    }
+});
+
 module.exports = router;

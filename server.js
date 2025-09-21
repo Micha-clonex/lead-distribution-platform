@@ -10,6 +10,7 @@ require('dotenv').config();
 const { pool, initDatabase } = require('./config/db');
 const { retryFailedWebhooks } = require('./services/webhook');
 const { requireAuth } = require('./middleware/auth');
+const { pullPartnerStatuses } = require('./services/statusPuller');
 
 const app = express();
 const PORT = 5000;
@@ -136,6 +137,9 @@ cron.schedule('*/5 * * * *', retryFailedWebhooks);
 // Failed leads retry cron job (every 10 minutes)
 const { retryFailedLeads } = require('./services/distribution');
 cron.schedule('*/10 * * * *', retryFailedLeads);
+
+// Partner status pulling cron job (every 15 minutes)
+cron.schedule('*/15 * * * *', pullPartnerStatuses);
 
 // Start server
 app.listen(PORT, '0.0.0.0', async () => {
