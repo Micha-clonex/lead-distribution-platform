@@ -42,7 +42,14 @@ router.get('/', async (req, res) => {
             countries: ['germany', 'austria', 'spain', 'canada', 'italy', 'uk', 'norway'],
             niches: ['forex', 'recovery'],
             types: ['premium', 'raw'],
-            statuses: ['pending', 'distributed', 'converted', 'failed']
+            statuses: ['pending', 'distributed', 'converted', 'failed'],
+            // Pass current query parameters for filter selection
+            currentFilters: {
+                status: status || '',
+                country: country || '',
+                niche: niche || '',
+                type: type || ''
+            }
         });
     } catch (error) {
         console.error('Leads fetch error:', error);

@@ -16,7 +16,7 @@
                 <select name="status" class="form-select">
                     <option value="">All Status</option>
                     <% statuses.forEach(status => { %>
-                        <option value="<%= status %>" <%= (req && req.query && req.query.status === status) ? 'selected' : '' %>>
+                        <option value="<%= status %>" <%= (currentFilters.status === status) ? 'selected' : '' %>>
                             <%= status.charAt(0).toUpperCase() + status.slice(1) %>
                         </option>
                     <% }) %>
@@ -27,7 +27,7 @@
                 <select name="country" class="form-select">
                     <option value="">All Countries</option>
                     <% countries.forEach(country => { %>
-                        <option value="<%= country %>" <%= (req && req.query && req.query.country === country) ? 'selected' : '' %>>
+                        <option value="<%= country %>" <%= (currentFilters.country === country) ? 'selected' : '' %>>
                             <%= country.charAt(0).toUpperCase() + country.slice(1) %>
                         </option>
                     <% }) %>
@@ -38,7 +38,7 @@
                 <select name="niche" class="form-select">
                     <option value="">All Niches</option>
                     <% niches.forEach(niche => { %>
-                        <option value="<%= niche %>" <%= (req && req.query && req.query.niche === niche) ? 'selected' : '' %>>
+                        <option value="<%= niche %>" <%= (currentFilters.niche === niche) ? 'selected' : '' %>>
                             <%= niche.charAt(0).toUpperCase() + niche.slice(1) %>
                         </option>
                     <% }) %>
@@ -49,7 +49,7 @@
                 <select name="type" class="form-select">
                     <option value="">All Types</option>
                     <% types.forEach(type => { %>
-                        <option value="<%= type %>" <%= (req && req.query && req.query.type === type) ? 'selected' : '' %>>
+                        <option value="<%= type %>" <%= (currentFilters.type === type) ? 'selected' : '' %>>
                             <%= type.charAt(0).toUpperCase() + type.slice(1) %>
                         </option>
                     <% }) %>
