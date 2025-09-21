@@ -57,6 +57,7 @@ const partnerRoutes = require('./routes/partners');
 const leadRoutes = require('./routes/leads');
 const webhookRoutes = require('./routes/webhooks');
 const analyticsRoutes = require('./routes/analytics');
+const alertsRoutes = require('./routes/alerts');
 const apiRoutes = require('./routes/api');
 const authRoutes = require('./routes/auth');
 
@@ -68,6 +69,7 @@ app.use('/partners', requireAuth, partnerRoutes);
 app.use('/leads', requireAuth, leadRoutes);
 app.use('/webhooks', requireAuth, webhookRoutes);
 app.use('/analytics', requireAuth, analyticsRoutes);
+app.use('/alerts', requireAuth, alertsRoutes);
 app.use('/api', apiRoutes); // API routes handle their own auth
 
 // Dashboard route (protected)

@@ -246,8 +246,56 @@ async function distributeLead(leadId) {
         const partnersResult = await client.query(partnersQuery, [lead.country, lead.niche]);
         
         if (partnersResult.rows.length === 0) {
-            await client.query('UPDATE leads SET status = $1 WHERE id = $2', ['failed', leadId]);
+            // Try backup partner matching strategies
+            const backupPartner = await findBackupPartner(client, lead);
+            
+            if (backupPartner) {
+                // Update lead with backup partner
+                await client.query(`
+                    UPDATE leads 
+                    SET assigned_partner_id = $1, status = 'distributed', distributed_at = CURRENT_TIMESTAMP
+                    WHERE id = $2
+                `, [backupPartner.id, leadId]);
+                
+                // Update distribution stats for backup partner
+                await client.query(`
+                    INSERT INTO distribution_stats (partner_id, date, leads_received, premium_leads, raw_leads)
+                    VALUES ($1, CURRENT_DATE, 1, $2, $3)
+                    ON CONFLICT (partner_id, date) 
+                    DO UPDATE SET 
+                        leads_received = distribution_stats.leads_received + 1,
+                        premium_leads = distribution_stats.premium_leads + $2,
+                        raw_leads = distribution_stats.raw_leads + $3
+                `, [backupPartner.id, lead.type === 'premium' ? 1 : 0, lead.type === 'raw' ? 1 : 0]);
+                
+                await client.query('COMMIT');
+                
+                // Send webhook asynchronously
+                setImmediate(async () => {
+                    try {
+                        const { sendWebhook } = require('./webhook');
+                        await sendWebhook(lead, backupPartner);
+                        await deliverToCRM(leadId, backupPartner.id, lead);
+                    } catch (error) {
+                        console.error(`Backup delivery failed for lead ${leadId}:`, error);
+                    }
+                });
+                return;
+            }
+            
+            // No backup found - mark as failed with retry scheduling
+            await client.query(`
+                UPDATE leads 
+                SET status = $1
+                WHERE id = $2
+            `, ['failed', leadId]);
             await client.query('COMMIT');
+            
+            // Schedule notification for stranded lead
+            setImmediate(async () => {
+                const alertSystem = require('./alertSystem');
+                await alertSystem.alertStrandedLead(lead);
+            });
             return;
         }
         
@@ -382,4 +430,85 @@ async function retryFailedLeads() {
     }
 }
 
-module.exports = { distributeLead, retryFailedLeads, deliverToCRM };
+// Backup partner matching strategies
+async function findBackupPartner(client, lead) {
+    // Strategy 1: Find partners in same country but different niche
+    let backupQuery = `
+        SELECT p.*, COALESCE(ds.leads_received, 0) as todays_leads
+        FROM partners p
+        LEFT JOIN distribution_stats ds ON p.id = ds.partner_id AND ds.date = CURRENT_DATE
+        WHERE p.status = 'active' 
+            AND p.country = $1 
+            AND p.niche != $2
+            AND COALESCE(ds.leads_received, 0) < p.daily_limit
+        ORDER BY COALESCE(ds.leads_received, 0) ASC, RANDOM()
+        LIMIT 1
+    `;
+    
+    let result = await client.query(backupQuery, [lead.country, lead.niche]);
+    if (result.rows.length > 0) {
+        return result.rows[0];
+    }
+    
+    // Strategy 2: Find partners in same niche but different country (nearby countries first)
+    const countryGroups = {
+        'germany': ['austria', 'spain', 'italy'],
+        'austria': ['germany', 'italy', 'spain'],  
+        'spain': ['italy', 'germany', 'austria'],
+        'italy': ['spain', 'austria', 'germany'],
+        'canada': ['uk', 'norway'],
+        'uk': ['canada', 'norway'],
+        'norway': ['uk', 'canada']
+    };
+    
+    const relatedCountries = countryGroups[lead.country.toLowerCase()] || [];
+    
+    if (relatedCountries.length > 0) {
+        backupQuery = `
+            SELECT p.*, COALESCE(ds.leads_received, 0) as todays_leads
+            FROM partners p
+            LEFT JOIN distribution_stats ds ON p.id = ds.partner_id AND ds.date = CURRENT_DATE
+            WHERE p.status = 'active' 
+                AND p.country = ANY($1)
+                AND p.niche = $2
+                AND COALESCE(ds.leads_received, 0) < p.daily_limit
+            ORDER BY 
+                CASE p.country 
+                    ${relatedCountries.map((country, index) => `WHEN '${country}' THEN ${index + 1}`).join(' ')}
+                    ELSE 999 
+                END,
+                COALESCE(ds.leads_received, 0) ASC, 
+                RANDOM()
+            LIMIT 1
+        `;
+        
+        result = await client.query(backupQuery, [relatedCountries, lead.niche]);
+        if (result.rows.length > 0) {
+            return result.rows[0];
+        }
+    }
+    
+    // Strategy 3: Find global/flexible partners
+    backupQuery = `
+        SELECT p.*, COALESCE(ds.leads_received, 0) as todays_leads
+        FROM partners p
+        LEFT JOIN distribution_stats ds ON p.id = ds.partner_id AND ds.date = CURRENT_DATE
+        WHERE p.status = 'active' 
+            AND (p.country = 'global' OR p.niche = 'all')
+            AND COALESCE(ds.leads_received, 0) < p.daily_limit
+        ORDER BY COALESCE(ds.leads_received, 0) ASC, RANDOM()
+        LIMIT 1
+    `;
+    
+    result = await client.query(backupQuery);
+    return result.rows.length > 0 ? result.rows[0] : null;
+}
+
+// Note: Stranded lead notifications now handled directly by alertSystem.alertStrandedLead()
+
+module.exports = { 
+    distributeLead, 
+    retryFailedLeads, 
+    deliverToCRM,
+    findBackupPartner
+};

@@ -1,0 +1,292 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-exclamation-triangle me-2"></i>System Alerts
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <!-- Filter Controls -->
+        <div class="btn-group me-2">
+            <form method="GET" class="d-flex">
+                <select class="form-select me-2" name="severity">
+                    <option value="">All Severities</option>
+                    <option value="critical" <%= filters.severity === 'critical' ? 'selected' : '' %>>Critical</option>
+                    <option value="high" <%= filters.severity === 'high' ? 'selected' : '' %>>High</option>
+                    <option value="medium" <%= filters.severity === 'medium' ? 'selected' : '' %>>Medium</option>
+                    <option value="low" <%= filters.severity === 'low' ? 'selected' : '' %>>Low</option>
+                </select>
+                <select class="form-select me-2" name="resolved">
+                    <option value="">All Alerts</option>
+                    <option value="false" <%= filters.resolved === 'false' ? 'selected' : '' %>>Active Only</option>
+                    <option value="true" <%= filters.resolved === 'true' ? 'selected' : '' %>>Resolved Only</option>
+                </select>
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Alert Statistics -->
+<div class="row mb-4">
+    <% stats.forEach(stat => { %>
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-<%= 
+                stat.severity === 'critical' ? 'danger' : 
+                stat.severity === 'high' ? 'warning' : 
+                stat.severity === 'medium' ? 'info' : 'secondary' 
+            %> shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-<%= 
+                                stat.severity === 'critical' ? 'danger' : 
+                                stat.severity === 'high' ? 'warning' : 
+                                stat.severity === 'medium' ? 'info' : 'secondary' 
+                            %> text-uppercase mb-1">
+                                <%= stat.severity %> Alerts
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <%= stat.active_count %> / <%= stat.count %>
+                                <small class="text-muted">active</small>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-<%= 
+                                stat.severity === 'critical' ? 'exclamation-circle' : 
+                                stat.severity === 'high' ? 'exclamation-triangle' : 
+                                stat.severity === 'medium' ? 'info-circle' : 'bell'
+                            %> fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% }) %>
+</div>
+
+<!-- Alert Type Breakdown -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Alert Types (Last 24h)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <% typeBreakdown.forEach(type => { %>
+                        <div class="col-md-3 mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-secondary me-2"><%= type.type.replace('_', ' ') %></span>
+                                <div>
+                                    <strong><%= type.active_count %></strong> / <%= type.count %>
+                                    <% if (type.active_count > 0) { %>
+                                        <form method="POST" action="/alerts/resolve-type/<%= type.type %>" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-success ms-1" 
+                                                    onclick="return confirm('Resolve all <%= type.type %> alerts?')">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts List -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Recent Alerts</h5>
+    </div>
+    <div class="card-body">
+        <% if (alerts.length === 0) { %>
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-check-circle fa-3x mb-3"></i>
+                <h4>No alerts found</h4>
+                <p>All systems are running smoothly!</p>
+            </div>
+        <% } else { %>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Severity</th>
+                            <th>Type</th>
+                            <th>Title</th>
+                            <th>Details</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% alerts.forEach(alert => { %>
+                            <tr class="<%= alert.resolved ? 'table-light' : '' %>">
+                                <td>
+                                    <span class="badge bg-<%= 
+                                        alert.severity === 'critical' ? 'danger' : 
+                                        alert.severity === 'high' ? 'warning' : 
+                                        alert.severity === 'medium' ? 'info' : 'secondary' 
+                                    %>">
+                                        <i class="fas fa-<%= 
+                                            alert.severity === 'critical' ? 'exclamation-circle' : 
+                                            alert.severity === 'high' ? 'exclamation-triangle' : 
+                                            alert.severity === 'medium' ? 'info-circle' : 'bell'
+                                        %> me-1"></i>
+                                        <%= alert.severity.toUpperCase() %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        <%= alert.type.replace('_', ' ') %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong><%= alert.title %></strong>
+                                    <% if (alert.lead_id) { %>
+                                        <br><small class="text-muted">Lead: <%= alert.first_name %> <%= alert.last_name %></small>
+                                    <% } %>
+                                    <% if (alert.partner_id) { %>
+                                        <br><small class="text-muted">Partner: <%= alert.partner_name %></small>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <%= alert.message %>
+                                    <% if (alert.data) { %>
+                                        <% try { 
+                                            const data = JSON.parse(alert.data);
+                                            if (data.country || data.niche) { %>
+                                                <br><small class="text-muted">
+                                                    <% if (data.country) { %><i class="fas fa-globe me-1"></i><%= data.country %><% } %>
+                                                    <% if (data.niche) { %><i class="fas fa-tag me-1"></i><%= data.niche %><% } %>
+                                                </small>
+                                            <% } %>
+                                        <% } catch(e) { /* ignore */ } %>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <span title="<%= new Date(alert.created_at).toLocaleString() %>">
+                                        <%= Math.round((Date.now() - new Date(alert.created_at)) / (1000 * 60)) %> min ago
+                                    </span>
+                                </td>
+                                <td>
+                                    <% if (alert.resolved) { %>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Resolved
+                                        </span>
+                                        <% if (alert.resolved_at) { %>
+                                            <br><small class="text-muted">
+                                                <%= Math.round((Date.now() - new Date(alert.resolved_at)) / (1000 * 60)) %> min ago
+                                            </small>
+                                        <% } %>
+                                    <% } else { %>
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-exclamation me-1"></i>Active
+                                        </span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (!alert.resolved) { %>
+                                        <form method="POST" action="/alerts/<%= alert.id %>/resolve" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-success" 
+                                                    onclick="return confirm('Mark this alert as resolved?')">
+                                                <i class="fas fa-check me-1"></i>Resolve
+                                            </button>
+                                        </form>
+                                    <% } %>
+                                    
+                                    <!-- Links to related entities -->
+                                    <% if (alert.lead_id) { %>
+                                        <a href="/leads?search=<%= alert.lead_id %>" class="btn btn-sm btn-outline-info">
+                                            <i class="fas fa-user-plus me-1"></i>View Lead
+                                        </a>
+                                    <% } %>
+                                    <% if (alert.partner_id) { %>
+                                        <a href="/partners?search=<%= alert.partner_id %>" class="btn btn-sm btn-outline-info">
+                                            <i class="fas fa-users me-1"></i>View Partner
+                                        </a>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- Development Test Section -->
+<% if (process.env.NODE_ENV !== 'production') { %>
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0 text-warning">
+            <i class="fas fa-code me-2"></i>Development Tools
+        </h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">Create test alerts to verify the alert system is working:</p>
+        <form method="POST" action="/alerts/test" class="d-inline">
+            <input type="hidden" name="type" value="stranded_lead">
+            <button type="submit" class="btn btn-sm btn-outline-warning me-2">Test Stranded Lead Alert</button>
+        </form>
+        <form method="POST" action="/alerts/test" class="d-inline">
+            <input type="hidden" name="type" value="webhook_failures">
+            <button type="submit" class="btn btn-sm btn-outline-warning me-2">Test Webhook Failures Alert</button>
+        </form>
+        <form method="POST" action="/alerts/test" class="d-inline">
+            <input type="hidden" name="type" value="system_error">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Test System Error Alert</button>
+        </form>
+    </div>
+</div>
+<% } %>
+
+<script>
+// Auto-refresh active alerts every 30 seconds
+setInterval(async function() {
+    try {
+        const response = await fetch('/alerts/api/active');
+        const activeAlerts = await response.json();
+        
+        // Update active alerts count in the page title
+        const activeCount = activeAlerts.filter(alert => !alert.resolved).length;
+        if (activeCount > 0) {
+            document.title = `(${activeCount}) System Alerts - Lead Distribution Platform`;
+        } else {
+            document.title = 'System Alerts - Lead Distribution Platform';
+        }
+        
+        // Optional: Show browser notification for new critical alerts
+        activeAlerts.forEach(alert => {
+            if (alert.severity === 'critical' && !alert.resolved) {
+                // Only notify if this alert wasn't already shown
+                if (!window.shownAlerts) window.shownAlerts = new Set();
+                if (!window.shownAlerts.has(alert.id)) {
+                    window.shownAlerts.add(alert.id);
+                    if (Notification.permission === 'granted') {
+                        new Notification('Critical Alert', {
+                            body: alert.title,
+                            icon: '/favicon.ico'
+                        });
+                    }
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('Failed to refresh alerts:', error);
+    }
+}, 30000);
+
+// Request notification permission on page load
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+</script>

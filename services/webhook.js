@@ -96,6 +96,28 @@ async function sendWebhook(lead, partner) {
                 SET status = 'failed', response_code = $1, response_body = $2
                 WHERE id = $3
             `, [error.response?.status || 0, error.message.substring(0, 500), deliveryId]);
+            
+            // Get attempt count for alerting
+            try {
+                const delivery = await pool.query(`
+                    SELECT attempts FROM webhook_deliveries WHERE id = $1
+                `, [deliveryId]);
+                
+                const attempts = delivery.rows[0]?.attempts || 0;
+                
+                // Alert on multiple failures (final attempt)
+                if (attempts >= 3) {
+                    const alertSystem = require('./alertSystem');
+                    await alertSystem.alertPartnerOffline({
+                        id: partner.id,
+                        name: partner.name,
+                        country: partner.country || 'unknown',
+                        niche: partner.niche || 'unknown'
+                    });
+                }
+            } catch (alertError) {
+                console.error('Failed to send partner offline alert:', alertError);
+            }
         }
         
         throw error;
@@ -160,8 +182,19 @@ async function retryFailedWebhooks() {
         }
         
         console.log(`Processed ${failedWebhooks.rows.length} failed webhooks for retry`);
+        
+        // Alert if we have many webhook failures
+        if (failedWebhooks.rows.length >= 5) {
+            const alertSystem = require('./alertSystem');
+            await alertSystem.alertWebhookFailures(failedWebhooks.rows.length);
+        }
+        
     } catch (error) {
         console.error('Webhook retry worker error:', error);
+        
+        // Alert on system errors
+        const alertSystem = require('./alertSystem');
+        await alertSystem.alertSystemError(error, { context: 'webhook_retry_worker' });
     }
 }
 
