@@ -86,6 +86,9 @@ async function initDatabase() {
             id SERIAL PRIMARY KEY,
             name VARCHAR(100) NOT NULL,
             source_type VARCHAR(50) NOT NULL,
+            country VARCHAR(50) NOT NULL,
+            niche VARCHAR(50) NOT NULL CHECK (niche IN ('forex', 'recovery')),
+            description TEXT,
             webhook_token VARCHAR(255) UNIQUE NOT NULL,
             is_active BOOLEAN DEFAULT true,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
