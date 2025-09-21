@@ -557,15 +557,41 @@ function manageCRM(partnerId) {
                 const integration = data.integration;
                 document.getElementById('crmName').value = integration.crm_name || '';
                 document.getElementById('crmEndpoint').value = integration.api_endpoint || '';
-                document.getElementById('crmApiKey').value = integration.api_key || '';
+                // Don't populate API key for security - show placeholder if exists
+                document.getElementById('crmApiKey').value = '';
+                document.getElementById('crmApiKey').placeholder = integration.api_key_set ? 
+                    'API key configured (leave blank to keep current)' : 'Enter API key';
                 document.getElementById('crmAuthHeader').value = integration.auth_header || 'api-key';
                 document.getElementById('crmMethod').value = integration.request_method || 'POST';
                 document.getElementById('crmTestUrl').value = integration.test_url || '';
-                document.getElementById('crmHeaders').value = JSON.stringify(integration.request_headers || {}, null, 2);
-                document.getElementById('crmFieldMapping').value = JSON.stringify(integration.field_mapping || {}, null, 2);
+                
+                // Parse JSON fields safely
+                try {
+                    const headers = typeof integration.request_headers === 'string' ? 
+                        JSON.parse(integration.request_headers) : (integration.request_headers || {});
+                    document.getElementById('crmHeaders').value = JSON.stringify(headers, null, 2);
+                } catch (e) {
+                    document.getElementById('crmHeaders').value = '{"Content-Type": "application/json"}';
+                }
+                
+                try {
+                    const fieldMapping = typeof integration.field_mapping === 'string' ? 
+                        JSON.parse(integration.field_mapping) : (integration.field_mapping || {});
+                    document.getElementById('crmFieldMapping').value = JSON.stringify(fieldMapping, null, 2);
+                } catch (e) {
+                    document.getElementById('crmFieldMapping').value = JSON.stringify({
+                        "first_name": "firstName",
+                        "last_name": "lastName", 
+                        "email": "email",
+                        "phone": "phone",
+                        "country": "country"
+                    }, null, 2);
+                }
+                
                 document.getElementById('crmIsActive').checked = integration.is_active !== false;
             } else {
                 // Set defaults for new integration
+                document.getElementById('crmApiKey').placeholder = 'Enter API key';
                 document.getElementById('crmHeaders').value = '{"Content-Type": "application/json"}';
                 document.getElementById('crmFieldMapping').value = JSON.stringify({
                     "first_name": "firstName",

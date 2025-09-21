@@ -147,19 +147,21 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-// CRM Integration endpoints
+// CRM Integration endpoints  
 router.get('/:id/crm-integration', async (req, res) => {
     try {
         const { id } = req.params;
         
         const result = await pool.query(
-            'SELECT * FROM partner_crm_integrations WHERE partner_id = $1',
+            'SELECT id, partner_id, crm_name, api_endpoint, auth_header, request_method, test_url, request_headers, field_mapping, is_active, created_at, updated_at, CASE WHEN api_key IS NOT NULL AND api_key != \'\' THEN true ELSE false END as api_key_set FROM partner_crm_integrations WHERE partner_id = $1',
             [id]
         );
         
+        const integration = result.rows[0];
+        
         res.json({
             success: true,
-            integration: result.rows[0] || null
+            integration: integration || null
         });
     } catch (error) {
         console.error('Get CRM integration error:', error);
@@ -182,6 +184,24 @@ router.post('/:id/crm-integration', async (req, res) => {
             is_active
         } = req.body;
         
+        // Validate API endpoint URL
+        if (api_endpoint) {
+            try {
+                const url = new URL(api_endpoint);
+                if (url.protocol !== 'https:') {
+                    return res.status(400).json({ error: 'Only HTTPS endpoints are allowed' });
+                }
+            } catch (e) {
+                return res.status(400).json({ error: 'Invalid API endpoint URL format' });
+            }
+        }
+        
+        // Validate request method
+        const allowedMethods = ['POST', 'PUT'];
+        if (request_method && !allowedMethods.includes(request_method.toUpperCase())) {
+            return res.status(400).json({ error: 'Invalid request method. Only POST and PUT are allowed.' });
+        }
+        
         // Check if integration already exists
         const existingResult = await pool.query(
             'SELECT id FROM partner_crm_integrations WHERE partner_id = $1',
@@ -189,18 +209,34 @@ router.post('/:id/crm-integration', async (req, res) => {
         );
         
         if (existingResult.rows.length > 0) {
-            // Update existing integration
-            await pool.query(`
-                UPDATE partner_crm_integrations 
-                SET crm_name = $1, api_endpoint = $2, api_key = $3, auth_header = $4,
-                    request_method = $5, test_url = $6, request_headers = $7,
-                    field_mapping = $8, is_active = $9, updated_at = CURRENT_TIMESTAMP
-                WHERE partner_id = $10
-            `, [crm_name, api_endpoint, api_key, auth_header, request_method, 
-                test_url, JSON.stringify(request_headers), JSON.stringify(field_mapping), 
-                is_active, id]);
+            // Update existing integration - only update API key if provided
+            if (api_key && api_key.trim()) {
+                await pool.query(`
+                    UPDATE partner_crm_integrations 
+                    SET crm_name = $1, api_endpoint = $2, api_key = $3, auth_header = $4,
+                        request_method = $5, test_url = $6, request_headers = $7,
+                        field_mapping = $8, is_active = $9, updated_at = CURRENT_TIMESTAMP
+                    WHERE partner_id = $10
+                `, [crm_name, api_endpoint, api_key, auth_header, request_method, 
+                    test_url, JSON.stringify(request_headers), JSON.stringify(field_mapping), 
+                    is_active, id]);
+            } else {
+                // Don't update API key if empty (keep existing)
+                await pool.query(`
+                    UPDATE partner_crm_integrations 
+                    SET crm_name = $1, api_endpoint = $2, auth_header = $3,
+                        request_method = $4, test_url = $5, request_headers = $6,
+                        field_mapping = $7, is_active = $8, updated_at = CURRENT_TIMESTAMP
+                    WHERE partner_id = $9
+                `, [crm_name, api_endpoint, auth_header, request_method, 
+                    test_url, JSON.stringify(request_headers), JSON.stringify(field_mapping), 
+                    is_active, id]);
+            }
         } else {
-            // Create new integration
+            // Create new integration - require API key
+            if (!api_key || !api_key.trim()) {
+                return res.status(400).json({ error: 'API key is required for new integrations' });
+            }
             await pool.query(`
                 INSERT INTO partner_crm_integrations 
                 (partner_id, crm_name, api_endpoint, api_key, auth_header, request_method,
@@ -222,6 +258,38 @@ router.post('/:id/test-crm', async (req, res) => {
     try {
         const { api_endpoint, api_key, auth_header, request_method } = req.body;
         
+        // Basic SSRF protection - validate URL
+        if (!api_endpoint || typeof api_endpoint !== 'string') {
+            return res.json({ success: false, error: 'Invalid API endpoint' });
+        }
+        
+        let url;
+        try {
+            url = new URL(api_endpoint);
+        } catch (e) {
+            return res.json({ success: false, error: 'Invalid URL format' });
+        }
+        
+        // Only allow HTTPS and standard ports for security
+        if (url.protocol !== 'https:') {
+            return res.json({ success: false, error: 'Only HTTPS endpoints are allowed' });
+        }
+        
+        // Block private IP ranges (basic protection)
+        const hostname = url.hostname;
+        if (hostname === 'localhost' || hostname.match(/^127\./) || 
+            hostname.match(/^192\.168\./) || hostname.match(/^10\./) || 
+            hostname.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\./) ||
+            hostname.match(/^0\./) || hostname === '::1') {
+            return res.json({ success: false, error: 'Private IP addresses not allowed' });
+        }
+        
+        // Validate method
+        const allowedMethods = ['POST', 'PUT'];
+        if (!allowedMethods.includes(request_method?.toUpperCase())) {
+            return res.json({ success: false, error: 'Invalid request method' });
+        }
+        
         const testPayload = {
             firstName: 'John',
             lastName: 'Doe',
@@ -232,9 +300,12 @@ router.post('/:id/test-crm', async (req, res) => {
         };
         
         const headers = {
-            'Content-Type': 'application/json',
-            [auth_header]: api_key
+            'Content-Type': 'application/json'
         };
+        
+        if (auth_header && api_key) {
+            headers[auth_header] = api_key;
+        }
         
         const response = await axios({
             method: request_method.toLowerCase(),
@@ -242,6 +313,7 @@ router.post('/:id/test-crm', async (req, res) => {
             headers: headers,
             data: testPayload,
             timeout: 10000,
+            maxRedirects: 0, // Prevent redirect attacks
             validateStatus: (status) => status < 500 // Don't throw on 4xx errors
         });
         
@@ -257,7 +329,7 @@ router.post('/:id/test-crm', async (req, res) => {
         console.error('Test CRM error:', error);
         res.json({ 
             success: false, 
-            error: error.code === 'ECONNABORTED' ? 'Connection timeout' : (error.message || 'Connection failed')
+            error: error.code === 'ECONNABORTED' ? 'Connection timeout' : 'Connection failed'
         });
     }
 });

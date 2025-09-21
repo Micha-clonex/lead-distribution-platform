@@ -18,8 +18,29 @@ async function deliverToCRM(leadId, partnerId, leadData) {
         
         const integration = crmResult.rows[0];
         
+        // Parse JSON fields (stored as strings in database)
+        let fieldMapping = {};
+        let requestHeaders = {};
+        
+        try {
+            fieldMapping = typeof integration.field_mapping === 'string' 
+                ? JSON.parse(integration.field_mapping) 
+                : (integration.field_mapping || {});
+        } catch (e) {
+            console.error('Invalid field mapping JSON, using defaults');
+            fieldMapping = {};
+        }
+        
+        try {
+            requestHeaders = typeof integration.request_headers === 'string' 
+                ? JSON.parse(integration.request_headers) 
+                : (integration.request_headers || {});
+        } catch (e) {
+            console.error('Invalid request headers JSON, using defaults');
+            requestHeaders = {};
+        }
+        
         // Map lead fields according to partner's field mapping
-        const fieldMapping = integration.field_mapping || {};
         const mappedData = {};
         
         for (const [ourField, theirField] of Object.entries(fieldMapping)) {
@@ -36,20 +57,58 @@ async function deliverToCRM(leadId, partnerId, leadData) {
             mappedData.timestamp = new Date().toISOString();
         }
         
-        // Prepare headers
+        // **CRITICAL SECURITY: Validate endpoint and method before sending**
+        if (!integration.api_endpoint || typeof integration.api_endpoint !== 'string') {
+            return { success: false, error: 'Invalid API endpoint configuration' };
+        }
+        
+        // Parse and validate URL
+        let url;
+        try {
+            url = new URL(integration.api_endpoint);
+        } catch (e) {
+            return { success: false, error: 'Invalid URL format in CRM configuration' };
+        }
+        
+        // SSRF Protection: Only allow HTTPS
+        if (url.protocol !== 'https:') {
+            return { success: false, error: 'Only HTTPS endpoints are allowed for security' };
+        }
+        
+        // SSRF Protection: Block private IP ranges
+        const hostname = url.hostname;
+        if (hostname === 'localhost' || hostname.match(/^127\./) || 
+            hostname.match(/^192\.168\./) || hostname.match(/^10\./) || 
+            hostname.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\./) ||
+            hostname.match(/^0\./) || hostname === '::1') {
+            return { success: false, error: 'Private IP addresses not allowed for security' };
+        }
+        
+        // Validate request method
+        const allowedMethods = ['POST', 'PUT'];
+        if (!allowedMethods.includes(integration.request_method?.toUpperCase())) {
+            return { success: false, error: 'Invalid request method in CRM configuration' };
+        }
+        
+        // Prepare headers - validate auth header exists
         const headers = {
             'Content-Type': 'application/json',
-            [integration.auth_header]: integration.api_key,
-            ...integration.request_headers
+            ...requestHeaders
         };
         
-        // Send lead to partner's CRM
+        if (integration.auth_header && integration.api_key) {
+            headers[integration.auth_header] = integration.api_key;
+        }
+        
+        // Send lead to partner's CRM with security controls
         const response = await axios({
             method: integration.request_method.toLowerCase(),
             url: integration.api_endpoint,
             headers: headers,
             data: mappedData,
             timeout: 15000,
+            maxRedirects: 0, // CRITICAL: Prevent redirect-based SSRF
+            maxContentLength: 1024 * 1024, // Limit response size to 1MB
             validateStatus: (status) => status < 500
         });
         
