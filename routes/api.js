@@ -105,6 +105,7 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
         // Extract and normalize lead data based on source type
         let normalizedData = {};
         
+        // **ENHANCED: Use webhook source lead_type for automatic premium/raw identification**
         if (source.source_type === 'facebook') {
             normalizedData = {
                 first_name: leadData.first_name || leadData.firstName,
@@ -113,7 +114,7 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
                 phone: leadData.phone || leadData.phone_number,
                 country: leadData.country,
                 niche: leadData.niche || 'forex',
-                type: leadData.type || 'raw',
+                type: leadData.type || source.lead_type || 'raw', // Use source's configured lead type
                 utm_source: leadData.utm_source,
                 utm_campaign: leadData.utm_campaign,
                 utm_medium: leadData.utm_medium,
@@ -127,24 +128,42 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
                 phone: leadData.phone,
                 country: leadData.country, // May be empty from landing page
                 niche: leadData.niche,
-                type: leadData.type || 'premium',
+                type: leadData.type || source.lead_type || 'premium', // Use source's configured lead type
                 utm_source: leadData.utm_source,
                 utm_campaign: leadData.utm_campaign,
                 utm_medium: leadData.utm_medium,
                 landing_page_url: leadData.landing_page_url || leadData.page_url
             };
         } else {
-            // Generic format
-            normalizedData = leadData;
+            // Generic format - use source's lead_type
+            normalizedData = {
+                ...leadData,
+                type: leadData.type || source.lead_type || 'raw'
+            };
         }
         
         // **NEW: Data Enrichment** - Automatically fill missing fields
         const { enrichLeadData } = require('../services/dataEnrichment');
         const enrichedData = await enrichLeadData(normalizedData, source);
         
-        // **CRITICAL FIX**: Use webhook source country/niche as defaults (correct precedence)
+        // **CRITICAL FIX**: Use webhook source country/niche/lead_type as defaults (correct precedence)
         const finalCountry = normalizedData.country || source.country || enrichedData.country || 'unknown';
         const finalNiche = normalizedData.niche || source.niche || enrichedData.niche || 'forex';
+        
+        // **ENHANCED: Robust lead type validation and normalization**
+        let finalLeadType = normalizedData.type || source.lead_type || 'raw';
+        
+        // Normalize and validate lead type to prevent INSERT failures
+        if (finalLeadType && typeof finalLeadType === 'string') {
+            finalLeadType = finalLeadType.toLowerCase().trim();
+            // Only allow valid lead types, fallback to source config if invalid
+            if (!['premium', 'raw'].includes(finalLeadType)) {
+                console.warn(`Invalid lead type '${normalizedData.type}' from webhook, using source default: ${source.lead_type}`);
+                finalLeadType = source.lead_type || 'raw';
+            }
+        } else {
+            finalLeadType = source.lead_type || 'raw';
+        }
         
         // **NEW: Quality Scoring** - Calculate comprehensive quality score
         const leadQualityScoring = require('../services/leadQualityScoring');
@@ -152,7 +171,7 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
         // Prepare lead data for quality scoring
         const leadForScoring = {
             source: source.name,
-            type: enrichedData.type || 'raw',
+            type: finalLeadType, // Use source's configured lead type
             niche: finalNiche,
             country: finalCountry,
             first_name: enrichedData.first_name,
@@ -176,7 +195,7 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
             RETURNING id
         `, [
             source.name,
-            enrichedData.type || 'raw',
+            finalLeadType, // Use source's configured lead type  
             finalNiche,
             finalCountry,
             enrichedData.first_name,

@@ -174,6 +174,22 @@ async function initDatabase() {
             WHERE weekends_enabled IS NULL
         `);
         
+        // **CRITICAL**: Add lead_type to webhook_sources for premium/raw identification
+        await pool.query(`
+            ALTER TABLE webhook_sources 
+            ADD COLUMN IF NOT EXISTS lead_type VARCHAR(20) DEFAULT 'raw' CHECK (lead_type IN ('premium', 'raw'))
+        `);
+        
+        // Backfill existing webhook sources with appropriate defaults
+        await pool.query(`
+            UPDATE webhook_sources 
+            SET lead_type = CASE 
+                WHEN source_type = 'landing_page' THEN 'premium'
+                ELSE 'raw'
+            END
+            WHERE lead_type IS NULL
+        `);
+        
         console.log('Database tables initialized successfully');
         return true;
     } catch (error) {

@@ -24,6 +24,7 @@
                                 <th>Name</th>
                                 <th>Country</th>
                                 <th>Niche</th>
+                                <th>Lead Type</th>
                                 <th>Token</th>
                                 <th>Webhook URL</th>
                                 <th>Status</th>
@@ -49,6 +50,11 @@
                                     <td>
                                         <span class="badge bg-<%= source.niche === 'forex' ? 'success' : 'warning' %>">
                                             <%= source.niche ? source.niche.charAt(0).toUpperCase() + source.niche.slice(1) : 'N/A' %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-<%= source.lead_type === 'premium' ? 'primary' : 'secondary' %>">
+                                            <%= source.lead_type ? source.lead_type.charAt(0).toUpperCase() + source.lead_type.slice(1) : 'Raw' %>
                                         </span>
                                     </td>
                                     <td>
@@ -237,6 +243,20 @@
                                 <option value="forex">Forex</option>
                                 <option value="recovery">Recovery</option>
                             </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Lead Type *</label>
+                        <select class="form-control" name="lead_type" required>
+                            <option value="">Select Lead Type</option>
+                            <option value="premium">Premium Leads</option>
+                            <option value="raw">Raw Leads</option>
+                        </select>
+                        <div class="form-text">
+                            <small class="text-muted">
+                                <strong>Premium:</strong> High-quality leads with verified information<br>
+                                <strong>Raw:</strong> Basic leads that may require additional qualification
+                            </small>
                         </div>
                     </div>
                     <div class="mb-3">

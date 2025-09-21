@@ -30,19 +30,24 @@ router.get('/', async (req, res) => {
 // Create new webhook source
 router.post('/sources', async (req, res) => {
     try {
-        const { name, source_type, country, niche, description } = req.body;
+        const { name, source_type, country, niche, lead_type, description } = req.body;
         
         // Validate required fields
-        if (!country || !niche) {
-            return res.redirect('/webhooks?error=Country and Niche are required fields');
+        if (!country || !niche || !lead_type) {
+            return res.redirect('/webhooks?error=Country, Niche, and Lead Type are required fields');
+        }
+        
+        // Validate lead_type
+        if (!['premium', 'raw'].includes(lead_type)) {
+            return res.redirect('/webhooks?error=Lead Type must be either premium or raw');
         }
         
         const webhook_token = crypto.randomBytes(32).toString('hex');
         
         await pool.query(`
-            INSERT INTO webhook_sources (name, source_type, country, niche, description, webhook_token)
-            VALUES ($1, $2, $3, $4, $5, $6)
-        `, [name, source_type, country, niche, description, webhook_token]);
+            INSERT INTO webhook_sources (name, source_type, country, niche, lead_type, description, webhook_token)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `, [name, source_type, country, niche, lead_type, description, webhook_token]);
         
         res.redirect('/webhooks?success=Webhook source created successfully');
     } catch (error) {
