@@ -128,37 +128,13 @@
                                 Secure admin access to the lead distribution platform
                             </small>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Setup Form (for first time setup) -->
-                <div class="card mt-4" id="setupCard" style="display: none;">
-                    <div class="card-header bg-warning">
-                        <h6 class="mb-0">
-                            <i class="fas fa-wrench me-2"></i>First Time Setup
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted mb-3">No admin users found. Create the first admin user:</p>
-                        <form id="setupForm">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Username</label>
-                                    <input type="text" class="form-control" name="username" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" class="form-control" name="email" required>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Password</label>
-                                <input type="password" class="form-control" name="password" required minlength="6">
-                            </div>
-                            <button type="submit" class="btn btn-warning">
-                                <i class="fas fa-user-plus me-2"></i>Create Admin User
-                            </button>
-                        </form>
+                        
+                        <div class="text-center mt-3">
+                            <small class="text-info">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Default login: <strong>admin</strong> / <strong>admin123</strong>
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -166,45 +142,5 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Check if setup is needed
-        fetch('/admin/setup', { method: 'GET' })
-            .then(response => response.json())
-            .catch(() => {
-                // If there's an error, it might mean no admins exist, show setup form
-                document.getElementById('setupCard').style.display = 'block';
-            });
-        
-        // Handle setup form
-        document.getElementById('setupForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            
-            try {
-                const response = await fetch('/admin/setup', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: formData.get('username'),
-                        email: formData.get('email'),
-                        password: formData.get('password')
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    alert('Admin user created successfully! You can now login.');
-                    document.getElementById('setupCard').style.display = 'none';
-                } else {
-                    alert('Setup failed: ' + data.error);
-                }
-            } catch (error) {
-                alert('Setup failed: ' + error.message);
-            }
-        });
-    </script>
 </body>
 </html>
