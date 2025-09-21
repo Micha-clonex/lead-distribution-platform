@@ -31,6 +31,12 @@ router.get('/', async (req, res) => {
 router.post('/sources', async (req, res) => {
     try {
         const { name, source_type, country, niche, description } = req.body;
+        
+        // Validate required fields
+        if (!country || !niche) {
+            return res.redirect('/webhooks?error=Country and Niche are required fields');
+        }
+        
         const webhook_token = crypto.randomBytes(32).toString('hex');
         
         await pool.query(`

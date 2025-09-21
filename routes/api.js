@@ -142,6 +142,10 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
         const { enrichLeadData } = require('../services/dataEnrichment');
         const enrichedData = await enrichLeadData(normalizedData, source);
         
+        // **CRITICAL FIX**: Use webhook source country/niche as defaults (correct precedence)
+        const finalCountry = normalizedData.country || source.country || enrichedData.country || 'unknown';
+        const finalNiche = normalizedData.niche || source.niche || enrichedData.niche || 'forex';
+        
         // Insert enriched lead into database
         const leadResult = await pool.query(`
             INSERT INTO leads (source, type, niche, country, first_name, last_name, email, phone, data)
@@ -150,8 +154,8 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
         `, [
             source.name,
             enrichedData.type || 'raw',
-            enrichedData.niche || 'forex',
-            enrichedData.country || 'unknown',
+            finalNiche,
+            finalCountry,
             enrichedData.first_name,
             enrichedData.last_name,
             enrichedData.email,
@@ -159,7 +163,12 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
             JSON.stringify({
                 original: leadData,
                 enriched: enrichedData,
-                enrichment_score: enrichedData.data_completeness_score
+                enrichment_score: enrichedData.data_completeness_score,
+                webhook_source: {
+                    country: source.country,
+                    niche: source.niche,
+                    name: source.name
+                }
             })
         ]);
         
