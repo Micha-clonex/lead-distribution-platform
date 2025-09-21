@@ -1,0 +1,416 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">🤖 Automated Partner Management</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-primary" onclick="runAnalysis()">
+                <i class="bi bi-play-circle"></i> Run Analysis Now
+            </button>
+            <button type="button" class="btn btn-outline-secondary" onclick="refreshData()">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="action" class="form-label">Action Type</label>
+                        <select class="form-select" id="action" name="action">
+                            <option value="">All Actions</option>
+                            <% actionTypes.forEach(type => { %>
+                                <option value="<%= type %>" <%= currentFilters.action === type ? 'selected' : '' %>>
+                                    <%= type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) %>
+                                </option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="timeframe" class="form-label">Timeframe</label>
+                        <select class="form-select" id="timeframe" name="timeframe">
+                            <option value="1" <%= currentFilters.timeframe === '1' ? 'selected' : '' %>>Last 24 Hours</option>
+                            <option value="7" <%= currentFilters.timeframe === '7' ? 'selected' : '' %>>Last 7 Days</option>
+                            <option value="30" <%= currentFilters.timeframe === '30' ? 'selected' : '' %>>Last 30 Days</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-outline-primary me-2">Apply Filters</button>
+                        <a href="?" class="btn btn-outline-secondary">Clear</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>📊 Management Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between">
+                            <span>Total Actions:</span>
+                            <strong><%= summary.total_actions || 0 %></strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Auto-Paused:</span>
+                            <strong class="text-warning"><%= summary.auto_pauses || 0 %></strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Auto-Resumed:</span>
+                            <strong class="text-success"><%= summary.auto_resumes || 0 %></strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between">
+                            <span>Manual Pauses:</span>
+                            <strong class="text-secondary"><%= summary.manual_pauses || 0 %></strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Manual Resumes:</span>
+                            <strong class="text-info"><%= summary.manual_resumes || 0 %></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>👥 Partner Status</h5>
+            </div>
+            <div class="card-body">
+                <% statusBreakdown.forEach(status => { %>
+                    <div class="d-flex justify-content-between">
+                        <span class="badge bg-<%= status.status === 'active' ? 'success' : status.status === 'paused' ? 'warning' : 'secondary' %>">
+                            <%= status.status.toUpperCase() %>
+                        </span>
+                        <strong><%= status.count %> partners</strong>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Partner Performance Insights -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>🔍 Partner Performance Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Partner</th>
+                                <th>Status</th>
+                                <th>Today's Performance</th>
+                                <th>Webhook Health</th>
+                                <th>Last Action</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% insights.forEach(partner => { %>
+                                <tr>
+                                    <td>
+                                        <strong><%= partner.name %></strong><br>
+                                        <small class="text-muted">
+                                            <%= partner.country.toUpperCase() %> / <%= partner.niche %>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-<%= partner.status === 'active' ? 'success' : partner.status === 'paused' ? 'warning' : 'secondary' %>">
+                                            <%= partner.status.toUpperCase() %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="small">
+                                            <div><%= partner.today_leads %> leads</div>
+                                            <div><%= partner.today_conversions %> conversions</div>
+                                            <div class="text-<%= partner.today_conversion_rate > 5 ? 'success' : partner.today_conversion_rate > 2 ? 'warning' : 'danger' %>">
+                                                <%= partner.today_conversion_rate %>% rate
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-<%= partner.webhook_failure_rate <= 10 ? 'success' : partner.webhook_failure_rate <= 25 ? 'warning' : 'danger' %>">
+                                            <%= partner.webhook_failure_rate || 0 %>% failures
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            <%= partner.last_action ? partner.last_action.substring(0, 50) : 'No actions' %>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <% if (partner.status === 'active') { %>
+                                                <button class="btn btn-outline-warning btn-xs" onclick="pausePartner(<%= partner.id %>, '<%= partner.name %>')">
+                                                    Pause
+                                                </button>
+                                            <% } else if (partner.status === 'paused') { %>
+                                                <button class="btn btn-outline-success btn-xs" onclick="resumePartner(<%= partner.id %>, '<%= partner.name %>')">
+                                                    Resume
+                                                </button>
+                                            <% } %>
+                                            <button class="btn btn-outline-info btn-xs" onclick="analyzePartner(<%= partner.id %>)">
+                                                Analyze
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Actions Log -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>📋 Recent Management Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Partner</th>
+                                <th>Action</th>
+                                <th>Reason</th>
+                                <th>Admin</th>
+                                <th>Metrics</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (actions.length === 0) { %>
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        No management actions recorded in the selected timeframe
+                                    </td>
+                                </tr>
+                            <% } else { %>
+                                <% actions.forEach(action => { %>
+                                    <tr>
+                                        <td>
+                                            <small><%= new Date(action.created_at).toLocaleString() %></small>
+                                        </td>
+                                        <td>
+                                            <strong><%= action.partner_name %></strong><br>
+                                            <small class="text-muted">
+                                                <span class="badge bg-<%= action.current_status === 'active' ? 'success' : action.current_status === 'paused' ? 'warning' : 'secondary' %> text-xs">
+                                                    <%= action.current_status.toUpperCase() %>
+                                                </span>
+                                                <%= action.country.toUpperCase() %> / <%= action.niche %>
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-<%= action.action.includes('auto') ? 'primary' : 'secondary' %>">
+                                                <%= action.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small><%= action.reason || 'No reason provided' %></small>
+                                        </td>
+                                        <td>
+                                            <small><%= action.admin_user || 'System' %></small>
+                                        </td>
+                                        <td>
+                                            <% if (action.metrics) { %>
+                                                <small class="text-muted">
+                                                    <% const metrics = JSON.parse(action.metrics); %>
+                                                    <%= metrics.totalLeads ? metrics.totalLeads + ' leads' : '' %>
+                                                    <%= metrics.conversionRate ? ', ' + metrics.conversionRate + '% conv' : '' %>
+                                                </small>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analysis Modal -->
+<div class="modal fade" id="analysisModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Partner Analysis</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="analysisContent">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function runAnalysis() {
+    try {
+        document.querySelector('button[onclick="runAnalysis()"]').disabled = true;
+        document.querySelector('button[onclick="runAnalysis()"]').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Running...';
+        
+        const response = await fetch('/partner-management/analyze', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ Partner analysis completed successfully!\n\nSummary:\n' +
+                `Partners Analyzed: ${result.summary.partnersAnalyzed || 0}\n` +
+                `Partners Paused: ${result.summary.partnersPaused || 0}\n`);
+            location.reload();
+        } else {
+            alert('❌ Analysis failed: ' + result.error);
+        }
+    } catch (error) {
+        alert('❌ Error running analysis: ' + error.message);
+    } finally {
+        document.querySelector('button[onclick="runAnalysis()"]').disabled = false;
+        document.querySelector('button[onclick="runAnalysis()"]').innerHTML = '<i class="bi bi-play-circle"></i> Run Analysis Now';
+    }
+}
+
+async function pausePartner(partnerId, partnerName) {
+    const reason = prompt(`Enter reason for pausing ${partnerName}:`);
+    if (!reason) return;
+    
+    try {
+        const response = await fetch(`/partner-management/partners/${partnerId}/pause`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ ' + result.message);
+            location.reload();
+        } else {
+            alert('❌ ' + result.error);
+        }
+    } catch (error) {
+        alert('❌ Error: ' + error.message);
+    }
+}
+
+async function resumePartner(partnerId, partnerName) {
+    const reason = prompt(`Enter reason for resuming ${partnerName}:`);
+    if (!reason) return;
+    
+    try {
+        const response = await fetch(`/partner-management/partners/${partnerId}/resume`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ ' + result.message);
+            location.reload();
+        } else {
+            alert('❌ ' + result.error);
+        }
+    } catch (error) {
+        alert('❌ Error: ' + error.message);
+    }
+}
+
+async function analyzePartner(partnerId) {
+    try {
+        const modal = new bootstrap.Modal(document.getElementById('analysisModal'));
+        modal.show();
+        
+        const response = await fetch(`/partner-management/partners/${partnerId}/analysis`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const { partner, performance, resumeAnalysis, history } = result;
+            
+            document.getElementById('analysisContent').innerHTML = `
+                <h6>Partner: ${partner.name} (${partner.country.toUpperCase()}/${partner.niche})</h6>
+                <p><strong>Current Status:</strong> <span class="badge bg-${partner.status === 'active' ? 'success' : partner.status === 'paused' ? 'warning' : 'secondary'}">${partner.status.toUpperCase()}</span></p>
+                
+                <h6>Performance Analysis:</h6>
+                <div class="alert alert-${performance.shouldPause ? 'warning' : 'success'}">
+                    <strong>Should Pause:</strong> ${performance.shouldPause ? 'Yes' : 'No'}<br>
+                    ${performance.reasons.length > 0 ? '<strong>Reasons:</strong><ul>' + performance.reasons.map(r => `<li>${r}</li>`).join('') + '</ul>' : ''}
+                </div>
+                
+                <h6>Current Metrics:</h6>
+                <ul>
+                    <li>Total Leads: ${performance.metrics.totalLeads || 0}</li>
+                    <li>Conversions: ${performance.metrics.conversions || 0}</li>  
+                    <li>Conversion Rate: ${performance.metrics.conversionRate || 0}%</li>
+                    <li>Webhook Failure Rate: ${performance.metrics.failureRate || 0}%</li>
+                </ul>
+                
+                <h6>Recent Management Actions:</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead><tr><th>Date</th><th>Action</th><th>Reason</th></tr></thead>
+                        <tbody>
+                            ${history.slice(0, 5).map(h => `
+                                <tr>
+                                    <td><small>${new Date(h.created_at).toLocaleString()}</small></td>
+                                    <td><span class="badge bg-secondary">${h.action.replace(/_/g, ' ')}</span></td>
+                                    <td><small>${h.reason || 'N/A'}</small></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        } else {
+            document.getElementById('analysisContent').innerHTML = `<div class="alert alert-danger">Error: ${result.error}</div>`;
+        }
+    } catch (error) {
+        document.getElementById('analysisContent').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    }
+}
+
+function refreshData() {
+    location.reload();
+}
+</script>

@@ -70,6 +70,7 @@ app.use('/leads', requireAuth, leadRoutes);
 app.use('/webhooks', requireAuth, webhookRoutes);
 app.use('/analytics', requireAuth, analyticsRoutes);
 app.use('/alerts', requireAuth, alertsRoutes);
+app.use('/partner-management', requireAuth, require('./routes/partnerManagement'));
 app.use('/api', apiRoutes); // API routes handle their own auth
 
 // Dashboard route (protected)
@@ -142,6 +143,18 @@ cron.schedule('*/10 * * * *', retryFailedLeads);
 
 // Partner status pulling cron job (every 15 minutes)
 cron.schedule('*/15 * * * *', pullPartnerStatuses);
+
+// Automated partner management cron job (every 2 hours)
+const partnerManager = require('./services/partnerManager');
+cron.schedule('0 */2 * * *', async () => {
+    console.log('🤖 Running automated partner management...');
+    try {
+        const summary = await partnerManager.runAutomatedManagement();
+        console.log('✅ Automated partner management completed:', summary);
+    } catch (error) {
+        console.error('❌ Automated partner management failed:', error.message);
+    }
+});
 
 // Start server
 app.listen(PORT, '0.0.0.0', async () => {

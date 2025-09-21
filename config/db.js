@@ -120,6 +120,21 @@ async function initDatabase() {
         
         CREATE UNIQUE INDEX IF NOT EXISTS "IDX_session_sid" ON sessions ("sid" COLLATE "default");
         CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON sessions ("expire");
+        
+        -- Partner Management Log table for automated partner management  
+        CREATE TABLE IF NOT EXISTS partner_management_log (
+            id SERIAL PRIMARY KEY,
+            partner_id INTEGER REFERENCES partners(id) ON DELETE CASCADE,
+            action VARCHAR(50) NOT NULL CHECK (action IN ('auto_pause', 'auto_resume', 'manual_pause', 'manual_resume', 'performance_review')),
+            reason TEXT,
+            metrics JSONB,
+            admin_user VARCHAR(255),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        
+        CREATE INDEX IF NOT EXISTS idx_partner_management_log_partner ON partner_management_log(partner_id);
+        CREATE INDEX IF NOT EXISTS idx_partner_management_log_action ON partner_management_log(action);
+        CREATE INDEX IF NOT EXISTS idx_partner_management_log_created ON partner_management_log(created_at);
         `);
         
         console.log('Database tables initialized successfully');
