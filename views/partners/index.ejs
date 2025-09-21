@@ -372,14 +372,17 @@
                         <div class="form-text">The URL where leads will be sent</div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">API Key *</label>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">API Key/Token *</label>
                             <input type="text" class="form-control" id="crmApiKey" name="api_key" 
                                    placeholder="7cd8ae99-3e3f-45eb-9273-e94799d08d67" required>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Auth Type</label>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Authentication Type</label>
                             <select class="form-control" id="crmAuthType" onchange="updateAuthFields()">
                                 <option value="api_key">API Key</option>
                                 <option value="bearer_token">Bearer Token</option>
@@ -387,19 +390,22 @@
                                 <option value="custom_header">Custom Header</option>
                             </select>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-md-4">
                             <label class="form-label" id="authHeaderLabel">Header Name</label>
                             <input type="text" class="form-control" id="crmAuthHeader" name="auth_header" 
                                    value="X-API-Key" placeholder="X-API-Key">
-                            <small class="form-text text-muted" id="authHint">Header where your key/token will be sent</small>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-md-4">
                             <label class="form-label">Request Method</label>
                             <select class="form-select" id="crmMethod" name="request_method">
                                 <option value="POST">POST</option>
                                 <option value="PUT">PUT</option>
                             </select>
                         </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="form-text text-muted" id="authHint">Header where your key/token will be sent</small>
                     </div>
                     
                     <div class="mb-3">
