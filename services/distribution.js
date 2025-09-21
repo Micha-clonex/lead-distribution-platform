@@ -122,8 +122,23 @@ async function deliverToCRM(leadId, partnerId, leadData) {
             ...requestHeaders
         };
         
+        // Handle different authentication types
         if (integration.auth_header && integration.api_key) {
-            headers[integration.auth_header] = integration.api_key;
+            // Determine auth type from header name or stored type
+            const authHeader = integration.auth_header.toLowerCase();
+            
+            if (authHeader === 'authorization') {
+                // Check if this should be Bearer or Token format
+                if (integration.api_key.startsWith('Bearer ') || integration.api_key.startsWith('Token ')) {
+                    headers[integration.auth_header] = integration.api_key;
+                } else {
+                    // Default to Bearer for Authorization header
+                    headers[integration.auth_header] = `Bearer ${integration.api_key}`;
+                }
+            } else {
+                // Direct header assignment for API keys and custom headers
+                headers[integration.auth_header] = integration.api_key;
+            }
         }
         
         // Send lead to partner's CRM with security controls

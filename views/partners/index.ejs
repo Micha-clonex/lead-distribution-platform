@@ -379,9 +379,19 @@
                                    placeholder="7cd8ae99-3e3f-45eb-9273-e94799d08d67" required>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <label class="form-label">Auth Header Name</label>
+                            <label class="form-label">Auth Type</label>
+                            <select class="form-control" id="crmAuthType" onchange="updateAuthFields()">
+                                <option value="api_key">API Key</option>
+                                <option value="bearer_token">Bearer Token</option>
+                                <option value="custom_token">Custom Token</option>
+                                <option value="custom_header">Custom Header</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label" id="authHeaderLabel">Header Name</label>
                             <input type="text" class="form-control" id="crmAuthHeader" name="auth_header" 
-                                   value="api-key" placeholder="api-key">
+                                   value="X-API-Key" placeholder="X-API-Key">
+                            <small class="form-text text-muted" id="authHint">Header where your key/token will be sent</small>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Request Method</label>
@@ -413,11 +423,49 @@
                         <div class="form-text">How to map lead fields to partner's CRM fields</div>
                     </div>
                     
+                    <!-- Status Pulling Configuration -->
+                    <hr>
+                    <h6><i class="fas fa-sync me-2"></i>Status Pulling (Optional)</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Status Endpoint URL</label>
+                            <input type="url" class="form-control" id="statusPullEndpoint" 
+                                   placeholder="https://api.partner.com/leads/status">
+                            <div class="form-text">URL to fetch lead status updates from partner</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Pull Method</label>
+                            <select class="form-control" id="statusPullMethod">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Pull Frequency (min)</label>
+                            <input type="number" class="form-control" id="pullFrequency" 
+                                   value="60" min="5" max="1440" placeholder="60">
+                            <div class="form-text">How often to check for updates</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Status Field Mapping (JSON)</label>
+                        <textarea class="form-control" id="statusFieldMapping" rows="3" 
+                                  placeholder='{"active": "qualified", "converted": "converted", "rejected": "rejected"}'>{}</textarea>
+                        <div class="form-text">How to map partner's status values to our system</div>
+                    </div>
+
                     <div class="mb-3">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="crmIsActive" name="is_active" checked>
                             <label class="form-check-label" for="crmIsActive">
                                 Enable CRM Integration
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="statusPullingActive">
+                            <label class="form-check-label" for="statusPullingActive">
+                                Enable Status Pulling (automatically fetch lead status from partner)
                             </label>
                         </div>
                     </div>
@@ -588,7 +636,30 @@ function manageCRM(partnerId) {
                 document.getElementById('crmApiKey').value = '';
                 document.getElementById('crmApiKey').placeholder = integration.api_key_set ? 
                     'API key configured (leave blank to keep current)' : 'Enter API key';
-                document.getElementById('crmAuthHeader').value = integration.auth_header || 'api-key';
+                document.getElementById('crmAuthHeader').value = integration.auth_header || 'X-API-Key';
+    
+    // Populate status pulling fields
+    document.getElementById('statusPullEndpoint').value = integration.status_pull_endpoint || '';
+    document.getElementById('statusPullMethod').value = integration.status_pull_method || 'GET';
+    document.getElementById('pullFrequency').value = integration.pull_frequency || 60;
+    document.getElementById('statusFieldMapping').value = typeof integration.status_field_mapping === 'string' ? 
+        integration.status_field_mapping : JSON.stringify(integration.status_field_mapping || {});
+    document.getElementById('statusPullingActive').checked = integration.status_pull_endpoint ? true : false;
+    
+    // Set auth type (detect from header)
+    const authHeader = (integration.auth_header || '').toLowerCase();
+    let authType = 'api_key';
+    if (authHeader === 'authorization') {
+        if (integration.api_key && integration.api_key.startsWith('Bearer ')) {
+            authType = 'bearer_token';
+        } else if (integration.api_key && integration.api_key.startsWith('Token ')) {
+            authType = 'custom_token';
+        }
+    } else if (authHeader.includes('token')) {
+        authType = 'custom_header';
+    }
+    document.getElementById('crmAuthType').value = authType;
+    updateAuthFields(); // Apply the auth type styling
                 document.getElementById('crmMethod').value = integration.request_method || 'POST';
                 document.getElementById('crmTestUrl').value = integration.test_url || '';
                 
@@ -637,6 +708,44 @@ function manageCRM(partnerId) {
     new bootstrap.Modal(document.getElementById('crmIntegrationModal')).show();
 }
 
+// Handle authentication type changes
+function updateAuthFields() {
+    const authType = document.getElementById('crmAuthType').value;
+    const headerLabel = document.getElementById('authHeaderLabel');
+    const headerInput = document.getElementById('crmAuthHeader');
+    const hint = document.getElementById('authHint');
+    
+    switch(authType) {
+        case 'bearer_token':
+            headerLabel.textContent = 'Token Value';
+            headerInput.value = 'Authorization';
+            headerInput.placeholder = 'Authorization';
+            headerInput.readOnly = true;
+            hint.textContent = 'Will send as "Authorization: Bearer YOUR_TOKEN"';
+            break;
+        case 'custom_token':
+            headerLabel.textContent = 'Token Value';
+            headerInput.value = 'Authorization';
+            headerInput.placeholder = 'Authorization';
+            headerInput.readOnly = true;
+            hint.textContent = 'Will send as "Authorization: Token YOUR_TOKEN"';
+            break;
+        case 'custom_header':
+            headerLabel.textContent = 'Header Name';
+            headerInput.value = 'X-Auth-Token';
+            headerInput.placeholder = 'X-Auth-Token';
+            headerInput.readOnly = false;
+            hint.textContent = 'Custom header name for your token';
+            break;
+        default: // api_key
+            headerLabel.textContent = 'Header Name';
+            headerInput.value = 'X-API-Key';
+            headerInput.placeholder = 'X-API-Key';
+            headerInput.readOnly = false;
+            hint.textContent = 'Header where your API key will be sent';
+    }
+}
+
 function saveCRMIntegration() {
     const form = document.getElementById('crmIntegrationForm');
     const formData = new FormData(form);
@@ -657,11 +766,18 @@ function saveCRMIntegration() {
         api_endpoint: formData.get('api_endpoint'),
         api_key: formData.get('api_key'),
         auth_header: formData.get('auth_header'),
+        auth_type: document.getElementById('crmAuthType').value,
         request_method: formData.get('request_method'),
         test_url: formData.get('test_url'),
         request_headers: headers,
         field_mapping: fieldMapping,
-        is_active: document.getElementById('crmIsActive').checked
+        is_active: document.getElementById('crmIsActive').checked,
+        // Status pulling configuration
+        status_pull_endpoint: document.getElementById('statusPullEndpoint').value,
+        status_pull_method: document.getElementById('statusPullMethod').value,
+        pull_frequency: document.getElementById('pullFrequency').value,
+        status_field_mapping: document.getElementById('statusFieldMapping').value,
+        status_pulling_active: document.getElementById('statusPullingActive').checked
     };
     
     fetch(`/partners/${partnerId}/crm-integration`, {

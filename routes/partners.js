@@ -177,11 +177,17 @@ router.post('/:id/crm-integration', async (req, res) => {
             api_endpoint,
             api_key,
             auth_header,
+            auth_type,
             request_method,
             test_url,
             request_headers,
             field_mapping,
-            is_active
+            is_active,
+            status_pull_endpoint,
+            status_pull_method,
+            pull_frequency,
+            status_field_mapping,
+            status_pulling_active
         } = req.body;
         
         // Validate API endpoint URL
@@ -215,22 +221,28 @@ router.post('/:id/crm-integration', async (req, res) => {
                     UPDATE partner_crm_integrations 
                     SET crm_name = $1, api_endpoint = $2, api_key = $3, auth_header = $4,
                         request_method = $5, test_url = $6, request_headers = $7,
-                        field_mapping = $8, is_active = $9, updated_at = CURRENT_TIMESTAMP
-                    WHERE partner_id = $10
+                        field_mapping = $8, is_active = $9, status_pull_endpoint = $10,
+                        status_pull_method = $11, pull_frequency = $12, status_field_mapping = $13,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE partner_id = $14
                 `, [crm_name, api_endpoint, api_key, auth_header, request_method, 
                     test_url, JSON.stringify(request_headers), JSON.stringify(field_mapping), 
-                    is_active, id]);
+                    is_active, status_pull_endpoint, status_pull_method || 'GET', 
+                    pull_frequency || 60, JSON.stringify(status_field_mapping), id]);
             } else {
                 // Don't update API key if empty (keep existing)
                 await pool.query(`
                     UPDATE partner_crm_integrations 
                     SET crm_name = $1, api_endpoint = $2, auth_header = $3,
                         request_method = $4, test_url = $5, request_headers = $6,
-                        field_mapping = $7, is_active = $8, updated_at = CURRENT_TIMESTAMP
-                    WHERE partner_id = $9
+                        field_mapping = $7, is_active = $8, status_pull_endpoint = $9,
+                        status_pull_method = $10, pull_frequency = $11, status_field_mapping = $12,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE partner_id = $13
                 `, [crm_name, api_endpoint, auth_header, request_method, 
                     test_url, JSON.stringify(request_headers), JSON.stringify(field_mapping), 
-                    is_active, id]);
+                    is_active, status_pull_endpoint, status_pull_method || 'GET', 
+                    pull_frequency || 60, JSON.stringify(status_field_mapping), id]);
             }
         } else {
             // Create new integration - require API key
@@ -240,11 +252,13 @@ router.post('/:id/crm-integration', async (req, res) => {
             await pool.query(`
                 INSERT INTO partner_crm_integrations 
                 (partner_id, crm_name, api_endpoint, api_key, auth_header, request_method,
-                 test_url, request_headers, field_mapping, is_active)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                 test_url, request_headers, field_mapping, is_active, status_pull_endpoint,
+                 status_pull_method, pull_frequency, status_field_mapping)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             `, [id, crm_name, api_endpoint, api_key, auth_header, request_method,
                 test_url, JSON.stringify(request_headers), JSON.stringify(field_mapping), 
-                is_active]);
+                is_active, status_pull_endpoint, status_pull_method || 'GET', 
+                pull_frequency || 60, JSON.stringify(status_field_mapping)]);
         }
         
         res.json({ success: true });
