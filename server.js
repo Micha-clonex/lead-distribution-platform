@@ -2,10 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const cron = require('node-cron');
+const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
 require('dotenv').config();
 
 const { pool, initDatabase } = require('./config/db');
 const { retryFailedWebhooks } = require('./services/webhook');
+const { requireAuth } = require('./middleware/auth');
 
 const app = express();
 const PORT = 5000;
@@ -15,6 +18,23 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
+
+// Session configuration
+app.use(session({
+    store: new pgSession({
+        pool: pool,
+        createTableIfMissing: false,
+        tableName: 'sessions'
+    }),
+    secret: process.env.SESSION_SECRET || 'your-fallback-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false, // Set to true in production with HTTPS
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
 
 // Set view engine for server-side rendering
 app.set('view engine', 'ejs');
@@ -26,16 +46,20 @@ const leadRoutes = require('./routes/leads');
 const webhookRoutes = require('./routes/webhooks');
 const analyticsRoutes = require('./routes/analytics');
 const apiRoutes = require('./routes/api');
+const authRoutes = require('./routes/auth');
 
-// Use routes
-app.use('/partners', partnerRoutes);
-app.use('/leads', leadRoutes);
-app.use('/webhooks', webhookRoutes);
-app.use('/analytics', analyticsRoutes);
-app.use('/api', apiRoutes);
+// Authentication routes (public)
+app.use('/admin', authRoutes);
 
-// Dashboard route
-app.get('/', async (req, res) => {
+// Protected routes
+app.use('/partners', requireAuth, partnerRoutes);
+app.use('/leads', requireAuth, leadRoutes);
+app.use('/webhooks', requireAuth, webhookRoutes);
+app.use('/analytics', requireAuth, analyticsRoutes);
+app.use('/api', apiRoutes); // API routes handle their own auth
+
+// Dashboard route (protected)
+app.get('/', requireAuth, async (req, res) => {
     try {
         // Get dashboard stats
         const partnersQuery = await pool.query('SELECT COUNT(*) as count FROM partners WHERE status = $1', ['active']);

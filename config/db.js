@@ -91,12 +91,32 @@ async function initDatabase() {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         
+        CREATE TABLE IF NOT EXISTS admin_users (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(100) NOT NULL UNIQUE,
+            password VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL UNIQUE,
+            status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_login TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        
+        CREATE TABLE IF NOT EXISTS sessions (
+            sid VARCHAR NOT NULL COLLATE "default",
+            sess JSON NOT NULL,
+            expire TIMESTAMP(6) NOT NULL
+        ) WITH (OIDS=FALSE);
+        
         -- Create indexes for performance
         CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
         CREATE INDEX IF NOT EXISTS idx_leads_niche_country ON leads(niche, country);
         CREATE INDEX IF NOT EXISTS idx_partners_country_niche ON partners(country, niche, status);
         CREATE INDEX IF NOT EXISTS idx_distribution_stats_date ON distribution_stats(date);
         CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_status ON webhook_deliveries(status);
+        
+        CREATE UNIQUE INDEX IF NOT EXISTS "IDX_session_sid" ON sessions ("sid" COLLATE "default");
+        CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON sessions ("expire");
         `);
         
         console.log('Database tables initialized successfully');
