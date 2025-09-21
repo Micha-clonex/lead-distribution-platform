@@ -51,16 +51,16 @@
                                         </button>
                                     </td>
                                     <td>
-                                        <span class="badge bg-<%= source.status === 'active' ? 'success' : 'danger' %>">
-                                            <%= source.status.charAt(0).toUpperCase() + source.status.slice(1) %>
+                                        <span class="badge bg-<%= source.is_active ? 'success' : 'danger' %>">
+                                            <%= source.is_active ? 'Active' : 'Inactive' %>
                                         </span>
                                     </td>
                                     <td><%= source.leads_received || 0 %></td>
                                     <td><%= new Date(source.created_at).toLocaleDateString() %></td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-warning" onclick="toggleWebhookStatus(<%= source.id %>, '<%= source.status %>')">
-                                                <i class="fas fa-<%= source.status === 'active' ? 'pause' : 'play' %>"></i>
+                                            <button class="btn btn-outline-warning" onclick="toggleWebhookStatus(<%= source.id %>, '<%= source.is_active %>')">
+                                                <i class="fas fa-<%= source.is_active ? 'pause' : 'play' %>"></i>
                                             </button>
                                             <button class="btn btn-outline-danger" onclick="deleteWebhookSource(<%= source.id %>)">
                                                 <i class="fas fa-trash"></i>
