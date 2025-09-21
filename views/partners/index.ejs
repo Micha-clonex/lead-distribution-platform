@@ -565,9 +565,11 @@ function editPartner(id) {
     document.getElementById('editPartnerTimezone').value = partner.timezone;
     document.getElementById('editPartnerRecoveryFormat').value = partner.recovery_fields_format || 'separate';
     
-    // Show/hide recovery format based on niche
+    // Show/hide recovery format based on niche and update preview
     toggleRecoveryFormatVisibility(partner.niche);
-    updateRecoveryFormatPreview(partner.recovery_fields_format || 'separate');
+    
+    // Setup event listeners for this modal session
+    setupEditModalEventListeners();
     
     // Show modal
     new bootstrap.Modal(document.getElementById('editPartnerModal')).show();
@@ -635,9 +637,15 @@ document.getElementById('editPartnerForm').addEventListener('submit', function(e
 
 // **NEW: Recovery fields format helper functions**
 function toggleRecoveryFormatVisibility(niche) {
-    const recoveryRow = document.querySelector('.row:has(#editPartnerRecoveryFormat)');
+    const recoveryRow = document.getElementById('editPartnerRecoveryFormat')?.closest('.row');
     if (recoveryRow) {
         recoveryRow.style.display = (niche === 'recovery') ? 'block' : 'none';
+        
+        // Also update the preview when visibility changes
+        if (niche === 'recovery') {
+            const currentFormat = document.getElementById('editPartnerRecoveryFormat')?.value || 'separate';
+            updateRecoveryFormatPreview(currentFormat);
+        }
     }
 }
 
@@ -687,22 +695,34 @@ function updateRecoveryFormatPreview(format) {
     }
 }
 
-// Add event listener for recovery format changes
-document.addEventListener('DOMContentLoaded', function() {
+// **FIXED: Better event listener setup for edit modal**
+function setupEditModalEventListeners() {
+    // Remove any existing listeners to avoid duplicates
     const recoveryFormatSelect = document.getElementById('editPartnerRecoveryFormat');
+    const nicheSelect = document.getElementById('editPartnerNiche');
+    
     if (recoveryFormatSelect) {
-        recoveryFormatSelect.addEventListener('change', function() {
+        // Clone node to remove all event listeners, then replace
+        const newRecoverySelect = recoveryFormatSelect.cloneNode(true);
+        recoveryFormatSelect.parentNode.replaceChild(newRecoverySelect, recoveryFormatSelect);
+        
+        // Add fresh event listener
+        newRecoverySelect.addEventListener('change', function() {
             updateRecoveryFormatPreview(this.value);
         });
     }
     
-    const nicheSelect = document.getElementById('editPartnerNiche');
     if (nicheSelect) {
-        nicheSelect.addEventListener('change', function() {
+        // Clone node to remove all event listeners, then replace
+        const newNicheSelect = nicheSelect.cloneNode(true);
+        nicheSelect.parentNode.replaceChild(newNicheSelect, nicheSelect);
+        
+        // Add fresh event listener
+        newNicheSelect.addEventListener('change', function() {
             toggleRecoveryFormatVisibility(this.value);
         });
     }
-});
+}
 
 // CRM Integration Management
 function manageCRM(partnerId) {

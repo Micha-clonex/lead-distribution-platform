@@ -24,20 +24,21 @@ async function sendWebhook(lead, partner) {
             LIMIT 1
         `, [lead.id, partner.id]);
         
+        // **CRITICAL FIX: Always regenerate payload to honor partner preference changes**
+        const payload = await createPayloadForPartner(lead, partner);
+        
         if (existingRecord.rows.length > 0) {
-            // Update existing record for retry
+            // Update existing record for retry with fresh payload
             deliveryId = existingRecord.rows[0].id;
             const currentAttempts = existingRecord.rows[0].attempts;
             
             await pool.query(`
                 UPDATE webhook_deliveries 
-                SET attempts = $1, status = 'pending', created_at = CURRENT_TIMESTAMP
-                WHERE id = $2
-            `, [currentAttempts + 1, deliveryId]);
+                SET attempts = $1, status = 'pending', payload = $2, created_at = CURRENT_TIMESTAMP
+                WHERE id = $3
+            `, [currentAttempts + 1, JSON.stringify(payload), deliveryId]);
         } else {
             // Create new delivery record with recovery field formatting
-            const payload = await createPayloadForPartner(lead, partner);
-            
             const result = await pool.query(`
                 INSERT INTO webhook_deliveries (lead_id, partner_id, webhook_url, payload, attempts, status)
                 VALUES ($1, $2, $3, $4, 1, 'pending')
@@ -47,12 +48,10 @@ async function sendWebhook(lead, partner) {
             deliveryId = result.rows[0].id;
         }
         
-        // Get current payload and attempts
+        // Get current attempt count
         const delivery = await pool.query(`
-            SELECT payload, attempts FROM webhook_deliveries WHERE id = $1
+            SELECT attempts FROM webhook_deliveries WHERE id = $1
         `, [deliveryId]);
-        
-        const payload = JSON.parse(delivery.rows[0].payload);
         const currentAttempt = delivery.rows[0].attempts;
         
         // Send webhook with timeout
