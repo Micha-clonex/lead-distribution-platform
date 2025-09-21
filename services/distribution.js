@@ -109,4 +109,52 @@ async function distributeLead(leadId) {
     }
 }
 
-module.exports = { distributeLead };
+// Retry failed leads (called by cron)
+async function retryFailedLeads() {
+    try {
+        // Only retry leads that failed due to no available partners
+        const failedLeads = await pool.query(`
+            SELECT l.*, p.name as partner_name 
+            FROM leads l
+            LEFT JOIN partners p ON l.assigned_partner_id = p.id
+            WHERE l.status = 'failed' 
+                AND l.created_at > NOW() - INTERVAL '24 hours'
+                AND l.assigned_partner_id IS NULL
+            ORDER BY l.created_at ASC
+            LIMIT 10
+        `);
+        
+        for (const lead of failedLeads.rows) {
+            try {
+                console.log(`Retrying distribution for failed lead ${lead.id} (${lead.country}/${lead.niche})`);
+                
+                // Check if eligible partners are now available
+                const availablePartners = await pool.query(`
+                    SELECT p.*, ds.leads_received
+                    FROM partners p
+                    LEFT JOIN distribution_stats ds ON p.id = ds.partner_id AND ds.date = CURRENT_DATE
+                    WHERE p.status = 'active' 
+                        AND (p.country = $1 OR p.country = 'global')
+                        AND (p.niche = $2 OR p.niche = 'all')
+                        AND (ds.leads_received IS NULL OR ds.leads_received < p.daily_limit)
+                    ORDER BY COALESCE(ds.leads_received, 0) ASC, p.created_at ASC
+                `, [lead.country, lead.niche]);
+                
+                if (availablePartners.rows.length > 0) {
+                    await distributeLead(lead.id);
+                    console.log(`Successfully redistributed failed lead ${lead.id}`);
+                } else {
+                    console.log(`No eligible partners available yet for lead ${lead.id} (${lead.country}/${lead.niche})`);
+                }
+            } catch (error) {
+                console.error(`Retry failed for lead ${lead.id}:`, error.message);
+            }
+        }
+        
+        console.log(`Processed ${failedLeads.rows.length} failed leads for retry`);
+    } catch (error) {
+        console.error('Failed lead retry error:', error);
+    }
+}
+
+module.exports = { distributeLead, retryFailedLeads };

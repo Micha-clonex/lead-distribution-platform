@@ -188,6 +188,20 @@
                         <input type="text" class="form-control" name="name" required placeholder="Facebook Leads, Landing Page, etc.">
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Source Type *</label>
+                        <select class="form-control" name="source_type" required>
+                            <option value="">Select source type...</option>
+                            <option value="facebook">Facebook Ads</option>
+                            <option value="google">Google Ads</option>
+                            <option value="landing_page">Landing Page</option>
+                            <option value="crm">CRM System</option>
+                            <option value="affiliate">Affiliate Network</option>
+                            <option value="email_campaign">Email Campaign</option>
+                            <option value="api">API Integration</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Description</label>
                         <textarea class="form-control" name="description" rows="3" placeholder="Brief description of this webhook source"></textarea>
                     </div>
