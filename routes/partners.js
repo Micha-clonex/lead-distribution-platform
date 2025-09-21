@@ -334,4 +334,56 @@ router.post('/:id/test-crm', async (req, res) => {
     }
 });
 
+// Status tracking endpoint for admin interface
+router.get('/:id/status-tracking', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Get partner summary stats
+        const summaryResult = await pool.query(`
+            SELECT 
+                COUNT(l.id) as total_leads,
+                COUNT(CASE WHEN lsu.status = 'converted' THEN 1 END) as conversions,
+                SUM(lsu.conversion_value) as total_revenue,
+                AVG(lsu.quality_score) as avg_quality,
+                CASE 
+                    WHEN COUNT(l.id) > 0 THEN 
+                        ROUND((COUNT(CASE WHEN lsu.status = 'converted' THEN 1 END)::decimal / COUNT(l.id) * 100), 2)
+                    ELSE 0 
+                END as conversion_rate
+            FROM leads l
+            LEFT JOIN lead_status_updates lsu ON l.id = lsu.lead_id
+            WHERE l.assigned_partner_id = $1 
+              AND l.created_at > NOW() - INTERVAL '30 days'
+        `, [id]);
+        
+        // Get recent status updates
+        const updatesResult = await pool.query(`
+            SELECT lsu.*, l.email as lead_email
+            FROM lead_status_updates lsu
+            JOIN leads l ON lsu.lead_id = l.id
+            WHERE lsu.partner_id = $1
+            ORDER BY lsu.created_at DESC
+            LIMIT 50
+        `, [id]);
+        
+        // Get postback configuration
+        const postbackResult = await pool.query(
+            'SELECT postback_token, is_active FROM partner_postback_config WHERE partner_id = $1',
+            [id]
+        );
+        
+        res.json({
+            success: true,
+            summary: summaryResult.rows[0] || {},
+            recent_updates: updatesResult.rows,
+            postback_config: postbackResult.rows[0] || null
+        });
+        
+    } catch (error) {
+        console.error('Status tracking error:', error);
+        res.status(500).json({ error: 'Failed to get status tracking data' });
+    }
+});
+
 module.exports = router;

@@ -162,6 +162,9 @@
                                     <button class="btn btn-outline-success" onclick="manageCRM(<%= partner.id %>)" title="CRM Integration">
                                         <i class="fas fa-cog"></i>
                                     </button>
+                                    <button class="btn btn-outline-info" onclick="viewStatus(<%= partner.id %>)" title="Status Tracking">
+                                        <i class="fas fa-chart-line"></i>
+                                    </button>
                                     <button class="btn btn-outline-danger" onclick="deletePartner(<%= partner.id %>)" title="Delete">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -448,6 +451,30 @@
     </div>
 </div>
 
+<!-- Status Tracking Modal -->
+<div class="modal fade" id="statusTrackingModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Lead Status Tracking</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="statusTrackingContent">
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function editPartner(id) {
     // Find partner data
@@ -714,6 +741,182 @@ function showTestResult(message, type) {
     setTimeout(() => {
         testResult.style.display = 'none';
     }, 5000);
+}
+
+// Status tracking functionality
+function viewStatus(partnerId) {
+    const partners = <%- JSON.stringify(partners) %>;
+    const partner = partners.find(p => p.id == partnerId);
+    
+    if (!partner) {
+        alert('Partner not found');
+        return;
+    }
+    
+    // Update modal title with partner name
+    document.querySelector('#statusTrackingModal .modal-title').textContent = 
+        `Lead Status Tracking - ${partner.name}`;
+    
+    // Show loading spinner
+    document.getElementById('statusTrackingContent').innerHTML = `
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    `;
+    
+    // Load status data
+    fetch(`/partners/${partnerId}/status-tracking`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderStatusTracking(data);
+            } else {
+                document.getElementById('statusTrackingContent').innerHTML = 
+                    '<div class="alert alert-danger">Failed to load status tracking data</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Status tracking error:', error);
+            document.getElementById('statusTrackingContent').innerHTML = 
+                '<div class="alert alert-danger">Network error loading status data</div>';
+        });
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('statusTrackingModal')).show();
+}
+
+function renderStatusTracking(data) {
+    const { summary, recent_updates, postback_config } = data;
+    
+    const html = `
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Total Leads</h6>
+                        <h3>${summary.total_leads}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Conversions</h6>
+                        <h3>${summary.conversions}</h3>
+                        <small>${summary.conversion_rate}% rate</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Revenue</h6>
+                        <h3>$${(summary.total_revenue || 0).toFixed(2)}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Avg Quality</h6>
+                        <h3>${(summary.avg_quality || 0).toFixed(1)}/10</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Configuration Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-cogs me-2"></i>Tracking Configuration</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Postback URL:</strong><br>
+                        <code>/api/postback/status/${postback_config?.postback_token || 'Not configured'}</code>
+                        ${postback_config?.postback_token ? 
+                            '<span class="badge bg-success ms-2">Active</span>' : 
+                            '<span class="badge bg-warning ms-2">Not Setup</span>'
+                        }
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Status Updates:</strong><br>
+                        <span class="badge bg-primary">${recent_updates.length} recent</span>
+                        <span class="badge bg-secondary">Both postback & pulling enabled</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Updates -->
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-history me-2"></i>Recent Status Updates</h6>
+            </div>
+            <div class="card-body">
+                ${recent_updates.length === 0 ? 
+                    '<div class="alert alert-info">No recent status updates</div>' : 
+                    `<div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Lead</th>
+                                    <th>Status</th>
+                                    <th>Value</th>
+                                    <th>Quality</th>
+                                    <th>Source</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${recent_updates.map(update => `
+                                    <tr>
+                                        <td>
+                                            <small>ID: ${update.lead_id}</small><br>
+                                            <small class="text-muted">${update.lead_email}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-${getStatusColor(update.status)}">${update.status}</span>
+                                        </td>
+                                        <td>
+                                            ${update.conversion_value ? '$' + parseFloat(update.conversion_value).toFixed(2) : '-'}
+                                        </td>
+                                        <td>
+                                            ${update.quality_score ? update.quality_score + '/10' : '-'}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-${update.update_source === 'postback' ? 'primary' : 'secondary'}">
+                                                ${update.update_source}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small>${new Date(update.created_at).toLocaleDateString()}</small>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>`
+                }
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('statusTrackingContent').innerHTML = html;
+}
+
+function getStatusColor(status) {
+    switch (status) {
+        case 'converted': return 'success';
+        case 'qualified': return 'primary';
+        case 'rejected': return 'danger';
+        case 'pending': return 'warning';
+        default: return 'secondary';
+    }
 }
 </script>
 

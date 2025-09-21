@@ -487,24 +487,39 @@ router.post('/postback/status/:token', webhookRateLimit(100), async (req, res) =
             mappedStatus = config.status_field_mapping[status];
         }
         
-        // Record status update
-        await pool.query(`
-            INSERT INTO lead_status_updates 
-            (lead_id, partner_id, status, conversion_value, conversion_currency, quality_score, 
-             partner_feedback, update_source, partner_reference, raw_data)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        `, [
-            lead_id,
-            config.partner_id,
-            mappedStatus,
-            conversion_value,
-            'USD', // Default currency
-            quality_score,
-            partner_feedback,
-            'postback',
-            partner_reference,
-            JSON.stringify(req.body)
-        ]);
+        // Record status update with idempotency protection
+        try {
+            await pool.query(`
+                INSERT INTO lead_status_updates 
+                (lead_id, partner_id, status, conversion_value, conversion_currency, quality_score, 
+                 partner_feedback, update_source, partner_reference, raw_data)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                ON CONFLICT (lead_id, partner_id, status, COALESCE(partner_reference, 'none'), DATE_TRUNC('minute', created_at))
+                DO NOTHING
+            `, [
+                lead_id,
+                config.partner_id,
+                mappedStatus,
+                conversion_value,
+                'USD', // Default currency
+                quality_score,
+                partner_feedback,
+                'postback',
+                partner_reference,
+                JSON.stringify(req.body)
+            ]);
+        } catch (duplicateError) {
+            // Return success for duplicate status updates (idempotent)
+            if (duplicateError.code === '23505') {
+                return res.json({
+                    success: true,
+                    message: 'Status already recorded (idempotent)',
+                    lead_id: lead_id,
+                    status: mappedStatus
+                });
+            }
+            throw duplicateError;
+        }
         
         // Update lead record with latest status
         await pool.query(`

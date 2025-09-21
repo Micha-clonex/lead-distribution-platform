@@ -93,13 +93,54 @@ async function pullStatusForPartner(partner) {
         return;
     }
     
-    // SSRF Protection: Block private IP ranges
+    // **CRITICAL SSRF Protection: Resolve DNS and validate final IP**
+    const dns = require('dns').promises;
+    let resolvedIPs;
+    
+    try {
+        resolvedIPs = await dns.resolve4(url.hostname);
+    } catch (dnsError) {
+        try {
+            // Try IPv6 if IPv4 fails
+            resolvedIPs = await dns.resolve6(url.hostname);
+        } catch (dns6Error) {
+            console.error(`DNS resolution failed for partner ${partner.name}: ${url.hostname}`);
+            return;
+        }
+    }
+    
+    // Validate all resolved IPs against private ranges
+    for (const ip of resolvedIPs) {
+        // IPv4 private ranges
+        if (ip.match(/^127\./) ||                          // Loopback
+            ip.match(/^192\.168\./) ||                     // Private Class C
+            ip.match(/^10\./) ||                           // Private Class A  
+            ip.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\./) ||  // Private Class B
+            ip.match(/^169\.254\./) ||                     // Link-local
+            ip.match(/^224\./) ||                          // Multicast
+            ip.match(/^0\./) ||                            // Current network
+            ip === '255.255.255.255') {                    // Broadcast
+            console.error(`Private/reserved IP ${ip} rejected for partner ${partner.name}`);
+            return;
+        }
+        
+        // IPv6 private ranges
+        if (ip.startsWith('::1') ||                        // Loopback
+            ip.startsWith('::ffff:') ||                    // IPv4-mapped
+            ip.startsWith('fe80:') ||                      // Link-local
+            ip.startsWith('fc00:') ||                      // Unique local
+            ip.startsWith('fd00:')) {                      // Unique local
+            console.error(`Private IPv6 ${ip} rejected for partner ${partner.name}`);
+            return;
+        }
+    }
+    
+    console.log(`DNS validation passed for ${partner.name}: ${url.hostname} -> ${resolvedIPs.join(', ')}`);
+    
+    // Additional hostname validation - only allow known safe domains if configured
     const hostname = url.hostname;
-    if (hostname === 'localhost' || hostname.match(/^127\./) || 
-        hostname.match(/^192\.168\./) || hostname.match(/^10\./) || 
-        hostname.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\./) ||
-        hostname.match(/^0\./) || hostname === '::1') {
-        console.error(`Private IP address rejected for partner ${partner.name}`);
+    if (hostname === 'localhost' || hostname.match(/\.local$/)) {
+        console.error(`Local hostname rejected for partner ${partner.name}`);
         return;
     }
     
@@ -200,23 +241,30 @@ async function processStatusResponse(partner, responseData, leads, statusFieldMa
                 continue; // Skip duplicate status
             }
             
-            // Record status update
-            await pool.query(`
-                INSERT INTO lead_status_updates 
-                (lead_id, partner_id, status, conversion_value, quality_score, 
-                 partner_feedback, update_source, partner_reference, raw_data)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            `, [
-                leadId,
-                partner.id,
-                mappedStatus,
-                value,
-                quality,
-                feedback,
-                'pulled',
-                reference,
-                JSON.stringify(statusUpdate)
-            ]);
+            // Record status update with idempotency protection
+            try {
+                await pool.query(`
+                    INSERT INTO lead_status_updates 
+                    (lead_id, partner_id, status, conversion_value, quality_score, 
+                     partner_feedback, update_source, partner_reference, raw_data)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    ON CONFLICT (lead_id, partner_id, status, COALESCE(partner_reference, 'none'), DATE_TRUNC('minute', created_at))
+                    DO NOTHING
+                `, [
+                    leadId,
+                    partner.id,
+                    mappedStatus,
+                    value,
+                    quality,
+                    feedback,
+                    'pulled',
+                    reference,
+                    JSON.stringify(statusUpdate)
+                ]);
+            } catch (duplicateError) {
+                // Skip duplicates silently (handled by unique constraint)
+                continue;
+            }
             
             // Update main leads table
             await pool.query(`
