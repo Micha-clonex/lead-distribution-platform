@@ -1,0 +1,400 @@
+<%- contentFor('extraCSS') %>
+<link rel="stylesheet" href="/css/admin-dashboard.css">
+<style>
+/* Quality Scoring Dashboard Specific Styles */
+.quality-score-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.quality-premium { background-color: #10B981; color: white; }
+.quality-high { background-color: #3B82F6; color: white; }
+.quality-standard { background-color: #F59E0B; color: white; }
+.quality-low { background-color: #EF4444; color: white; }
+.quality-reject { background-color: #6B7280; color: white; }
+
+.quality-factor-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #3B82F6;
+}
+
+.quality-score-display {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #1F2937;
+}
+
+.quality-trend-positive { color: #10B981; }
+.quality-trend-negative { color: #EF4444; }
+.quality-trend-neutral { color: #6B7280; }
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 1rem 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.factor-breakdown {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+@media (max-width: 768px) {
+    .factor-breakdown {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+<%- contentFor('extraJS') %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>📊 Lead Quality Scoring Dashboard</h1>
+        <p class="admin-subtitle">Multi-factor lead assessment and quality analytics</p>
+        
+        <!-- Date Range Filter -->
+        <form method="GET" class="date-filter-form" style="margin: 1rem 0;">
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <label for="start_date">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date" value="<%= startDate %>" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div>
+                    <label for="end_date">End Date:</label>
+                    <input type="date" id="end_date" name="end_date" value="<%= endDate %>" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <button type="submit" style="padding: 0.5rem 1rem; background-color: #3B82F6; color: white; border: none; border-radius: 4px; cursor: pointer;">Update</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Quality Overview Stats -->
+    <div class="stats-grid">
+        <div class="quality-factor-card">
+            <h3>📈 Quality Trends</h3>
+            <div class="quality-score-display">
+                <%= qualityTrends.length > 0 ? Math.round(qualityTrends.reduce((sum, day) => sum + parseFloat(day.avg_quality_score || 0), 0) / qualityTrends.length) : 0 %>
+            </div>
+            <p>Average Quality Score</p>
+            <small>Based on <%= qualityTrends.reduce((sum, day) => sum + parseInt(day.total_leads), 0) %> leads</small>
+        </div>
+
+        <div class="quality-factor-card">
+            <h3>🎯 Quality Distribution</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0;">
+                <% 
+                let totalLeads = qualityTrends.reduce((sum, day) => sum + parseInt(day.total_leads), 0);
+                let premiumCount = qualityTrends.reduce((sum, day) => sum + parseInt(day.premium_leads || 0), 0);
+                let highCount = qualityTrends.reduce((sum, day) => sum + parseInt(day.high_quality_leads || 0), 0);
+                let standardCount = qualityTrends.reduce((sum, day) => sum + parseInt(day.standard_quality_leads || 0), 0);
+                %>
+                <span class="quality-score-badge quality-premium">Premium: <%= Math.round((premiumCount / Math.max(totalLeads, 1)) * 100) %>%</span>
+                <span class="quality-score-badge quality-high">High: <%= Math.round((highCount / Math.max(totalLeads, 1)) * 100) %>%</span>
+                <span class="quality-score-badge quality-standard">Standard: <%= Math.round((standardCount / Math.max(totalLeads, 1)) * 100) %>%</span>
+            </div>
+        </div>
+
+        <div class="quality-factor-card">
+            <h3>⚡ Top Performing Sources</h3>
+            <% if (sourceQuality.length > 0) { %>
+                <div class="quality-score-display"><%= Math.round(sourceQuality[0].avg_quality_score) %></div>
+                <p><strong><%= sourceQuality[0].source %></strong> (<%= sourceQuality[0].niche %>)</p>
+                <small><%= sourceQuality[0].conversion_rate %>% conversion rate</small>
+            <% } else { %>
+                <div class="quality-score-display">-</div>
+                <p>No data available</p>
+            <% } %>
+        </div>
+
+        <div class="quality-factor-card">
+            <h3>🔄 Conversion Impact</h3>
+            <div class="quality-score-display">
+                <%= qualityTrends.length > 0 ? (qualityTrends.reduce((sum, day) => sum + parseFloat(day.conversion_rate || 0), 0) / qualityTrends.length).toFixed(1) : 0 %>%
+            </div>
+            <p>Average Conversion Rate</p>
+            <small>Quality-weighted performance</small>
+        </div>
+    </div>
+
+    <!-- Quality Trends Chart -->
+    <div class="admin-panel">
+        <h2>📈 Quality Score Trends</h2>
+        <div class="chart-container">
+            <canvas id="qualityTrendsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Factor Breakdown -->
+    <div class="factor-breakdown">
+        <!-- Quality Factor Analysis -->
+        <div class="admin-panel">
+            <h2>🔍 Quality Factor Analysis</h2>
+            <div id="qualityFactorsData" style="max-height: 300px; overflow-y: auto;">
+                <% if (qualityBreakdown.length > 0) { %>
+                    <% qualityBreakdown.forEach(row => { %>
+                        <div style="padding: 0.75rem; border-bottom: 1px solid #eee; display: flex; justify-content: between; align-items: center;">
+                            <div>
+                                <strong><%= row.country.toUpperCase() %> - <%= row.niche.toUpperCase() %> (<%= row.type %>)</strong><br>
+                                <small>📊 Total Score: <span style="font-weight: bold; color: #3B82F6;"><%= Math.round(row.avg_total_score) %></span> | 
+                                📈 Conversion: <%= row.conversion_rate %>% | 
+                                📦 Leads: <%= row.leads_count %></small>
+                            </div>
+                            <div style="text-align: right;">
+                                <span class="quality-score-badge quality-<%= row.avg_total_score >= 85 ? 'premium' : row.avg_total_score >= 70 ? 'high' : row.avg_total_score >= 55 ? 'standard' : row.avg_total_score >= 40 ? 'low' : 'reject' %>">
+                                    <%= row.avg_total_score >= 85 ? 'Premium' : row.avg_total_score >= 70 ? 'High' : row.avg_total_score >= 55 ? 'Standard' : row.avg_total_score >= 40 ? 'Low' : 'Reject' %>
+                                </span>
+                            </div>
+                        </div>
+                        <div style="padding: 0.5rem 0.75rem; background: #f8f9fa; font-size: 0.8em;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem;">
+                                <span>📋 Data: <%= Math.round(row.avg_completeness || 0) %>%</span>
+                                <span>✅ Quality: <%= Math.round(row.avg_data_quality || 0) %>%</span>
+                                <span>🏆 Source: <%= Math.round(row.avg_source_reliability || 0) %>%</span>
+                                <span>⏱️ Fresh: <%= Math.round(row.avg_freshness || 0) %>%</span>
+                                <span>🎯 Predict: <%= Math.round(row.avg_conversion_prediction || 0) %>%</span>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p style="text-align: center; color: #6B7280; padding: 2rem;">No quality breakdown data available for the selected period.</p>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Source Quality Performance -->
+        <div class="admin-panel">
+            <h2>🌟 Source Quality Performance</h2>
+            <div style="max-height: 300px; overflow-y: auto;">
+                <% if (sourceQuality.length > 0) { %>
+                    <% sourceQuality.forEach((source, index) => { %>
+                        <div style="padding: 0.75rem; border-bottom: 1px solid #eee;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <div>
+                                    <strong><%= source.source %></strong> 
+                                    <span style="color: #6B7280;">(<%= source.niche %>)</span>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 1.25rem; font-weight: bold; color: <%= source.avg_quality_score >= 75 ? '#10B981' : source.avg_quality_score >= 60 ? '#F59E0B' : '#EF4444' %>;">
+                                        <%= Math.round(source.avg_quality_score) %>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.5rem; font-size: 0.8em; color: #6B7280;">
+                                <span>📦 Leads: <%= source.total_leads %></span>
+                                <span>📈 Conv: <%= source.conversion_rate %>%</span>
+                                <span>🏆 High Quality: <%= source.high_quality_rate %>%</span>
+                                <span>⏱️ Dist: <%= source.avg_distribution_time_minutes ? Math.round(source.avg_distribution_time_minutes) + 'm' : 'N/A' %></span>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p style="text-align: center; color: #6B7280; padding: 2rem;">No source quality data available.</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Source Quality Chart -->
+    <div class="admin-panel">
+        <h2>📊 Source Quality vs Conversion Performance</h2>
+        <div class="chart-container">
+            <canvas id="sourceQualityChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Quality Distribution Pie Chart -->
+    <div class="admin-panel">
+        <h2>🥧 Quality Tier Distribution</h2>
+        <div class="chart-container">
+            <canvas id="qualityDistributionChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+// Quality Trends Chart
+const qualityTrendsCtx = document.getElementById('qualityTrendsChart').getContext('2d');
+const qualityTrendsChart = new Chart(qualityTrendsCtx, {
+    type: 'line',
+    data: {
+        labels: [<% qualityTrends.forEach(day => { %>'<%= day.date %>', <% }); %>],
+        datasets: [
+            {
+                label: 'Average Quality Score',
+                data: [<% qualityTrends.forEach(day => { %><%= Math.round(day.avg_quality_score || 0) %>, <% }); %>],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                tension: 0.1,
+                yAxisID: 'y'
+            },
+            {
+                label: 'Total Leads',
+                data: [<% qualityTrends.forEach(day => { %><%= day.total_leads %>, <% }); %>],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                tension: 0.1,
+                yAxisID: 'y1'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
+        scales: {
+            x: {
+                display: true,
+                title: {
+                    display: true,
+                    text: 'Date'
+                }
+            },
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: {
+                    display: true,
+                    text: 'Quality Score'
+                },
+                min: 0,
+                max: 100
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                    display: true,
+                    text: 'Lead Count'
+                },
+                grid: {
+                    drawOnChartArea: false,
+                },
+            }
+        }
+    }
+});
+
+// Source Quality Chart
+const sourceQualityCtx = document.getElementById('sourceQualityChart').getContext('2d');
+const sourceQualityChart = new Chart(sourceQualityCtx, {
+    type: 'bar',
+    data: {
+        labels: [<% sourceQuality.slice(0, 8).forEach(source => { %>'<%= source.source %>', <% }); %>],
+        datasets: [
+            {
+                label: 'Quality Score',
+                data: [<% sourceQuality.slice(0, 8).forEach(source => { %><%= Math.round(source.avg_quality_score) %>, <% }); %>],
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+                yAxisID: 'y'
+            },
+            {
+                label: 'Conversion Rate (%)',
+                data: [<% sourceQuality.slice(0, 8).forEach(source => { %><%= parseFloat(source.conversion_rate || 0) %>, <% }); %>],
+                backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                borderColor: 'rgba(255, 159, 64, 1)',
+                borderWidth: 1,
+                yAxisID: 'y1'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                title: {
+                    display: true,
+                    text: 'Quality Score'
+                }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                    display: true,
+                    text: 'Conversion Rate (%)'
+                },
+                grid: {
+                    drawOnChartArea: false,
+                }
+            }
+        }
+    }
+});
+
+// Quality Distribution Pie Chart  
+const qualityDistCtx = document.getElementById('qualityDistributionChart').getContext('2d');
+
+// Calculate distribution from trends data
+let premiumTotal = <%= qualityTrends.reduce((sum, day) => sum + parseInt(day.premium_leads || 0), 0) %>;
+let highTotal = <%= qualityTrends.reduce((sum, day) => sum + parseInt(day.high_quality_leads || 0), 0) %>;
+let standardTotal = <%= qualityTrends.reduce((sum, day) => sum + parseInt(day.standard_quality_leads || 0), 0) %>;
+let lowTotal = <%= qualityTrends.reduce((sum, day) => sum + parseInt(day.low_quality_leads || 0), 0) %>;
+let rejectTotal = <%= qualityTrends.reduce((sum, day) => sum + parseInt(day.reject_count || 0), 0) %>;
+
+const qualityDistChart = new Chart(qualityDistCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Premium', 'High', 'Standard', 'Low', 'Reject'],
+        datasets: [{
+            data: [premiumTotal, highTotal, standardTotal, lowTotal, rejectTotal],
+            backgroundColor: [
+                '#10B981', // Premium - Green
+                '#3B82F6', // High - Blue  
+                '#F59E0B', // Standard - Yellow
+                '#EF4444', // Low - Red
+                '#6B7280'  // Reject - Gray
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.label || '';
+                        let value = context.parsed;
+                        let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        let percentage = ((value / total) * 100).toFixed(1);
+                        return label + ': ' + value + ' (' + percentage + '%)';
+                    }
+                }
+            }
+        }
+    }
+});
+</script>

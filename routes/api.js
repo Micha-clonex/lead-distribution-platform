@@ -146,7 +146,30 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
         const finalCountry = normalizedData.country || source.country || enrichedData.country || 'unknown';
         const finalNiche = normalizedData.niche || source.niche || enrichedData.niche || 'forex';
         
-        // Insert enriched lead into database
+        // **NEW: Quality Scoring** - Calculate comprehensive quality score
+        const leadQualityScoring = require('../services/leadQualityScoring');
+        
+        // Prepare lead data for quality scoring
+        const leadForScoring = {
+            source: source.name,
+            type: enrichedData.type || 'raw',
+            niche: finalNiche,
+            country: finalCountry,
+            first_name: enrichedData.first_name,
+            last_name: enrichedData.last_name,
+            email: enrichedData.email,
+            phone: enrichedData.phone,
+            data: {
+                ...enrichedData,
+                original: leadData,
+                enrichment_score: enrichedData.data_completeness_score
+            },
+            created_at: new Date()
+        };
+        
+        const qualityScore = await leadQualityScoring.calculateQualityScore(leadForScoring);
+        
+        // Insert enriched lead with quality scoring into database
         const leadResult = await pool.query(`
             INSERT INTO leads (source, type, niche, country, first_name, last_name, email, phone, data)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -168,7 +191,13 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
                     country: source.country,
                     niche: source.niche,
                     name: source.name
-                }
+                },
+                // **NEW: Quality Scoring Data**
+                quality_score: qualityScore.totalScore,
+                quality_tier: qualityScore.qualityTier,
+                quality_breakdown: qualityScore.breakdown,
+                distribution_recommendation: qualityScore.recommendation,
+                quality_calculated_at: new Date().toISOString()
             })
         ]);
         
@@ -184,7 +213,10 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
         res.json({ 
             success: true, 
             lead_id: leadId,
-            message: 'Lead received and queued for distribution' 
+            quality_score: qualityScore.totalScore,
+            quality_tier: qualityScore.qualityTier,
+            distribution_priority: qualityScore.recommendation.priority,
+            message: 'Lead received, quality scored, and queued for distribution' 
         });
         
     } catch (error) {

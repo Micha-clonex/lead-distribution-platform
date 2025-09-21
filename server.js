@@ -58,6 +58,7 @@ const leadRoutes = require('./routes/leads');
 const webhookRoutes = require('./routes/webhooks');
 const analyticsRoutes = require('./routes/analytics');
 const alertsRoutes = require('./routes/alerts');
+const qualityScoringRoutes = require('./routes/qualityScoring');
 const apiRoutes = require('./routes/api');
 const authRoutes = require('./routes/auth');
 
@@ -70,6 +71,7 @@ app.use('/leads', requireAuth, leadRoutes);
 app.use('/webhooks', requireAuth, webhookRoutes);
 app.use('/analytics', requireAuth, analyticsRoutes);
 app.use('/alerts', requireAuth, alertsRoutes);
+app.use('/quality', requireAuth, qualityScoringRoutes);
 app.use('/partner-management', requireAuth, require('./routes/partnerManagement'));
 app.use('/monitoring', requireAuth, require('./routes/monitoring'));
 app.use('/api', apiRoutes); // API routes handle their own auth
