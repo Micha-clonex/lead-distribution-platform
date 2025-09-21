@@ -86,14 +86,80 @@ router.get('/', async (req, res) => {
             WHERE created_at >= $1 AND created_at <= $2
             GROUP BY status
         `, [startDate, endDate + ' 23:59:59']);
-        
+
+        // **NEW: Lead Source Performance Analysis**
+        const sourceStatsQuery = await pool.query(`
+            SELECT 
+                l.source,
+                COUNT(*) as total_leads,
+                COUNT(*) FILTER (WHERE l.type = 'premium') as premium_leads,
+                COUNT(*) FILTER (WHERE l.type = 'raw') as raw_leads,
+                COUNT(*) FILTER (WHERE l.status = 'distributed') as distributed_leads,
+                COUNT(*) FILTER (WHERE l.status = 'converted') as converted_leads,
+                COUNT(*) FILTER (WHERE l.status = 'failed') as failed_leads,
+                CASE 
+                    WHEN COUNT(*) > 0 
+                    THEN ROUND((COUNT(*) FILTER (WHERE l.status = 'converted')::decimal / COUNT(*)) * 100, 2)
+                    ELSE 0 
+                END as conversion_rate,
+                CASE 
+                    WHEN COUNT(*) > 0 
+                    THEN ROUND((COUNT(*) FILTER (WHERE l.status = 'distributed')::decimal / COUNT(*)) * 100, 2)
+                    ELSE 0 
+                END as distribution_rate,
+                AVG(EXTRACT(EPOCH FROM (l.distributed_at - l.created_at))/60) FILTER (WHERE l.distributed_at IS NOT NULL) as avg_distribution_time_minutes
+            FROM leads l
+            WHERE l.created_at >= $1 AND l.created_at <= $2
+            GROUP BY l.source
+            ORDER BY total_leads DESC
+        `, [startDate, endDate + ' 23:59:59']);
+
+        // **NEW: Hourly Performance Analysis**
+        const hourlyStatsQuery = await pool.query(`
+            SELECT 
+                EXTRACT(HOUR FROM l.created_at) as hour,
+                COUNT(*) as leads_count,
+                COUNT(*) FILTER (WHERE l.status = 'distributed') as distributed_count,
+                COUNT(*) FILTER (WHERE l.status = 'converted') as converted_count,
+                ROUND(AVG(CASE WHEN l.status = 'converted' THEN 1.0 ELSE 0.0 END) * 100, 2) as conversion_rate
+            FROM leads l
+            WHERE l.created_at >= $1 AND l.created_at <= $2
+            GROUP BY EXTRACT(HOUR FROM l.created_at)
+            ORDER BY hour
+        `, [startDate, endDate + ' 23:59:59']);
+
+        // **NEW: Lead Quality Analysis**
+        const qualityStatsQuery = await pool.query(`
+            SELECT 
+                l.country,
+                l.niche,
+                l.type,
+                COUNT(*) as total_leads,
+                AVG(CASE 
+                    WHEN l.email IS NOT NULL AND l.phone IS NOT NULL AND l.first_name IS NOT NULL AND l.last_name IS NOT NULL THEN 100
+                    WHEN (l.email IS NOT NULL AND l.phone IS NOT NULL) OR (l.email IS NOT NULL AND l.first_name IS NOT NULL) THEN 75
+                    WHEN l.email IS NOT NULL OR l.phone IS NOT NULL THEN 50
+                    ELSE 25
+                END) as avg_data_completeness_score,
+                COUNT(*) FILTER (WHERE l.status = 'converted') as conversions,
+                ROUND((COUNT(*) FILTER (WHERE l.status = 'converted')::decimal / COUNT(*)) * 100, 2) as conversion_rate
+            FROM leads l
+            WHERE l.created_at >= $1 AND l.created_at <= $2
+            GROUP BY l.country, l.niche, l.type
+            HAVING COUNT(*) >= 5  -- Only show segments with at least 5 leads
+            ORDER BY conversion_rate DESC, total_leads DESC
+        `, [startDate, endDate + ' 23:59:59']);
+
         res.render('analytics/index', {
-            title: 'Analytics Dashboard',
+            title: 'Enhanced Analytics Dashboard',
             partnerStats: partnerStatsQuery.rows,
             dailyStats: dailyStatsQuery.rows,
             countryStats: countryStatsQuery.rows,
             nicheStats: nicheStatsQuery.rows,
             webhookStats: webhookStatsQuery.rows,
+            sourceStats: sourceStatsQuery.rows,
+            hourlyStats: hourlyStatsQuery.rows,
+            qualityStats: qualityStatsQuery.rows,
             startDate,
             endDate
         });

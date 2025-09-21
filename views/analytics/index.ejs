@@ -1,5 +1,5 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Analytics Dashboard</h1>
+    <h1 class="h2">Enhanced Analytics Dashboard</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
             <form method="GET" class="d-flex">
@@ -126,8 +126,163 @@
     </div>
 </div>
 
-<!-- Data Tables -->
+<!-- Enhanced Analytics Tables -->
 <div class="row">
+    <!-- Lead Source Performance -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Lead Source Performance
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Total Leads</th>
+                                <th>Premium/Raw</th>
+                                <th>Distribution Rate</th>
+                                <th>Conversion Rate</th>
+                                <th>Avg. Dist. Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% sourceStats.forEach(source => { %>
+                                <tr>
+                                    <td>
+                                        <strong><%= source.source %></strong>
+                                        <% if (source.conversion_rate >= 15) { %>
+                                            <span class="badge bg-success ms-1">High Performer</span>
+                                        <% } else if (source.conversion_rate >= 5) { %>
+                                            <span class="badge bg-warning ms-1">Average</span>
+                                        <% } else if (source.total_leads >= 10) { %>
+                                            <span class="badge bg-danger ms-1">Needs Attention</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <strong><%= source.total_leads %></strong>
+                                        <% if (source.failed_leads > 0) { %>
+                                            <br><small class="text-danger">(<%= source.failed_leads %> failed)</small>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <span class="text-success"><%= source.premium_leads %></span> / 
+                                        <span class="text-info"><%= source.raw_leads %></span>
+                                        <br><small class="text-muted">
+                                            <%= source.total_leads > 0 ? Math.round((source.premium_leads / source.total_leads) * 100) : 0 %>% premium
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="progress mb-1" style="height: 8px;">
+                                            <div class="progress-bar bg-info" style="width: <%= source.distribution_rate %>%"></div>
+                                        </div>
+                                        <small><%= source.distribution_rate %>%</small>
+                                    </td>
+                                    <td>
+                                        <div class="progress mb-1" style="height: 8px;">
+                                            <div class="progress-bar bg-<%= source.conversion_rate >= 10 ? 'success' : source.conversion_rate >= 5 ? 'warning' : 'danger' %>" 
+                                                 style="width: <%= Math.min(source.conversion_rate, 30) * 100 / 30 %>%"></div>
+                                        </div>
+                                        <small><%= source.conversion_rate %>%</small>
+                                    </td>
+                                    <td>
+                                        <% if (source.avg_distribution_time_minutes !== null) { %>
+                                            <span class="<%= source.avg_distribution_time_minutes <= 30 ? 'text-success' : source.avg_distribution_time_minutes <= 120 ? 'text-warning' : 'text-danger' %>">
+                                                <%= Math.round(source.avg_distribution_time_minutes) %> min
+                                            </span>
+                                        <% } else { %>
+                                            <span class="text-muted">N/A</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (source.conversion_rate >= 10 && source.distribution_rate >= 80) { %>
+                                            <span class="badge bg-success">Excellent</span>
+                                        <% } else if (source.conversion_rate >= 5 && source.distribution_rate >= 60) { %>
+                                            <span class="badge bg-info">Good</span>
+                                        <% } else if (source.total_leads >= 5) { %>
+                                            <span class="badge bg-warning">Review Needed</span>
+                                        <% } else { %>
+                                            <span class="badge bg-secondary">Insufficient Data</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hourly Performance Chart -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Hourly Lead Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="hourlyChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lead Quality Analysis -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-star me-2"></i>Lead Quality Insights
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th>Segment</th>
+                                <th>Quality</th>
+                                <th>Conv. Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% qualityStats.slice(0, 8).forEach(segment => { %>
+                                <tr>
+                                    <td>
+                                        <small>
+                                            <span class="badge bg-secondary text-xs"><%= (segment.country || 'N/A').toUpperCase() %></span>
+                                            <span class="badge bg-info text-xs"><%= segment.niche || 'N/A' %></span>
+                                            <span class="badge bg-<%= segment.type === 'premium' ? 'success' : 'warning' %> text-xs"><%= segment.type %></span>
+                                        </small>
+                                        <br><small class="text-muted"><%= segment.total_leads %> leads</small>
+                                    </td>
+                                    <td>
+                                        <div class="progress mb-1" style="height: 6px;">
+                                            <div class="progress-bar bg-<%= segment.avg_data_completeness_score >= 80 ? 'success' : segment.avg_data_completeness_score >= 60 ? 'warning' : 'danger' %>" 
+                                                 style="width: <%= segment.avg_data_completeness_score %>%"></div>
+                                        </div>
+                                        <small><%= Math.round(segment.avg_data_completeness_score) %>%</small>
+                                    </td>
+                                    <td>
+                                        <strong class="<%= segment.conversion_rate >= 15 ? 'text-success' : segment.conversion_rate >= 8 ? 'text-warning' : 'text-danger' %>">
+                                            <%= segment.conversion_rate %>%
+                                        </strong>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Partner Performance -->
     <div class="col-md-6 mb-4">
         <div class="card">
             <div class="card-header">
@@ -154,7 +309,7 @@
                                     <td><%= partner.name %></td>
                                     <td>
                                         <span class="badge bg-info text-xs">
-                                            <%= partner.country.toUpperCase() %>
+                                            <%= (partner.country || 'N/A').toUpperCase() %>
                                         </span>
                                     </td>
                                     <td><%= partner.total_leads %></td>
@@ -241,7 +396,7 @@ const countryCtx = document.getElementById('countryChart').getContext('2d');
 const countryChart = new Chart(countryCtx, {
     type: 'doughnut',
     data: {
-        labels: [<% countryStats.forEach((country, index) => { %>'<%= country.country.toUpperCase() %>'<%= index < countryStats.length - 1 ? ',' : '' %><% }) %>],
+        labels: [<% countryStats.forEach((country, index) => { %>'<%= (country.country || 'N/A').toUpperCase() %>'<%= index < countryStats.length - 1 ? ',' : '' %><% }) %>],
         datasets: [{
             data: [<% countryStats.forEach((country, index) => { %><%= country.total_leads %><%= index < countryStats.length - 1 ? ',' : '' %><% }) %>],
             backgroundColor: [
@@ -258,6 +413,111 @@ const countryChart = new Chart(countryCtx, {
     options: {
         responsive: true,
         maintainAspectRatio: false
+    }
+});
+
+// **NEW: Hourly Performance Chart**
+const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+
+// Create hourly stats data
+const hourlyStatsData = <%- JSON.stringify(hourlyStats) %>;
+
+// Create 24-hour array with data
+const hourlyData = Array.from({length: 24}, (_, hour) => {
+    const hourData = hourlyStatsData.find(h => parseInt(h.hour) === hour);
+    return hourData ? {
+        hour: hour,
+        leads: parseInt(hourData.leads_count) || 0,
+        distributed: parseInt(hourData.distributed_count) || 0,
+        converted: parseInt(hourData.converted_count) || 0,
+        conversionRate: parseFloat(hourData.conversion_rate) || 0
+    } : {
+        hour: hour,
+        leads: 0,
+        distributed: 0,
+        converted: 0,
+        conversionRate: 0
+    };
+});
+
+const hourlyChart = new Chart(hourlyCtx, {
+    type: 'bar',
+    data: {
+        labels: hourlyData.map(h => `${h.hour}:00`),
+        datasets: [{
+            label: 'Total Leads',
+            data: hourlyData.map(h => h.leads),
+            backgroundColor: 'rgba(54, 162, 235, 0.3)',
+            borderColor: 'rgb(54, 162, 235)',
+            borderWidth: 1,
+            yAxisID: 'y'
+        }, {
+            label: 'Distributed',
+            data: hourlyData.map(h => h.distributed),
+            backgroundColor: 'rgba(75, 192, 192, 0.3)',
+            borderColor: 'rgb(75, 192, 192)',
+            borderWidth: 1,
+            yAxisID: 'y'
+        }, {
+            label: 'Conversion Rate (%)',
+            data: hourlyData.map(h => h.conversionRate),
+            type: 'line',
+            borderColor: 'rgb(255, 99, 132)',
+            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+            yAxisID: 'y1',
+            tension: 0.3
+        }]
+    },
+    options: {
+        responsive: true,
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
+        scales: {
+            x: {
+                display: true,
+                title: {
+                    display: true,
+                    text: 'Hour of Day'
+                }
+            },
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: {
+                    display: true,
+                    text: 'Number of Leads'
+                }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                    display: true,
+                    text: 'Conversion Rate (%)'
+                },
+                grid: {
+                    drawOnChartArea: false,
+                },
+                max: 100
+            }
+        },
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    afterBody: function(context) {
+                        const hour = hourlyData[context[0].dataIndex];
+                        return [`Peak activity: ${hour.leads > 0 ? 'Yes' : 'No'}`, `Best performance: ${hour.conversionRate}% conversion`];
+                    }
+                }
+            },
+            legend: {
+                position: 'top'
+            }
+        }
     }
 });
 </script>
