@@ -43,44 +43,44 @@
                 <i class="fas fa-share-alt me-2"></i>Lead Distribution
             </h4>
             
-            <% if (req && req.session && req.session.adminUsername) { %>
+            <% if (isLoggedIn) { %>
             <div class="px-3 mb-3">
                 <div class="alert alert-success py-2 mb-2">
                     <small>
                         <i class="fas fa-user-shield me-1"></i>
-                        Logged in as: <strong><%= req.session.adminUsername %></strong>
+                        Logged in as: <strong><%= currentUser %></strong>
                     </small>
                 </div>
             </div>
             <% } %>
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link <%= (req && req.path === '/') ? 'active' : '' %>" href="/">
+                    <a class="nav-link <%= (currentPath === '/') ? 'active' : '' %>" href="/">
                         <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <%= (req && req.path.includes('/partners')) ? 'active' : '' %>" href="/partners">
+                    <a class="nav-link <%= (currentPath.includes('/partners')) ? 'active' : '' %>" href="/partners">
                         <i class="fas fa-users me-2"></i>Partners
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <%= (req && req.path.includes('/leads')) ? 'active' : '' %>" href="/leads">
+                    <a class="nav-link <%= (currentPath.includes('/leads')) ? 'active' : '' %>" href="/leads">
                         <i class="fas fa-user-plus me-2"></i>Leads
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <%= (req && req.path.includes('/webhooks')) ? 'active' : '' %>" href="/webhooks">
+                    <a class="nav-link <%= (currentPath.includes('/webhooks')) ? 'active' : '' %>" href="/webhooks">
                         <i class="fas fa-plug me-2"></i>Webhooks
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <%= (req && req.path.includes('/analytics')) ? 'active' : '' %>" href="/analytics">
+                    <a class="nav-link <%= (currentPath.includes('/analytics')) ? 'active' : '' %>" href="/analytics">
                         <i class="fas fa-chart-bar me-2"></i>Analytics
                     </a>
                 </li>
                 
-                <% if (req && req.session && req.session.adminUsername) { %>
+                <% if (isLoggedIn) { %>
                 <li class="nav-item mt-3 border-top pt-3">
                     <form action="/admin/logout" method="POST" style="margin: 0;">
                         <button type="submit" class="btn btn-outline-danger btn-sm w-100">

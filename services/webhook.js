@@ -89,12 +89,14 @@ async function sendWebhook(lead, partner) {
     } catch (error) {
         console.error(`Webhook delivery error:`, error.message);
         
-        // Update delivery status as failed
-        await pool.query(`
-            UPDATE webhook_deliveries 
-            SET status = 'failed', response_code = $1, response_body = $2
-            WHERE id = $3
-        `, [error.response?.status || 0, error.message.substring(0, 500), deliveryId]);
+        // Update delivery status as failed (only if deliveryId exists)
+        if (typeof deliveryId !== 'undefined') {
+            await pool.query(`
+                UPDATE webhook_deliveries 
+                SET status = 'failed', response_code = $1, response_body = $2
+                WHERE id = $3
+            `, [error.response?.status || 0, error.message.substring(0, 500), deliveryId]);
+        }
         
         throw error;
     }

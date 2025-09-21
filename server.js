@@ -4,6 +4,7 @@ const path = require('path');
 const cron = require('node-cron');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
+const expressLayouts = require('express-ejs-layouts');
 require('dotenv').config();
 
 const { pool, initDatabase } = require('./config/db');
@@ -36,9 +37,19 @@ app.use(session({
     }
 }));
 
+// Make session data available to all templates
+app.use((req, res, next) => {
+    res.locals.currentUser = req.session?.adminUsername || null;
+    res.locals.isLoggedIn = !!(req.session?.adminId);
+    res.locals.currentPath = req.path;
+    next();
+});
+
 // Set view engine for server-side rendering
+app.use(expressLayouts);
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.set('layout', 'layout');
 
 // Import routes
 const partnerRoutes = require('./routes/partners');
