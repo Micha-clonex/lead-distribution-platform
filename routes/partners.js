@@ -26,8 +26,39 @@ router.get('/', async (req, res) => {
         query += ' ORDER BY created_at DESC';
         
         const result = await pool.query(query, params);
+        
+        // Get today's performance statistics for each partner
+        const statsQuery = `
+            SELECT 
+                p.id, p.premium_ratio as target_ratio,
+                COALESCE(ds.leads_received, 0) as leads_received, 
+                COALESCE(ds.premium_leads, 0) as premium_leads,
+                CASE 
+                    WHEN COALESCE(ds.leads_received, 0) > 0 
+                    THEN COALESCE(ds.premium_leads, 0)::decimal / COALESCE(ds.leads_received, 0) 
+                    ELSE 0 
+                END as actual_ratio
+            FROM partners p
+            LEFT JOIN distribution_stats ds ON p.id = ds.partner_id AND ds.date = CURRENT_DATE
+            WHERE p.id = ANY($1)
+        `;
+        const partnerIds = result.rows.map(p => p.id);
+        const statsResult = partnerIds.length > 0 ? await pool.query(statsQuery, [partnerIds]) : { rows: [] };
+        
+        // Merge stats with partner data
+        const partnersWithStats = result.rows.map(partner => {
+            const stats = statsResult.rows.find(s => s.id === partner.id) || {};
+            return {
+                ...partner,
+                todays_leads: stats.leads_received || 0,
+                todays_premium: stats.premium_leads || 0,
+                actual_ratio: stats.actual_ratio || 0,
+                target_ratio: stats.target_ratio || partner.premium_ratio
+            };
+        });
+        
         res.render('partners/index', { 
-            partners: result.rows,
+            partners: partnersWithStats,
             title: 'Partner Management',
             countries: ['germany', 'austria', 'spain', 'canada', 'italy', 'uk', 'norway'],
             niches: ['forex', 'recovery'],

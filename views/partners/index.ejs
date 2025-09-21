@@ -72,6 +72,7 @@
                         <th>Niche</th>
                         <th>Daily Limit</th>
                         <th>Premium/Raw Split</th>
+                        <th>Today's Performance</th>
                         <th>Status</th>
                         <th>Created</th>
                         <th>Actions</th>
@@ -115,6 +116,35 @@
                                              style="width: <%= rawPct %>%"
                                              title="<%= rawPct %>% Raw leads">
                                         </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <% 
+                                    const targetPct = Math.round(partner.premium_ratio * 100);
+                                    const actualPct = Math.round(partner.actual_ratio * 100);
+                                    const variance = actualPct - targetPct;
+                                    const performanceClass = Math.abs(variance) <= 5 ? 'success' : 
+                                                           Math.abs(variance) <= 15 ? 'warning' : 'danger';
+                                %>
+                                <div class="analytics-display">
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <div>
+                                            <small class="text-muted">Target:</small>
+                                            <span class="badge bg-primary"><%= targetPct %>%</span>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Actual:</small>
+                                            <span class="badge bg-<%= performanceClass %>"><%= actualPct %>%</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <small class="text-muted me-2">Leads: <%= partner.todays_leads || 0 %></small>
+                                        <% if (variance !== 0) { %>
+                                            <small class="badge bg-<%= variance > 0 ? 'info' : 'warning' %>" style="font-size: 0.6rem;">
+                                                <%= variance > 0 ? '+' : '' %><%= variance %>%
+                                            </small>
+                                        <% } %>
                                     </div>
                                 </div>
                             </td>
@@ -405,5 +435,12 @@ document.getElementById('editPartnerForm').addEventListener('submit', function(e
 .ratio-display .badge {
     font-size: 0.7rem;
     padding: 0.2rem 0.4rem;
+}
+.analytics-display {
+    min-width: 160px;
+}
+.analytics-display .badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.3rem;
 }
 </style>
