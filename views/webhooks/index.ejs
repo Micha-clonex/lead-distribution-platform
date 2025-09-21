@@ -228,7 +228,8 @@ function copyToken(token) {
 }
 
 function copyUrl(token) {
-    const url = `<%= process.env.APP_URL || 'http://localhost:5000' %>/api/webhook/${token}`;
+    const baseUrl = '<%= process.env.APP_URL || "http://localhost:5000" %>';
+    const url = baseUrl + '/api/webhook/' + token;
     navigator.clipboard.writeText(url).then(function() {
         alert('Webhook URL copied to clipboard!');
     });
