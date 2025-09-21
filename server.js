@@ -130,13 +130,11 @@ cron.schedule('0 0 * * *', async () => {
     }
 });
 
-// Webhook retry cron job (every 5 minutes)
-const { retryFailedWebhooks } = require('./services/webhook');
-const { retryFailedLeads } = require('./services/distribution');
-
+// Webhook retry cron job (every 5 minutes) 
 cron.schedule('*/5 * * * *', retryFailedWebhooks);
 
 // Failed leads retry cron job (every 10 minutes)
+const { retryFailedLeads } = require('./services/distribution');
 cron.schedule('*/10 * * * *', retryFailedLeads);
 
 // Start server

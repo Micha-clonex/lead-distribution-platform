@@ -38,17 +38,17 @@
                                     <td><%= source.name %></td>
                                     <td>
                                         <code class="text-muted">
-                                            <%= source.token.substring(0, 8) %>...
+                                            <%= source.webhook_token.substring(0, 8) %>...
                                         </code>
-                                        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToken('<%= source.token %>')">
+                                        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToken('<%= source.webhook_token %>')">
                                             <i class="fas fa-copy"></i>
                                         </button>
                                     </td>
                                     <td>
                                         <code class="text-primary">
-                                            <%= process.env.APP_URL || 'http://localhost:5000' %>/api/webhook/lead/<%= source.token %>
+                                            <%= process.env.APP_URL || 'http://localhost:5000' %>/api/webhook/<%= source.webhook_token %>
                                         </code>
-                                        <button class="btn btn-sm btn-outline-primary ms-2" onclick="copyUrl('<%= source.token %>')">
+                                        <button class="btn btn-sm btn-outline-primary ms-2" onclick="copyUrl('<%= source.webhook_token %>')">
                                             <i class="fas fa-copy"></i>
                                         </button>
                                     </td>
@@ -228,7 +228,7 @@ function copyToken(token) {
 }
 
 function copyUrl(token) {
-    const url = `<%= process.env.APP_URL || 'http://localhost:5000' %>/api/webhook/lead/${token}`;
+    const url = `<%= process.env.APP_URL || 'http://localhost:5000' %>/api/webhook/${token}`;
     navigator.clipboard.writeText(url).then(function() {
         alert('Webhook URL copied to clipboard!');
     });
