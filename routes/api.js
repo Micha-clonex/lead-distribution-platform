@@ -3,6 +3,62 @@ const router = express.Router();
 const { pool } = require('../config/db');
 const { distributeLead } = require('../services/distribution');
 
+// Authentication middleware for partner API endpoints
+const authenticatePartner = async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        const apiKey = authHeader && authHeader.startsWith('Bearer ') 
+            ? authHeader.substring(7) 
+            : req.headers['x-api-key'];
+        
+        if (!apiKey) {
+            return res.status(401).json({ error: 'API key required. Provide in Authorization header or x-api-key header.' });
+        }
+        
+        const result = await pool.query(`
+            SELECT pak.partner_id, p.name as partner_name, p.status
+            FROM partner_api_keys pak 
+            JOIN partners p ON pak.partner_id = p.id
+            WHERE pak.api_key = $1 AND pak.is_active = true AND p.status = 'active'
+        `, [apiKey]);
+        
+        if (result.rows.length === 0) {
+            return res.status(401).json({ error: 'Invalid or inactive API key' });
+        }
+        
+        req.partner = result.rows[0];
+        next();
+    } catch (error) {
+        console.error('Authentication error:', error);
+        res.status(500).json({ error: 'Authentication failed' });
+    }
+};
+
+// Rate limiting store (simple in-memory - use Redis in production)
+const rateLimitStore = new Map();
+const rateLimit = (maxRequests = 50, windowMs = 60000) => {
+    return (req, res, next) => {
+        const key = req.ip + ':' + req.partner?.partner_id;
+        const now = Date.now();
+        const windowStart = now - windowMs;
+        
+        if (!rateLimitStore.has(key)) {
+            rateLimitStore.set(key, []);
+        }
+        
+        const requests = rateLimitStore.get(key);
+        const recentRequests = requests.filter(time => time > windowStart);
+        
+        if (recentRequests.length >= maxRequests) {
+            return res.status(429).json({ error: 'Rate limit exceeded. Try again later.' });
+        }
+        
+        recentRequests.push(now);
+        rateLimitStore.set(key, recentRequests);
+        next();
+    };
+};
+
 // Inbound webhook endpoint for receiving leads
 router.post('/webhook/:token', async (req, res) => {
     try {
@@ -130,19 +186,14 @@ router.post('/postback/:partner_id', async (req, res) => {
 });
 
 // Enhanced conversion tracking endpoint - Partners report detailed lead conversions
-router.post('/conversion/:partnerId', async (req, res) => {
+router.post('/conversion/:partnerId', authenticatePartner, rateLimit(50), async (req, res) => {
     try {
         const { partnerId } = req.params;
         const { lead_id, external_transaction_id, conversion_type, conversion_value, metadata } = req.body;
         
-        // Verify partner exists and is active
-        const partnerResult = await pool.query(
-            'SELECT * FROM partners WHERE id = $1 AND status = $2',
-            [partnerId, 'active']
-        );
-        
-        if (partnerResult.rows.length === 0) {
-            return res.status(401).json({ error: 'Invalid or inactive partner' });
+        // Verify partner matches authenticated partner
+        if (parseInt(partnerId) !== req.partner.partner_id) {
+            return res.status(403).json({ error: 'Cannot report conversions for other partners' });
         }
         
         // Verify lead exists and belongs to this partner
@@ -157,11 +208,23 @@ router.post('/conversion/:partnerId', async (req, res) => {
         
         const lead = leadResult.rows[0];
         
-        // Record conversion
-        await pool.query(`
-            INSERT INTO lead_conversions (lead_id, partner_id, conversion_type, conversion_value, external_transaction_id, metadata)
-            VALUES ($1, $2, $3, $4, $5, $6)
-        `, [lead_id, partnerId, conversion_type, conversion_value || 0, external_transaction_id, JSON.stringify(metadata || {})]);
+        // Record conversion with idempotency protection
+        try {
+            await pool.query(`
+                INSERT INTO lead_conversions (lead_id, partner_id, conversion_type, conversion_value, external_transaction_id, metadata)
+                VALUES ($1, $2, $3, $4, $5, $6)
+            `, [lead_id, partnerId, conversion_type, conversion_value || 0, external_transaction_id, JSON.stringify(metadata || {})]);
+        } catch (duplicateError) {
+            if (duplicateError.code === '23505') { // Unique constraint violation
+                return res.json({
+                    success: true,
+                    message: 'Conversion already recorded (idempotent)',
+                    lead_id: lead_id,
+                    conversion_type: conversion_type
+                });
+            }
+            throw duplicateError;
+        }
         
         // Update lead status and value
         const statusHistory = Array.isArray(lead.status_history) ? lead.status_history : [];
@@ -201,8 +264,8 @@ router.post('/conversion/:partnerId', async (req, res) => {
     }
 });
 
-// Lead status lookup endpoint - Get real-time lead status
-router.get('/lead/:leadId/status', async (req, res) => {
+// Lead status lookup endpoint - Get real-time lead status (Partner-scoped)
+router.get('/lead/:leadId/status', authenticatePartner, rateLimit(100), async (req, res) => {
     try {
         const { leadId } = req.params;
         
@@ -213,8 +276,8 @@ router.get('/lead/:leadId/status', async (req, res) => {
                    ) as conversion_count
             FROM leads l
             LEFT JOIN partners p ON l.assigned_partner_id = p.id
-            WHERE l.id = $1
-        `, [leadId]);
+            WHERE l.id = $1 AND l.assigned_partner_id = $2
+        `, [leadId, req.partner.partner_id]);
         
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Lead not found' });
@@ -233,7 +296,7 @@ router.get('/lead/:leadId/status', async (req, res) => {
             success: true,
             lead: {
                 id: lead.id,
-                email: lead.email,
+                email: lead.email, // Only show email to assigned partner
                 status: lead.status,
                 quality_score: lead.quality_score,
                 conversion_value: lead.conversion_value,
@@ -251,19 +314,15 @@ router.get('/lead/:leadId/status', async (req, res) => {
     }
 });
 
-// CPA Analytics endpoint - Real-time performance metrics
-router.get('/analytics/cpa', async (req, res) => {
+// CPA Analytics endpoint - Real-time performance metrics (Partner-scoped)
+router.get('/analytics/cpa', authenticatePartner, rateLimit(20), async (req, res) => {
     try {
-        const { partner_id, date_from, date_to } = req.query;
+        const { date_from, date_to } = req.query;
         
-        let whereClause = '1=1';
-        const params = [];
-        let paramCount = 0;
-        
-        if (partner_id) {
-            whereClause += ` AND l.assigned_partner_id = $${++paramCount}`;
-            params.push(partner_id);
-        }
+        // Only show analytics for the authenticated partner
+        let whereClause = `l.assigned_partner_id = $1`;
+        const params = [req.partner.partner_id];
+        let paramCount = 1;
         
         if (date_from) {
             whereClause += ` AND l.created_at >= $${++paramCount}`;

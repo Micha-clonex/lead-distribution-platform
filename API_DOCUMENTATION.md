@@ -7,11 +7,18 @@ Complete API documentation for external integrations, lead tracking, and CPA opt
 
 ## 🔐 Authentication
 
-### Webhook Token Authentication
-All webhook endpoints require a unique token for security:
-- **Token Location**: URL parameter or header
-- **Token Format**: 64-character hexadecimal string
+### Webhook Token Authentication (Inbound Leads)
+Inbound webhook endpoints require a unique token for security:
+- **Token Location**: URL parameter `/api/webhook/{token}`
+- **Token Format**: 64-character hexadecimal string  
 - **Verification**: Server validates token against active webhook sources
+
+### Partner API Key Authentication (CPA Tracking)
+All CPA tracking endpoints require Partner API authentication:
+- **API Key Location**: `Authorization: Bearer {api_key}` or `x-api-key: {api_key}` header
+- **API Key Format**: `pk_` prefixed 32-character string (e.g., `pk_abc123def456...`)
+- **Scope**: Partners can only access their own leads and conversions
+- **Rate Limits**: Enforced per partner (see endpoint details)
 
 ---
 
@@ -71,6 +78,26 @@ Content-Type: application/json
 
 ---
 
+## 🔑 Getting Your API Keys
+
+### For Partners
+Contact your platform administrator to get your Partner API key. Each partner receives a unique API key in format: `pk_abc123def456...`
+
+### API Key Usage Examples
+```bash
+# Using Authorization header
+curl -X POST https://platform.domain/api/conversion/123 \
+  -H "Authorization: Bearer pk_abc123def456..." \
+  -H "Content-Type: application/json" \
+  -d '{"lead_id": 789, "conversion_type": "deposit", "conversion_value": 250}'
+
+# Using x-api-key header  
+curl -X GET https://platform.domain/api/lead/789/status \
+  -H "x-api-key: pk_abc123def456..."
+```
+
+---
+
 ## 📊 Conversion Tracking (CPA Optimization)
 
 ### POST `/api/conversion/{partnerId}`
@@ -79,7 +106,9 @@ Partners report lead conversions for CPA tracking
 #### Headers
 ```
 Content-Type: application/json
-Authorization: Bearer {partner_api_key} // Optional
+Authorization: Bearer {partner_api_key}
+# OR alternatively:
+x-api-key: {partner_api_key}
 ```
 
 #### URL Parameters  
@@ -117,6 +146,24 @@ Authorization: Bearer {partner_api_key} // Optional
 }
 ```
 
+#### Idempotency
+If the same `external_transaction_id` is sent multiple times for the same lead/partner combination:
+```json
+{
+  "success": true,
+  "message": "Conversion already recorded (idempotent)",
+  "lead_id": 123,
+  "conversion_type": "deposit"
+}
+```
+
+#### Error Responses
+- `401`: Invalid or missing API key
+- `403`: Cannot report conversions for other partners
+- `404`: Lead not found or not assigned to partner
+- `429`: Rate limit exceeded  
+- `500`: Server error
+
 ### Legacy Postback: POST `/api/postback/{partner_id}`
 Simple conversion tracking (maintained for backwards compatibility)
 
@@ -136,6 +183,16 @@ Simple conversion tracking (maintained for backwards compatibility)
 
 ### GET `/api/lead/{leadId}/status`
 Get comprehensive lead status and conversion history
+
+#### Headers
+```
+Authorization: Bearer {partner_api_key}
+# OR: x-api-key: {partner_api_key}
+```
+
+#### Security
+- ✅ **Partner-scoped**: Only shows leads assigned to authenticated partner
+- ✅ **Rate limited**: 100 requests per minute per partner
 
 #### Response
 ```json
@@ -181,13 +238,24 @@ Get comprehensive lead status and conversion history
 
 ## 📈 CPA Analytics API
 
-### GET `/api/analytics/cpa`
+### GET `/api/analytics/cpa`  
 Get real-time CPA performance metrics
 
+#### Headers
+```
+Authorization: Bearer {partner_api_key}
+# OR: x-api-key: {partner_api_key}
+```
+
+#### Security
+- ✅ **Partner-scoped**: Only shows analytics for authenticated partner
+- ✅ **Rate limited**: 20 requests per minute per partner
+
 #### Query Parameters
-- `partner_id` (optional): Filter by specific partner
-- `date_from` (optional): Start date (YYYY-MM-DD)
+- `date_from` (optional): Start date (YYYY-MM-DD) 
 - `date_to` (optional): End date (YYYY-MM-DD)
+
+**Note**: Results are automatically filtered to authenticated partner only.
 
 #### Response
 ```json
@@ -283,9 +351,17 @@ Use tools like:
 - **500 Server Error**: Check payload format and required fields
 
 ### Rate Limits
-- **Inbound Webhooks**: 100 requests/minute per token
-- **Conversion Tracking**: 50 requests/minute per partner  
-- **Analytics API**: 20 requests/minute
+- **Inbound Webhooks**: No rate limit (token-based verification)
+- **Conversion Tracking**: 50 requests/minute per partner API key
+- **Lead Status**: 100 requests/minute per partner API key  
+- **Analytics API**: 20 requests/minute per partner API key
+
+### Security Features
+- ✅ **Partner API Keys**: Secure authentication for all CPA endpoints
+- ✅ **Scoped Access**: Partners only see their own leads and data
+- ✅ **Idempotency Protection**: Duplicate conversions prevented  
+- ✅ **Rate Limiting**: Per-partner limits prevent abuse
+- ✅ **PII Protection**: Lead emails only visible to assigned partners
 
 ---
 
