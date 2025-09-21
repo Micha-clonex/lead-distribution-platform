@@ -79,15 +79,15 @@ router.get('/', async (req, res) => {
 // Add new partner
 router.post('/', async (req, res) => {
     try {
-        const { name, email, country, niche, webhook_url, daily_limit, premium_ratio, timezone } = req.body;
+        const { name, email, country, niche, daily_limit, premium_ratio, timezone } = req.body;
         
         // Convert percentage input to decimal (70 -> 0.70)
         const ratioDecimal = premium_ratio ? (parseFloat(premium_ratio) / 100) : 0.70;
         
         await pool.query(`
-            INSERT INTO partners (name, email, country, niche, webhook_url, daily_limit, premium_ratio, timezone)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        `, [name, email, country, niche, webhook_url, daily_limit || 50, ratioDecimal, timezone || 'UTC']);
+            INSERT INTO partners (name, email, country, niche, daily_limit, premium_ratio, timezone)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `, [name, email, country, niche, daily_limit || 50, ratioDecimal, timezone || 'UTC']);
         
         res.redirect('/partners?success=Partner added successfully');
     } catch (error) {
@@ -100,7 +100,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, email, country, niche, webhook_url, daily_limit, premium_ratio, status, timezone } = req.body;
+        const { name, email, country, niche, daily_limit, premium_ratio, status, timezone } = req.body;
         
         // Validate premium_ratio
         if (premium_ratio !== undefined && premium_ratio !== null && premium_ratio !== '') {
@@ -123,10 +123,10 @@ router.put('/:id', async (req, res) => {
         
         await pool.query(`
             UPDATE partners 
-            SET name = $1, email = $2, country = $3, niche = $4, webhook_url = $5, 
-                daily_limit = $6, premium_ratio = $7, status = $8, timezone = $9, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $10
-        `, [name, email, country, niche, webhook_url, daily_limit, ratioDecimal, status, timezone, id]);
+            SET name = $1, email = $2, country = $3, niche = $4, 
+                daily_limit = $5, premium_ratio = $6, status = $7, timezone = $8, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $9
+        `, [name, email, country, niche, daily_limit, ratioDecimal, status, timezone, id]);
         
         res.json({ success: true, message: 'Partner updated successfully' });
     } catch (error) {

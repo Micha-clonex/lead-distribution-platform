@@ -218,10 +218,6 @@
                             </select>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Webhook URL *</label>
-                        <input type="url" class="form-control" name="webhook_url" required placeholder="https://partner-crm.com/webhook/leads">
-                    </div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Daily Limit</label>
@@ -295,10 +291,6 @@
                                 <% }) %>
                             </select>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Webhook URL *</label>
-                        <input type="url" class="form-control" id="editPartnerWebhookUrl" name="webhook_url" required>
                     </div>
                     <div class="row">
                         <div class="col-md-3 mb-3">
@@ -546,7 +538,6 @@ function editPartner(id) {
     document.getElementById('editPartnerEmail').value = partner.email;
     document.getElementById('editPartnerCountry').value = partner.country;
     document.getElementById('editPartnerNiche').value = partner.niche;
-    document.getElementById('editPartnerWebhookUrl').value = partner.webhook_url;
     document.getElementById('editPartnerDailyLimit').value = partner.daily_limit;
     document.getElementById('editPartnerPremiumRatio').value = (partner.premium_ratio * 100).toFixed(2);
     document.getElementById('editPartnerStatus').value = partner.status;
@@ -587,7 +578,6 @@ document.getElementById('editPartnerForm').addEventListener('submit', function(e
         email: formData.get('email'),
         country: formData.get('country'),
         niche: formData.get('niche'),
-        webhook_url: formData.get('webhook_url'),
         daily_limit: formData.get('daily_limit'),
         premium_ratio: premiumRatio,
         status: formData.get('status'),
