@@ -13,7 +13,7 @@ const { requireAuth } = require('./middleware/auth');
 const { pullPartnerStatuses } = require('./services/statusPuller');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
