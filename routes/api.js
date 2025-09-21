@@ -118,7 +118,10 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
                 utm_source: leadData.utm_source,
                 utm_campaign: leadData.utm_campaign,
                 utm_medium: leadData.utm_medium,
-                landing_page_url: leadData.landing_page_url
+                landing_page_url: leadData.landing_page_url,
+                // **NEW: Recovery-specific fields**
+                amount_lost: leadData.amount_lost || leadData.amountLost,
+                fraud_type: leadData.fraud_type || leadData.fraudType || leadData.type_of_fraud
             };
         } else if (source.source_type === 'landing_page') {
             normalizedData = {
@@ -132,13 +135,19 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
                 utm_source: leadData.utm_source,
                 utm_campaign: leadData.utm_campaign,
                 utm_medium: leadData.utm_medium,
-                landing_page_url: leadData.landing_page_url || leadData.page_url
+                landing_page_url: leadData.landing_page_url || leadData.page_url,
+                // **NEW: Recovery-specific fields**
+                amount_lost: leadData.amount_lost || leadData.amountLost,
+                fraud_type: leadData.fraud_type || leadData.fraudType || leadData.type_of_fraud
             };
         } else {
             // Generic format - use source's lead_type
             normalizedData = {
                 ...leadData,
-                type: leadData.type || source.lead_type || 'raw'
+                type: leadData.type || source.lead_type || 'raw',
+                // **NEW: Recovery-specific fields**
+                amount_lost: leadData.amount_lost || leadData.amountLost,
+                fraud_type: leadData.fraud_type || leadData.fraudType || leadData.type_of_fraud
             };
         }
         

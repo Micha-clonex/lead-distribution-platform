@@ -35,20 +35,8 @@ async function sendWebhook(lead, partner) {
                 WHERE id = $2
             `, [currentAttempts + 1, deliveryId]);
         } else {
-            // Create new delivery record
-            const payload = {
-                lead_id: lead.id,
-                first_name: lead.first_name,
-                last_name: lead.last_name,
-                email: lead.email,
-                phone: lead.phone,
-                country: lead.country,
-                niche: lead.niche,
-                type: lead.type,
-                source: lead.source,
-                timestamp: lead.created_at,
-                postback_url: `${process.env.APP_URL || 'http://localhost:5000'}/api/postback/${partner.id}`
-            };
+            // Create new delivery record with recovery field formatting
+            const payload = await createPayloadForPartner(lead, partner);
             
             const result = await pool.query(`
                 INSERT INTO webhook_deliveries (lead_id, partner_id, webhook_url, payload, attempts, status)
@@ -157,25 +145,21 @@ async function retryFailedWebhooks() {
                     continue; // Skip if not enough time has passed
                 }
                 
-                await sendWebhook(
-                    {
-                        id: webhook.lead_id,
-                        first_name: webhook.first_name,
-                        last_name: webhook.last_name,
-                        email: webhook.email,
-                        phone: webhook.phone,
-                        country: webhook.country,
-                        niche: webhook.niche,
-                        type: webhook.type,
-                        source: webhook.source,
-                        created_at: webhook.created_at
-                    },
-                    {
-                        id: webhook.partner_id,
-                        name: webhook.partner_name,
-                        webhook_url: webhook.webhook_url
-                    }
-                );
+                // **ENHANCED: Get complete partner data for recovery field formatting**
+                const partnerResult = await pool.query(`
+                    SELECT * FROM partners WHERE id = $1
+                `, [webhook.partner_id]);
+                
+                const partner = partnerResult.rows[0];
+                
+                // **ENHANCED: Get complete lead data including JSONB data for recovery fields**
+                const leadResult = await pool.query(`
+                    SELECT * FROM leads WHERE id = $1
+                `, [webhook.lead_id]);
+                
+                const lead = leadResult.rows[0];
+                
+                await sendWebhook(lead, partner);
             } catch (error) {
                 console.error(`Retry failed for webhook ${webhook.delivery_id}:`, error.message);
             }
@@ -198,4 +182,58 @@ async function retryFailedWebhooks() {
     }
 }
 
-module.exports = { sendWebhook, retryFailedWebhooks };
+/**
+ * Create webhook payload with recovery field formatting based on partner preferences
+ */
+async function createPayloadForPartner(lead, partner) {
+    // Base payload with standard fields
+    const basePayload = {
+        lead_id: lead.id,
+        first_name: lead.first_name,
+        last_name: lead.last_name,
+        email: lead.email,
+        phone: lead.phone,
+        country: lead.country,
+        niche: lead.niche,
+        type: lead.type,
+        source: lead.source,
+        timestamp: lead.created_at,
+        postback_url: `${process.env.APP_URL || 'http://localhost:5000'}/api/postback/${partner.id}`
+    };
+    
+    // **NEW: Recovery-specific field handling**
+    if (lead.niche === 'recovery' && lead.data) {
+        const leadData = typeof lead.data === 'string' ? JSON.parse(lead.data) : lead.data;
+        const recoveryData = leadData.enriched || leadData.original || leadData;
+        
+        // Extract recovery-specific fields
+        const amountLost = recoveryData.amount_lost || recoveryData.amountLost;
+        const fraudType = recoveryData.fraud_type || recoveryData.fraudType || recoveryData.type_of_fraud;
+        
+        // Format according to partner preference
+        if (partner.recovery_fields_format === 'notes' && (amountLost || fraudType)) {
+            // **OPTION 1: Combined into notes field**
+            let notes = '';
+            if (amountLost) {
+                notes += `Amount Lost: ${amountLost}`;
+            }
+            if (fraudType) {
+                if (notes) notes += ' | ';
+                notes += `Fraud Type: ${fraudType}`;
+            }
+            basePayload.notes = notes;
+        } else {
+            // **OPTION 2: Separate fields (default)**
+            if (amountLost) {
+                basePayload.amount_lost = amountLost;
+            }
+            if (fraudType) {
+                basePayload.fraud_type = fraudType;
+            }
+        }
+    }
+    
+    return basePayload;
+}
+
+module.exports = { sendWebhook, retryFailedWebhooks, createPayloadForPartner };

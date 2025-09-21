@@ -324,6 +324,27 @@
                             </select>
                         </div>
                     </div>
+                    
+                    <!-- Recovery Fields Configuration -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Recovery Fields Format</label>
+                            <select class="form-select" id="editPartnerRecoveryFormat" name="recovery_fields_format">
+                                <option value="separate">Separate Fields (amount_lost, fraud_type)</option>
+                                <option value="notes">Combined in Notes Field</option>
+                            </select>
+                            <div class="form-text">
+                                <small class="text-muted">
+                                    How recovery lead data (amount lost, fraud type) should be sent to this partner's CRM.
+                                    <br><strong>Separate Fields:</strong> Sends as individual fields
+                                    <br><strong>Notes:</strong> Combines into a single notes field
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3" id="recoveryFormatPreview">
+                            <!-- Preview will be shown here via JavaScript -->
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -542,6 +563,11 @@ function editPartner(id) {
     document.getElementById('editPartnerPremiumRatio').value = (partner.premium_ratio * 100).toFixed(2);
     document.getElementById('editPartnerStatus').value = partner.status;
     document.getElementById('editPartnerTimezone').value = partner.timezone;
+    document.getElementById('editPartnerRecoveryFormat').value = partner.recovery_fields_format || 'separate';
+    
+    // Show/hide recovery format based on niche
+    toggleRecoveryFormatVisibility(partner.niche);
+    updateRecoveryFormatPreview(partner.recovery_fields_format || 'separate');
     
     // Show modal
     new bootstrap.Modal(document.getElementById('editPartnerModal')).show();
@@ -581,7 +607,8 @@ document.getElementById('editPartnerForm').addEventListener('submit', function(e
         daily_limit: formData.get('daily_limit'),
         premium_ratio: premiumRatio,
         status: formData.get('status'),
-        timezone: formData.get('timezone')
+        timezone: formData.get('timezone'),
+        recovery_fields_format: formData.get('recovery_fields_format') || 'separate'
     };
     
     fetch(`/partners/${id}`, {
@@ -604,6 +631,77 @@ document.getElementById('editPartnerForm').addEventListener('submit', function(e
         console.error('Error:', error);
         alert('Failed to update partner');
     });
+});
+
+// **NEW: Recovery fields format helper functions**
+function toggleRecoveryFormatVisibility(niche) {
+    const recoveryRow = document.querySelector('.row:has(#editPartnerRecoveryFormat)');
+    if (recoveryRow) {
+        recoveryRow.style.display = (niche === 'recovery') ? 'block' : 'none';
+    }
+}
+
+function updateRecoveryFormatPreview(format) {
+    const previewDiv = document.getElementById('recoveryFormatPreview');
+    if (!previewDiv) return;
+    
+    if (format === 'notes') {
+        previewDiv.innerHTML = `
+            <div class="card">
+                <div class="card-header py-2">
+                    <small class="fw-bold text-muted">PAYLOAD PREVIEW</small>
+                </div>
+                <div class="card-body py-2">
+                    <code class="small">
+                        {<br>
+                        &nbsp;&nbsp;"first_name": "John",<br>
+                        &nbsp;&nbsp;"last_name": "Smith",<br>
+                        &nbsp;&nbsp;"email": "john@example.com",<br>
+                        &nbsp;&nbsp;"phone": "+1234567890",<br>
+                        &nbsp;&nbsp;<span class="text-primary">"notes": "Amount Lost: $5000 | Fraud Type: Binary Options"</span><br>
+                        }
+                    </code>
+                </div>
+            </div>
+        `;
+    } else {
+        previewDiv.innerHTML = `
+            <div class="card">
+                <div class="card-header py-2">
+                    <small class="fw-bold text-muted">PAYLOAD PREVIEW</small>
+                </div>
+                <div class="card-body py-2">
+                    <code class="small">
+                        {<br>
+                        &nbsp;&nbsp;"first_name": "John",<br>
+                        &nbsp;&nbsp;"last_name": "Smith",<br>
+                        &nbsp;&nbsp;"email": "john@example.com",<br>
+                        &nbsp;&nbsp;"phone": "+1234567890",<br>
+                        &nbsp;&nbsp;<span class="text-primary">"amount_lost": "$5000",</span><br>
+                        &nbsp;&nbsp;<span class="text-primary">"fraud_type": "Binary Options"</span><br>
+                        }
+                    </code>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Add event listener for recovery format changes
+document.addEventListener('DOMContentLoaded', function() {
+    const recoveryFormatSelect = document.getElementById('editPartnerRecoveryFormat');
+    if (recoveryFormatSelect) {
+        recoveryFormatSelect.addEventListener('change', function() {
+            updateRecoveryFormatPreview(this.value);
+        });
+    }
+    
+    const nicheSelect = document.getElementById('editPartnerNiche');
+    if (nicheSelect) {
+        nicheSelect.addEventListener('change', function() {
+            toggleRecoveryFormatVisibility(this.value);
+        });
+    }
 });
 
 // CRM Integration Management

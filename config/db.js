@@ -190,6 +190,19 @@ async function initDatabase() {
             WHERE lead_type IS NULL
         `);
         
+        // **NEW: Add recovery field formatting preferences to partners**
+        await pool.query(`
+            ALTER TABLE partners 
+            ADD COLUMN IF NOT EXISTS recovery_fields_format VARCHAR(20) DEFAULT 'separate' CHECK (recovery_fields_format IN ('separate', 'notes'))
+        `);
+        
+        // Backfill partners with default recovery field format
+        await pool.query(`
+            UPDATE partners 
+            SET recovery_fields_format = 'separate' 
+            WHERE recovery_fields_format IS NULL
+        `);
+        
         console.log('Database tables initialized successfully');
         return true;
     } catch (error) {

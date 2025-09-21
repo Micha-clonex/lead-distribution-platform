@@ -100,7 +100,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, email, country, niche, daily_limit, premium_ratio, status, timezone } = req.body;
+        const { name, email, country, niche, daily_limit, premium_ratio, status, timezone, recovery_fields_format } = req.body;
         
         // Validate premium_ratio
         if (premium_ratio !== undefined && premium_ratio !== null && premium_ratio !== '') {
@@ -118,15 +118,21 @@ router.put('/:id', async (req, res) => {
             }
         }
         
+        // **NEW: Validate recovery_fields_format**
+        if (recovery_fields_format && !['separate', 'notes'].includes(recovery_fields_format)) {
+            return res.status(400).json({ success: false, error: 'Recovery fields format must be either "separate" or "notes"' });
+        }
+        
         // Convert percentage input to decimal (70 -> 0.70)
         const ratioDecimal = premium_ratio && premium_ratio !== '' ? (parseFloat(premium_ratio) / 100) : null;
         
         await pool.query(`
             UPDATE partners 
             SET name = $1, email = $2, country = $3, niche = $4, 
-                daily_limit = $5, premium_ratio = $6, status = $7, timezone = $8, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $9
-        `, [name, email, country, niche, daily_limit, ratioDecimal, status, timezone, id]);
+                daily_limit = $5, premium_ratio = $6, status = $7, timezone = $8, 
+                recovery_fields_format = $9, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $10
+        `, [name, email, country, niche, daily_limit, ratioDecimal, status, timezone, recovery_fields_format || 'separate', id]);
         
         res.json({ success: true, message: 'Partner updated successfully' });
     } catch (error) {
