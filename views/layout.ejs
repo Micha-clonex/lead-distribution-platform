@@ -89,6 +89,11 @@
                         <i class="fas fa-robot me-2"></i>Auto Management
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link <%= (currentPath === '/monitoring' || currentPath.startsWith('/monitoring/')) ? 'active' : '' %>" href="/monitoring">
+                        <i class="fas fa-heartbeat me-2"></i>Live Monitoring
+                    </a>
+                </li>
                 
                 <% if (isLoggedIn) { %>
                 <li class="nav-item mt-3 border-top pt-3">

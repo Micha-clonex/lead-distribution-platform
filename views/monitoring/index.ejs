@@ -1,0 +1,585 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">🔴 Live System Monitoring</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-outline-primary" onclick="toggleAutoRefresh()">
+                <span id="refreshIcon">⏸️</span> <span id="refreshText">Pause Auto-Refresh</span>
+            </button>
+            <button type="button" class="btn btn-outline-secondary" onclick="refreshNow()">
+                <i class="fas fa-sync-alt"></i> Refresh Now
+            </button>
+        </div>
+        <div class="btn-group">
+            <span class="badge bg-<%= health.status === 'healthy' ? 'success' : health.status === 'warning' ? 'warning' : health.status === 'degraded' ? 'info' : 'danger' %> fs-6 px-3 py-2">
+                Status: <%= health.status.toUpperCase() %>
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- System Overview Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3">
+        <div class="card border-<%= health.healthScore > 80 ? 'success' : health.healthScore > 60 ? 'warning' : 'danger' %>">
+            <div class="card-body text-center">
+                <h2 class="display-4 text-<%= health.healthScore > 80 ? 'success' : health.healthScore > 60 ? 'warning' : 'danger' %>">
+                    <%= health.healthScore %>%
+                </h2>
+                <h5 class="card-title">Health Score</h5>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-<%= health.healthScore > 80 ? 'success' : health.healthScore > 60 ? 'warning' : 'danger' %>" 
+                         style="width: <%= health.healthScore %>%"></div>
+                </div>
+                <small class="text-muted">System Overall Health</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h3 class="text-primary"><%= Math.floor(health.uptime / 3600) %>h <%= Math.floor((health.uptime % 3600) / 60) %>m</h3>
+                <h5 class="card-title">System Uptime</h5>
+                <small class="text-muted">Since last restart</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h3 class="text-info"><%= health.leads?.today?.total || 0 %></h3>
+                <h5 class="card-title">Leads Today</h5>
+                <small class="text-muted">
+                    <span class="text-success"><%= health.leads?.today?.distributed || 0 %> distributed</span> |
+                    <span class="text-danger"><%= health.leads?.today?.failed || 0 %> failed</span>
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h3 class="text-success"><%= health.partners?.summary?.active || 0 %></h3>
+                <h5 class="card-title">Active Partners</h5>
+                <small class="text-muted">
+                    <%= health.partners?.summary?.paused || 0 %> paused |
+                    <%= health.partners?.summary?.inactive || 0 %> inactive
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Real-time Performance Metrics -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>📊 Lead Processing Performance</h5>
+                <small class="text-muted">Real-time lead distribution metrics</small>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Today's Performance</h6>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>Distribution Rate:</span>
+                                <strong class="text-<%= (health.leads?.today?.distributionRate || 0) > 80 ? 'success' : (health.leads?.today?.distributionRate || 0) > 50 ? 'warning' : 'danger' %>">
+                                    <%= health.leads?.today?.distributionRate || 0 %>%
+                                </strong>
+                            </div>
+                            <div class="progress mb-2" style="height: 6px;">
+                                <div class="progress-bar bg-<%= (health.leads?.today?.distributionRate || 0) > 80 ? 'success' : (health.leads?.today?.distributionRate || 0) > 50 ? 'warning' : 'danger' %>" 
+                                     style="width: <%= health.leads?.today?.distributionRate || 0 %>%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="small">
+                            <div class="d-flex justify-content-between">
+                                <span>Pending Queue:</span>
+                                <span class="badge bg-<%= (health.leads?.performance?.pendingQueue || 0) > 20 ? 'danger' : (health.leads?.performance?.pendingQueue || 0) > 5 ? 'warning' : 'secondary' %>">
+                                    <%= health.leads?.performance?.pendingQueue || 0 %>
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Avg Processing:</span>
+                                <span><%= (health.leads?.performance?.avgProcessingTime || 0).toFixed(1) %>s</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6>Recent Activity (15min)</h6>
+                        <div class="text-center">
+                            <h4 class="text-primary"><%= health.leads?.recent?.rate || 0 %></h4>
+                            <small class="text-muted">Leads/Hour Projection</small>
+                        </div>
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between small">
+                                <span>Recent Total:</span>
+                                <span><%= health.leads?.recent?.total || 0 %></span>
+                            </div>
+                            <div class="d-flex justify-content-between small">
+                                <span>Recent Distributed:</span>
+                                <span class="text-success"><%= health.leads?.recent?.distributed || 0 %></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>🔗 Webhook Health</h5>
+                <small class="text-muted">Partner webhook delivery status</small>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Today's Delivery</h6>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>Success Rate:</span>
+                                <strong class="text-<%= (health.webhooks?.today?.successRate || 0) > 90 ? 'success' : (health.webhooks?.today?.successRate || 0) > 70 ? 'warning' : 'danger' %>">
+                                    <%= health.webhooks?.today?.successRate || 0 %>%
+                                </strong>
+                            </div>
+                            <div class="progress mb-2" style="height: 6px;">
+                                <div class="progress-bar bg-<%= (health.webhooks?.today?.successRate || 0) > 90 ? 'success' : (health.webhooks?.today?.successRate || 0) > 70 ? 'warning' : 'danger' %>" 
+                                     style="width: <%= health.webhooks?.today?.successRate || 0 %>%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="small">
+                            <div class="d-flex justify-content-between">
+                                <span>Total Attempts:</span>
+                                <span><%= health.webhooks?.today?.attempts || 0 %></span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Failed:</span>
+                                <span class="text-danger"><%= health.webhooks?.today?.failed || 0 %></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6>Performance</h6>
+                        <div class="text-center">
+                            <h4 class="text-info"><%= (health.webhooks?.performance?.avgResponseTime || 0).toFixed(2) %>s</h4>
+                            <small class="text-muted">Avg Response Time</small>
+                        </div>
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between small">
+                                <span>Retry Queue:</span>
+                                <span class="badge bg-<%= (health.webhooks?.performance?.retryQueue || 0) > 10 ? 'warning' : 'secondary' %>">
+                                    <%= health.webhooks?.performance?.retryQueue || 0 %>
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between small">
+                                <span>Last Hour Success:</span>
+                                <span class="text-success"><%= health.webhooks?.lastHour?.successRate || 0 %>%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Partner Status Breakdown -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>🤝 Partner Availability by Market</h5>
+                <small class="text-muted">Partner distribution and utilization rates</small>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Country/Niche</th>
+                                <th>Active</th>
+                                <th>Paused</th>
+                                <th>Today's Leads</th>
+                                <th>Utilization</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (health.partners?.breakdown?.length > 0) { %>
+                                <% health.partners.breakdown.forEach(market => { %>
+                                    <tr>
+                                        <td>
+                                            <strong><%= market.country.toUpperCase() %></strong> / <%= market.niche %>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-<%= market.status === 'active' ? 'success' : market.status === 'paused' ? 'warning' : 'secondary' %>">
+                                                <%= market.count %>
+                                            </span>
+                                        </td>
+                                        <td><%= market.nearCapacity || 0 %></td>
+                                        <td><%= market.leadsToday %></td>
+                                        <td>
+                                            <div class="progress" style="height: 6px; width: 60px;">
+                                                <div class="progress-bar bg-<%= market.utilization > 90 ? 'danger' : market.utilization > 70 ? 'warning' : 'info' %>" 
+                                                     style="width: <%= Math.min(market.utilization, 100) %>%"></div>
+                                            </div>
+                                            <small><%= market.utilization.toFixed(1) %>%</small>
+                                        </td>
+                                        <td>
+                                            <% if (market.utilization > 95) { %>
+                                                <span class="badge bg-danger">At Capacity</span>
+                                            <% } else if (market.utilization > 80) { %>
+                                                <span class="badge bg-warning">High Load</span>
+                                            <% } else if (market.status === 'active') { %>
+                                                <span class="badge bg-success">Available</span>
+                                            <% } else { %>
+                                                <span class="badge bg-secondary">Unavailable</span>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-3">No partner data available</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>🚨 Active Alerts</h5>
+                <small class="text-muted">Recent critical system alerts</small>
+            </div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                <% if (health.alerts?.recentCritical?.length > 0) { %>
+                    <% health.alerts.recentCritical.forEach(alert => { %>
+                        <div class="alert alert-<%= alert.severity === 'high' ? 'danger' : alert.severity === 'medium' ? 'warning' : 'info' %> alert-sm py-2 mb-2">
+                            <div class="d-flex justify-content-between">
+                                <strong class="small"><%= alert.title %></strong>
+                                <small class="text-muted"><%= new Date(alert.timestamp).toLocaleTimeString() %></small>
+                            </div>
+                            <div class="small"><%= alert.message %></div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-check-circle fa-2x mb-2"></i>
+                        <div>No active critical alerts</div>
+                        <small>System operating normally</small>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Trends Chart -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>📈 Performance Trends</h5>
+                <small class="text-muted">Real-time system performance over time</small>
+            </div>
+            <div class="card-body">
+                <canvas id="trendsChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Diagnostics -->
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>🛠️ System Diagnostics</h5>
+                <small class="text-muted">Automated health checks</small>
+            </div>
+            <div class="card-body" id="diagnosticsContent">
+                <div class="text-center">
+                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                    <span class="ms-2">Running diagnostics...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>💾 Database Performance</h5>
+                <small class="text-muted">Database connection and performance metrics</small>
+            </div>
+            <div class="card-body">
+                <% if (health.database?.connected) { %>
+                    <div class="alert alert-success alert-sm">
+                        <i class="fas fa-check-circle me-2"></i>Database Connected
+                    </div>
+                    <div class="small">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Database Size:</span>
+                            <span><%= (health.database.databaseSize / 1024 / 1024).toFixed(2) %> MB</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Last Query:</span>
+                            <span><%= new Date(health.database.timestamp).toLocaleTimeString() %></span>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mt-3">Table Activity</h6>
+                    <div style="max-height: 200px; overflow-y: auto;">
+                        <% if (health.database.tables?.length > 0) { %>
+                            <% health.database.tables.slice(0, 5).forEach(table => { %>
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span><%= table.name %></span>
+                                    <span class="text-muted">
+                                        <%= table.liveTuples.toLocaleString() %> rows
+                                        <% if (table.deadTuples > 0) { %>
+                                            (<%= table.deadTuples %> dead)
+                                        <% } %>
+                                    </span>
+                                </div>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-danger alert-sm">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Database Connection Failed
+                        <% if (health.database?.error) { %>
+                            <br><small><%= health.database.error %></small>
+                        <% } %>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let autoRefreshEnabled = true;
+let refreshTimer;
+let trendsChart;
+
+// Auto-refresh functionality
+function startAutoRefresh() {
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = setInterval(refreshData, <%= refreshInterval * 1000 %>);
+}
+
+function toggleAutoRefresh() {
+    autoRefreshEnabled = !autoRefreshEnabled;
+    const icon = document.getElementById('refreshIcon');
+    const text = document.getElementById('refreshText');
+    
+    if (autoRefreshEnabled) {
+        icon.textContent = '⏸️';
+        text.textContent = 'Pause Auto-Refresh';
+        startAutoRefresh();
+    } else {
+        icon.textContent = '▶️';
+        text.textContent = 'Resume Auto-Refresh';
+        if (refreshTimer) clearInterval(refreshTimer);
+    }
+}
+
+async function refreshData() {
+    try {
+        const response = await fetch('/monitoring/api/health');
+        const result = await response.json();
+        
+        if (result.success) {
+            // Update key metrics without full page reload
+            updateHealthScore(result.data.healthScore, result.data.status);
+            updateSystemMetrics(result.data);
+            
+            // Update timestamp
+            document.querySelector('.border-bottom .h2').innerHTML = 
+                `🔴 Live System Monitoring <small class="text-muted">(Updated: ${new Date().toLocaleTimeString()})</small>`;
+        }
+    } catch (error) {
+        console.error('Auto-refresh failed:', error);
+    }
+}
+
+function refreshNow() {
+    location.reload();
+}
+
+function updateHealthScore(score, status) {
+    const scoreElement = document.querySelector('.display-4');
+    const statusBadge = document.querySelector('.btn-toolbar .badge');
+    
+    if (scoreElement) {
+        scoreElement.textContent = score + '%';
+        scoreElement.className = `display-4 text-${score > 80 ? 'success' : score > 60 ? 'warning' : 'danger'}`;
+    }
+    
+    if (statusBadge) {
+        statusBadge.className = `badge bg-${status === 'healthy' ? 'success' : status === 'warning' ? 'warning' : status === 'degraded' ? 'info' : 'danger'} fs-6 px-3 py-2`;
+        statusBadge.textContent = `Status: ${status.toUpperCase()}`;
+    }
+}
+
+function updateSystemMetrics(data) {
+    // Update leads today
+    const leadsElement = document.querySelector('.col-lg-3:nth-child(3) .text-info');
+    if (leadsElement && data.leads?.today?.total !== undefined) {
+        leadsElement.textContent = data.leads.today.total;
+    }
+    
+    // Update active partners
+    const partnersElement = document.querySelector('.col-lg-3:nth-child(4) .text-success');
+    if (partnersElement && data.partners?.summary?.active !== undefined) {
+        partnersElement.textContent = data.partners.summary.active;
+    }
+}
+
+// Load diagnostics
+async function loadDiagnostics() {
+    try {
+        const response = await fetch('/monitoring/api/diagnostics');
+        const result = await response.json();
+        
+        const diagnosticsContent = document.getElementById('diagnosticsContent');
+        
+        if (result.success) {
+            let html = '';
+            result.diagnostics.checks.forEach(check => {
+                html += `
+                    <div class="alert alert-${check.status === 'healthy' ? 'success' : check.status === 'warning' ? 'warning' : 'danger'} alert-sm py-2 mb-2">
+                        <div class="d-flex justify-content-between">
+                            <strong class="small">${check.name}</strong>
+                            <span class="badge bg-${check.status === 'healthy' ? 'success' : check.status === 'warning' ? 'warning' : 'danger'}">
+                                ${check.status.toUpperCase()}
+                            </span>
+                        </div>
+                        <div class="small">${check.message}</div>
+                    </div>
+                `;
+            });
+            diagnosticsContent.innerHTML = html;
+        } else {
+            diagnosticsContent.innerHTML = `<div class="alert alert-danger">Failed to load diagnostics: ${result.error}</div>`;
+        }
+    } catch (error) {
+        document.getElementById('diagnosticsContent').innerHTML = 
+            `<div class="alert alert-danger">Diagnostics error: ${error.message}</div>`;
+    }
+}
+
+// Load trends chart
+async function loadTrendsChart() {
+    try {
+        const response = await fetch('/monitoring/api/trends?hours=12');
+        const result = await response.json();
+        
+        if (result.success && result.trends.length > 0) {
+            const ctx = document.getElementById('trendsChart').getContext('2d');
+            
+            // Reverse data for chronological order
+            const trends = result.trends.reverse();
+            
+            trendsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: trends.map(t => new Date(t.hour).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})),
+                    datasets: [{
+                        label: 'Lead Distribution Rate (%)',
+                        data: trends.map(t => t.leads.distributionRate),
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Webhook Success Rate (%)',
+                        data: trends.map(t => t.webhooks.successRate),
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Total Leads',
+                        data: trends.map(t => t.leads.total),
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        yAxisID: 'y1',
+                        type: 'bar',
+                        order: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Time (Last 12 Hours)'
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Rate (%)'
+                            },
+                            max: 100
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Lead Count'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Failed to load trends chart:', error);
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    startAutoRefresh();
+    loadDiagnostics();
+    loadTrendsChart();
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (refreshTimer) clearInterval(refreshTimer);
+    if (trendsChart) trendsChart.destroy();
+});
+</script>

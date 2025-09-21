@@ -135,6 +135,11 @@ async function initDatabase() {
         CREATE INDEX IF NOT EXISTS idx_partner_management_log_partner ON partner_management_log(partner_id);
         CREATE INDEX IF NOT EXISTS idx_partner_management_log_action ON partner_management_log(action);
         CREATE INDEX IF NOT EXISTS idx_partner_management_log_created ON partner_management_log(created_at);
+        
+        -- Performance indexes for Live Monitoring Dashboard
+        CREATE INDEX IF NOT EXISTS idx_leads_created_status ON leads(created_at, status);
+        CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_created_status ON webhook_deliveries(created_at, status);
+        CREATE INDEX IF NOT EXISTS idx_system_alerts_created_severity ON system_alerts(created_at, severity, resolved);
         `);
         
         console.log('Database tables initialized successfully');

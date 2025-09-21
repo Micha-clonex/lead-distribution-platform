@@ -71,6 +71,7 @@ app.use('/webhooks', requireAuth, webhookRoutes);
 app.use('/analytics', requireAuth, analyticsRoutes);
 app.use('/alerts', requireAuth, alertsRoutes);
 app.use('/partner-management', requireAuth, require('./routes/partnerManagement'));
+app.use('/monitoring', requireAuth, require('./routes/monitoring'));
 app.use('/api', apiRoutes); // API routes handle their own auth
 
 // Dashboard route (protected)
