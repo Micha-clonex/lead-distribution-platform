@@ -111,9 +111,13 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
                 last_name: leadData.last_name || leadData.lastName,
                 email: leadData.email,
                 phone: leadData.phone || leadData.phone_number,
-                country: leadData.country || 'unknown',
+                country: leadData.country,
                 niche: leadData.niche || 'forex',
-                type: leadData.type || 'raw'
+                type: leadData.type || 'raw',
+                utm_source: leadData.utm_source,
+                utm_campaign: leadData.utm_campaign,
+                utm_medium: leadData.utm_medium,
+                landing_page_url: leadData.landing_page_url
             };
         } else if (source.source_type === 'landing_page') {
             normalizedData = {
@@ -121,30 +125,42 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
                 last_name: leadData.last_name,
                 email: leadData.email,
                 phone: leadData.phone,
-                country: leadData.country,
+                country: leadData.country, // May be empty from landing page
                 niche: leadData.niche,
-                type: leadData.type || 'premium'
+                type: leadData.type || 'premium',
+                utm_source: leadData.utm_source,
+                utm_campaign: leadData.utm_campaign,
+                utm_medium: leadData.utm_medium,
+                landing_page_url: leadData.landing_page_url || leadData.page_url
             };
         } else {
             // Generic format
             normalizedData = leadData;
         }
         
-        // Insert lead into database
+        // **NEW: Data Enrichment** - Automatically fill missing fields
+        const { enrichLeadData } = require('../services/dataEnrichment');
+        const enrichedData = await enrichLeadData(normalizedData, source);
+        
+        // Insert enriched lead into database
         const leadResult = await pool.query(`
             INSERT INTO leads (source, type, niche, country, first_name, last_name, email, phone, data)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id
         `, [
             source.name,
-            normalizedData.type || 'raw',
-            normalizedData.niche || 'forex',
-            normalizedData.country || 'unknown',
-            normalizedData.first_name,
-            normalizedData.last_name,
-            normalizedData.email,
-            normalizedData.phone,
-            JSON.stringify(leadData)
+            enrichedData.type || 'raw',
+            enrichedData.niche || 'forex',
+            enrichedData.country || 'unknown',
+            enrichedData.first_name,
+            enrichedData.last_name,
+            enrichedData.email,
+            enrichedData.phone,
+            JSON.stringify({
+                original: leadData,
+                enriched: enrichedData,
+                enrichment_score: enrichedData.data_completeness_score
+            })
         ]);
         
         const leadId = leadResult.rows[0].id;

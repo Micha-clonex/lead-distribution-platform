@@ -40,21 +40,47 @@ async function deliverToCRM(leadId, partnerId, leadData) {
             requestHeaders = {};
         }
         
-        // Map lead fields according to partner's field mapping
-        const mappedData = {};
+        // **ENHANCED: Use data enrichment for partner-specific preparation**
+        const { prepareDataForPartner } = require('./dataEnrichment');
         
-        for (const [ourField, theirField] of Object.entries(fieldMapping)) {
-            if (leadData[ourField] !== undefined) {
-                mappedData[theirField] = leadData[ourField];
+        // Parse stored lead data (includes enriched fields)
+        let enrichedLeadData = leadData;
+        if (typeof leadData.data === 'string') {
+            try {
+                const parsedData = JSON.parse(leadData.data);
+                enrichedLeadData = { ...leadData, ...(parsedData.enriched || parsedData) };
+            } catch (e) {
+                // Fallback to original lead data
+                enrichedLeadData = leadData;
             }
         }
         
-        // Add default fields if not mapped
-        if (!mappedData.source) {
-            mappedData.source = 'Lead Distribution Platform';
+        // Prepare data specifically for this partner's requirements
+        let mappedData = await prepareDataForPartner(enrichedLeadData, partnerId);
+        
+        // Apply legacy field mapping for backwards compatibility
+        const legacyMapped = {};
+        for (const [ourField, theirField] of Object.entries(fieldMapping)) {
+            if (enrichedLeadData[ourField] !== undefined) {
+                legacyMapped[theirField] = enrichedLeadData[ourField];
+            }
+        }
+        
+        // Merge legacy mapping with new enriched mapping
+        mappedData = { ...mappedData, ...legacyMapped };
+        
+        // Add essential default fields if still missing
+        if (!mappedData.source && !mappedData.original_source) {
+            mappedData.source = enrichedLeadData.original_source || 'Lead Distribution Platform';
         }
         if (!mappedData.timestamp) {
             mappedData.timestamp = new Date().toISOString();
+        }
+        if (!mappedData.country && enrichedLeadData.country) {
+            mappedData.country = enrichedLeadData.country;
+        }
+        if (!mappedData.country_code && enrichedLeadData.country_code) {
+            mappedData.country_code = enrichedLeadData.country_code;
         }
         
         // **CRITICAL SECURITY: Validate endpoint and method before sending**
