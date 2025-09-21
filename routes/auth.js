@@ -5,6 +5,7 @@ const { requireGuest, getAdminByUsername, comparePassword } = require('../middle
 // Login page
 router.get('/login', requireGuest, (req, res) => {
     res.render('auth/login', { 
+        layout: false,  // Disable layout for login page
         title: 'Admin Login',
         error: req.query.error 
     });
