@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/db');
+const axios = require('axios');
 
 // Get all partners
 router.get('/', async (req, res) => {
@@ -143,6 +144,121 @@ router.delete('/:id', async (req, res) => {
     } catch (error) {
         console.error('Partner deletion error:', error);
         res.status(500).json({ success: false, error: 'Failed to delete partner' });
+    }
+});
+
+// CRM Integration endpoints
+router.get('/:id/crm-integration', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const result = await pool.query(
+            'SELECT * FROM partner_crm_integrations WHERE partner_id = $1',
+            [id]
+        );
+        
+        res.json({
+            success: true,
+            integration: result.rows[0] || null
+        });
+    } catch (error) {
+        console.error('Get CRM integration error:', error);
+        res.status(500).json({ error: 'Failed to get CRM integration' });
+    }
+});
+
+router.post('/:id/crm-integration', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            crm_name,
+            api_endpoint,
+            api_key,
+            auth_header,
+            request_method,
+            test_url,
+            request_headers,
+            field_mapping,
+            is_active
+        } = req.body;
+        
+        // Check if integration already exists
+        const existingResult = await pool.query(
+            'SELECT id FROM partner_crm_integrations WHERE partner_id = $1',
+            [id]
+        );
+        
+        if (existingResult.rows.length > 0) {
+            // Update existing integration
+            await pool.query(`
+                UPDATE partner_crm_integrations 
+                SET crm_name = $1, api_endpoint = $2, api_key = $3, auth_header = $4,
+                    request_method = $5, test_url = $6, request_headers = $7,
+                    field_mapping = $8, is_active = $9, updated_at = CURRENT_TIMESTAMP
+                WHERE partner_id = $10
+            `, [crm_name, api_endpoint, api_key, auth_header, request_method, 
+                test_url, JSON.stringify(request_headers), JSON.stringify(field_mapping), 
+                is_active, id]);
+        } else {
+            // Create new integration
+            await pool.query(`
+                INSERT INTO partner_crm_integrations 
+                (partner_id, crm_name, api_endpoint, api_key, auth_header, request_method,
+                 test_url, request_headers, field_mapping, is_active)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            `, [id, crm_name, api_endpoint, api_key, auth_header, request_method,
+                test_url, JSON.stringify(request_headers), JSON.stringify(field_mapping), 
+                is_active]);
+        }
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Save CRM integration error:', error);
+        res.status(500).json({ error: 'Failed to save CRM integration' });
+    }
+});
+
+router.post('/:id/test-crm', async (req, res) => {
+    try {
+        const { api_endpoint, api_key, auth_header, request_method } = req.body;
+        
+        const testPayload = {
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'test@example.com',
+            phone: '+1234567890',
+            country: 'test',
+            source: 'Lead Platform Test'
+        };
+        
+        const headers = {
+            'Content-Type': 'application/json',
+            [auth_header]: api_key
+        };
+        
+        const response = await axios({
+            method: request_method.toLowerCase(),
+            url: api_endpoint,
+            headers: headers,
+            data: testPayload,
+            timeout: 10000,
+            validateStatus: (status) => status < 500 // Don't throw on 4xx errors
+        });
+        
+        if (response.status >= 200 && response.status < 400) {
+            res.json({ success: true, status: response.status });
+        } else {
+            res.json({ 
+                success: false, 
+                error: `HTTP ${response.status}: ${response.statusText}` 
+            });
+        }
+    } catch (error) {
+        console.error('Test CRM error:', error);
+        res.json({ 
+            success: false, 
+            error: error.code === 'ECONNABORTED' ? 'Connection timeout' : (error.message || 'Connection failed')
+        });
     }
 });
 

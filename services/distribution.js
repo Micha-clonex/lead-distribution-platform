@@ -1,5 +1,111 @@
 const { pool } = require('../config/db');
 const { sendWebhook } = require('./webhook');
+const axios = require('axios');
+
+// CRM lead delivery function
+async function deliverToCRM(leadId, partnerId, leadData) {
+    try {
+        // Get partner's CRM integration settings
+        const crmResult = await pool.query(`
+            SELECT * FROM partner_crm_integrations 
+            WHERE partner_id = $1 AND is_active = true
+        `, [partnerId]);
+        
+        if (crmResult.rows.length === 0) {
+            console.log(`No active CRM integration for partner ${partnerId}`);
+            return { success: true, message: 'No CRM integration configured' };
+        }
+        
+        const integration = crmResult.rows[0];
+        
+        // Map lead fields according to partner's field mapping
+        const fieldMapping = integration.field_mapping || {};
+        const mappedData = {};
+        
+        for (const [ourField, theirField] of Object.entries(fieldMapping)) {
+            if (leadData[ourField] !== undefined) {
+                mappedData[theirField] = leadData[ourField];
+            }
+        }
+        
+        // Add default fields if not mapped
+        if (!mappedData.source) {
+            mappedData.source = 'Lead Distribution Platform';
+        }
+        if (!mappedData.timestamp) {
+            mappedData.timestamp = new Date().toISOString();
+        }
+        
+        // Prepare headers
+        const headers = {
+            'Content-Type': 'application/json',
+            [integration.auth_header]: integration.api_key,
+            ...integration.request_headers
+        };
+        
+        // Send lead to partner's CRM
+        const response = await axios({
+            method: integration.request_method.toLowerCase(),
+            url: integration.api_endpoint,
+            headers: headers,
+            data: mappedData,
+            timeout: 15000,
+            validateStatus: (status) => status < 500
+        });
+        
+        // Log the delivery
+        await pool.query(`
+            INSERT INTO webhook_deliveries (lead_id, partner_id, webhook_url, payload, response_status, response_body, delivered_at)
+            VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+        `, [
+            leadId, 
+            partnerId, 
+            integration.api_endpoint, 
+            JSON.stringify(mappedData),
+            response.status,
+            JSON.stringify(response.data).substring(0, 1000) // Limit response size
+        ]);
+        
+        if (response.status >= 200 && response.status < 400) {
+            return { 
+                success: true, 
+                message: `Lead delivered to ${integration.crm_name}`,
+                crmName: integration.crm_name 
+            };
+        } else {
+            return { 
+                success: false, 
+                error: `CRM delivery failed: HTTP ${response.status}`,
+                crmName: integration.crm_name
+            };
+        }
+        
+    } catch (error) {
+        console.error(`CRM delivery error for partner ${partnerId}:`, error);
+        
+        // Log failed delivery
+        try {
+            await pool.query(`
+                INSERT INTO webhook_deliveries (lead_id, partner_id, webhook_url, payload, response_status, error_message, delivered_at)
+                VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+            `, [
+                leadId, 
+                partnerId, 
+                'CRM_DELIVERY_FAILED',
+                JSON.stringify({ error: 'Failed to map or send data' }),
+                0,
+                error.message?.substring(0, 500)
+            ]);
+        } catch (logError) {
+            console.error('Failed to log CRM delivery error:', logError);
+        }
+        
+        return { 
+            success: false, 
+            error: `CRM delivery failed: ${error.message}` 
+        };
+    }
+}
 
 // Lead distribution function with transaction safety
 async function distributeLead(leadId) {
@@ -82,13 +188,32 @@ async function distributeLead(leadId) {
         
         await client.query('COMMIT');
         
-        // Send webhook asynchronously (outside transaction)
+        // Send webhook and CRM delivery asynchronously (outside transaction)
         setImmediate(async () => {
             try {
+                // Send traditional webhook
                 await sendWebhook(lead, selectedPartner);
                 console.log(`Lead ${leadId} distributed to partner ${selectedPartner.name}`);
+                
+                // Also deliver to partner's CRM system
+                const crmResult = await deliverToCRM(leadId, selectedPartner.id, {
+                    first_name: lead.first_name,
+                    last_name: lead.last_name,
+                    email: lead.email,
+                    phone: lead.phone,
+                    country: lead.country,
+                    niche: lead.niche,
+                    type: lead.type,
+                    source: lead.source
+                });
+                
+                if (crmResult.success) {
+                    console.log(`CRM Delivery: ${crmResult.message}`);
+                } else {
+                    console.error(`CRM Delivery Failed: ${crmResult.error}`);
+                }
             } catch (error) {
-                console.error(`Webhook delivery failed for lead ${leadId}:`, error);
+                console.error(`Delivery failed for lead ${leadId}:`, error);
             }
         });
         
@@ -157,4 +282,4 @@ async function retryFailedLeads() {
     }
 }
 
-module.exports = { distributeLead, retryFailedLeads };
+module.exports = { distributeLead, retryFailedLeads, deliverToCRM };

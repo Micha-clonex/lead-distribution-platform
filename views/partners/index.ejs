@@ -159,6 +159,9 @@
                                     <button class="btn btn-outline-primary" onclick="editPartner(<%= partner.id %>)" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </button>
+                                    <button class="btn btn-outline-success" onclick="manageCRM(<%= partner.id %>)" title="CRM Integration">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
                                     <button class="btn btn-outline-danger" onclick="deletePartner(<%= partner.id %>)" title="Delete">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -336,10 +339,119 @@
     </div>
 </div>
 
+<!-- CRM Integration Modal -->
+<div class="modal fade" id="crmIntegrationModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">CRM Integration Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="crmIntegrationForm">
+                    <input type="hidden" id="crmPartnerId" name="partner_id">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Partner Name</label>
+                            <input type="text" class="form-control" id="crmPartnerName" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">CRM System Name *</label>
+                            <input type="text" class="form-control" id="crmName" name="crm_name" placeholder="e.g., Manticore CRM" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">API Endpoint *</label>
+                        <input type="url" class="form-control" id="crmEndpoint" name="api_endpoint" 
+                               placeholder="https://api.manticore-crm.site/contacts" required>
+                        <div class="form-text">The URL where leads will be sent</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">API Key *</label>
+                            <input type="text" class="form-control" id="crmApiKey" name="api_key" 
+                                   placeholder="7cd8ae99-3e3f-45eb-9273-e94799d08d67" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Auth Header Name</label>
+                            <input type="text" class="form-control" id="crmAuthHeader" name="auth_header" 
+                                   value="api-key" placeholder="api-key">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Request Method</label>
+                            <select class="form-select" id="crmMethod" name="request_method">
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Preview/Test URL (Optional)</label>
+                        <input type="url" class="form-control" id="crmTestUrl" name="test_url" 
+                               placeholder="https://api.manticore-crm.site/contacts/your-api-key">
+                        <div class="form-text">URL to preview leads in partner's CRM</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Additional Headers (JSON)</label>
+                        <textarea class="form-control" id="crmHeaders" name="request_headers" rows="3" 
+                                  placeholder='{"Content-Type": "application/json", "User-Agent": "LeadPlatform"}'>{}</textarea>
+                        <div class="form-text">Additional HTTP headers to send with requests</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Field Mapping (JSON)</label>
+                        <textarea class="form-control" id="crmFieldMapping" name="field_mapping" rows="5" 
+                                  placeholder='{"first_name": "firstName", "last_name": "lastName", "email": "email", "phone": "phone", "country": "country"}'>{}</textarea>
+                        <div class="form-text">How to map lead fields to partner's CRM fields</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="crmIsActive" name="is_active" checked>
+                            <label class="form-check-label" for="crmIsActive">
+                                Enable CRM Integration
+                            </label>
+                        </div>
+                    </div>
+                    
+                </form>
+                
+                <!-- Test Section -->
+                <div class="border-top pt-3">
+                    <h6>Test Integration</h6>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <button type="button" class="btn btn-outline-info" onclick="testCRMIntegration()">
+                                <i class="fas fa-flask me-1"></i>Test Connection
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="previewCRM()">
+                                <i class="fas fa-eye me-1"></i>Preview Leads
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <div id="testResult" class="alert" style="display: none;" role="alert"></div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveCRMIntegration()">Save Integration</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function editPartner(id) {
     // Find partner data
-    const partners = <%= JSON.stringify(partners) %>;
+    const partners = <%- JSON.stringify(partners) %>;
     const partner = partners.find(p => p.id == id);
     
     if (!partner) {
@@ -422,6 +534,161 @@ document.getElementById('editPartnerForm').addEventListener('submit', function(e
         alert('Failed to update partner');
     });
 });
+
+// CRM Integration Management
+function manageCRM(partnerId) {
+    const partners = <%- JSON.stringify(partners) %>;
+    const partner = partners.find(p => p.id == partnerId);
+    
+    if (!partner) {
+        alert('Partner not found');
+        return;
+    }
+    
+    // Fill partner info
+    document.getElementById('crmPartnerId').value = partnerId;
+    document.getElementById('crmPartnerName').value = partner.name;
+    
+    // Load existing CRM integration if exists
+    fetch(`/partners/${partnerId}/crm-integration`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.integration) {
+                const integration = data.integration;
+                document.getElementById('crmName').value = integration.crm_name || '';
+                document.getElementById('crmEndpoint').value = integration.api_endpoint || '';
+                document.getElementById('crmApiKey').value = integration.api_key || '';
+                document.getElementById('crmAuthHeader').value = integration.auth_header || 'api-key';
+                document.getElementById('crmMethod').value = integration.request_method || 'POST';
+                document.getElementById('crmTestUrl').value = integration.test_url || '';
+                document.getElementById('crmHeaders').value = JSON.stringify(integration.request_headers || {}, null, 2);
+                document.getElementById('crmFieldMapping').value = JSON.stringify(integration.field_mapping || {}, null, 2);
+                document.getElementById('crmIsActive').checked = integration.is_active !== false;
+            } else {
+                // Set defaults for new integration
+                document.getElementById('crmHeaders').value = '{"Content-Type": "application/json"}';
+                document.getElementById('crmFieldMapping').value = JSON.stringify({
+                    "first_name": "firstName",
+                    "last_name": "lastName", 
+                    "email": "email",
+                    "phone": "phone",
+                    "country": "country"
+                }, null, 2);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading CRM integration:', error);
+        });
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('crmIntegrationModal')).show();
+}
+
+function saveCRMIntegration() {
+    const form = document.getElementById('crmIntegrationForm');
+    const formData = new FormData(form);
+    const partnerId = formData.get('partner_id');
+    
+    // Validate JSON fields
+    let headers, fieldMapping;
+    try {
+        headers = JSON.parse(document.getElementById('crmHeaders').value || '{}');
+        fieldMapping = JSON.parse(document.getElementById('crmFieldMapping').value || '{}');
+    } catch (e) {
+        alert('Invalid JSON in headers or field mapping');
+        return;
+    }
+    
+    const data = {
+        crm_name: formData.get('crm_name'),
+        api_endpoint: formData.get('api_endpoint'),
+        api_key: formData.get('api_key'),
+        auth_header: formData.get('auth_header'),
+        request_method: formData.get('request_method'),
+        test_url: formData.get('test_url'),
+        request_headers: headers,
+        field_mapping: fieldMapping,
+        is_active: document.getElementById('crmIsActive').checked
+    };
+    
+    fetch(`/partners/${partnerId}/crm-integration`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('crmIntegrationModal')).hide();
+            showTestResult('CRM integration saved successfully!', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            alert('Failed to save CRM integration: ' + (result.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to save CRM integration');
+    });
+}
+
+function testCRMIntegration() {
+    const partnerId = document.getElementById('crmPartnerId').value;
+    const data = {
+        api_endpoint: document.getElementById('crmEndpoint').value,
+        api_key: document.getElementById('crmApiKey').value,
+        auth_header: document.getElementById('crmAuthHeader').value,
+        request_method: document.getElementById('crmMethod').value
+    };
+    
+    if (!data.api_endpoint || !data.api_key) {
+        alert('Please fill in API endpoint and API key');
+        return;
+    }
+    
+    showTestResult('Testing connection...', 'info');
+    
+    fetch(`/partners/${partnerId}/test-crm`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showTestResult('✅ Connection successful!', 'success');
+        } else {
+            showTestResult('❌ Connection failed: ' + (result.error || 'Unknown error'), 'danger');
+        }
+    })
+    .catch(error => {
+        showTestResult('❌ Connection failed: Network error', 'danger');
+    });
+}
+
+function previewCRM() {
+    const testUrl = document.getElementById('crmTestUrl').value;
+    if (testUrl) {
+        window.open(testUrl, '_blank');
+    } else {
+        alert('No preview URL configured');
+    }
+}
+
+function showTestResult(message, type) {
+    const testResult = document.getElementById('testResult');
+    testResult.className = `alert alert-${type}`;
+    testResult.textContent = message;
+    testResult.style.display = 'block';
+    
+    setTimeout(() => {
+        testResult.style.display = 'none';
+    }, 5000);
+}
 </script>
 
 <style>
