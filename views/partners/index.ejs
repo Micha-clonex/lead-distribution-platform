@@ -713,13 +713,25 @@ function testCRMIntegration() {
     .then(response => response.json())
     .then(result => {
         if (result.success) {
-            showTestResult('✅ Connection successful!', 'success');
+            const details = [
+                result.message,
+                `Response time: ${result.responseTime}ms`,
+                result.responseData ? `Response preview: ${result.responseData.substring(0, 100)}...` : ''
+            ].filter(Boolean).join('\n');
+            
+            showDetailedTestResult(details, 'success');
         } else {
-            showTestResult('❌ Connection failed: ' + (result.error || 'Unknown error'), 'danger');
+            const details = [
+                result.error || 'Unknown error',
+                result.status ? `HTTP Status: ${result.status}` : '',
+                result.details ? `Details: ${result.details}` : ''
+            ].filter(Boolean).join('\n');
+            
+            showDetailedTestResult(details, 'danger');
         }
     })
     .catch(error => {
-        showTestResult('❌ Connection failed: Network error', 'danger');
+        showDetailedTestResult('❌ Connection failed: Network error', 'danger');
     });
 }
 
@@ -741,6 +753,18 @@ function showTestResult(message, type) {
     setTimeout(() => {
         testResult.style.display = 'none';
     }, 5000);
+}
+
+function showDetailedTestResult(message, type) {
+    const testResult = document.getElementById('testResult');
+    testResult.className = `alert alert-${type}`;
+    testResult.innerHTML = message.split('\n').map(line => `<div>${line}</div>`).join('');
+    testResult.style.display = 'block';
+    
+    // Keep detailed results visible longer
+    setTimeout(() => {
+        testResult.style.display = 'none';
+    }, 10000);
 }
 
 // Status tracking functionality

@@ -307,6 +307,7 @@ router.post('/:id/test-crm', async (req, res) => {
             headers[auth_header] = api_key;
         }
         
+        const startTime = Date.now();
         const response = await axios({
             method: request_method.toLowerCase(),
             url: api_endpoint,
@@ -318,18 +319,48 @@ router.post('/:id/test-crm', async (req, res) => {
         });
         
         if (response.status >= 200 && response.status < 400) {
-            res.json({ success: true, status: response.status });
+            res.json({ 
+                success: true, 
+                status: response.status,
+                statusText: response.statusText,
+                message: `✅ Connection successful! HTTP ${response.status} - ${response.statusText}`,
+                responseTime: Date.now() - startTime,
+                responseHeaders: response.headers,
+                responseData: typeof response.data === 'string' ? response.data.substring(0, 500) : JSON.stringify(response.data).substring(0, 500)
+            });
         } else {
             res.json({ 
                 success: false, 
-                error: `HTTP ${response.status}: ${response.statusText}` 
+                status: response.status,
+                statusText: response.statusText,
+                error: `❌ HTTP ${response.status}: ${response.statusText}`,
+                responseTime: Date.now() - startTime,
+                responseData: typeof response.data === 'string' ? response.data.substring(0, 500) : JSON.stringify(response.data).substring(0, 500)
             });
         }
     } catch (error) {
         console.error('Test CRM error:', error);
+        let errorMessage = '❌ Connection failed';
+        let errorDetails = error.message;
+        
+        if (error.code === 'ECONNABORTED') {
+            errorMessage = '⏱️ Connection timeout (10 seconds)';
+        } else if (error.code === 'ENOTFOUND') {
+            errorMessage = '🌐 DNS lookup failed - domain not found';
+        } else if (error.code === 'ECONNREFUSED') {
+            errorMessage = '🚫 Connection refused - server not accepting connections';
+        } else if (error.response) {
+            // Server responded with error status
+            errorMessage = `❌ HTTP ${error.response.status}: ${error.response.statusText}`;
+            errorDetails = error.response.data;
+        }
+        
         res.json({ 
             success: false, 
-            error: error.code === 'ECONNABORTED' ? 'Connection timeout' : 'Connection failed'
+            error: errorMessage,
+            details: errorDetails,
+            status: error.response?.status || null,
+            statusText: error.response?.statusText || null
         });
     }
 });
