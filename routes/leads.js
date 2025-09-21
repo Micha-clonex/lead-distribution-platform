@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../server');
+const { pool } = require('../config/db');
+const { distributeLead } = require('../services/distribution');
 
 // Get all leads
 router.get('/', async (req, res) => {
@@ -62,8 +63,12 @@ router.post('/inject', async (req, res) => {
         
         const leadId = result.rows[0].id;
         
-        // Trigger distribution
-        await distributeLead(leadId);
+        // Trigger distribution asynchronously
+        setImmediate(() => {
+            distributeLead(leadId).catch(error => {
+                console.error(`Distribution failed for lead ${leadId}:`, error);
+            });
+        });
         
         res.redirect('/leads?success=Lead injected and distributed successfully');
     } catch (error) {
@@ -72,88 +77,5 @@ router.post('/inject', async (req, res) => {
     }
 });
 
-// Lead distribution function
-async function distributeLead(leadId) {
-    try {
-        // Get lead details
-        const leadResult = await pool.query('SELECT * FROM leads WHERE id = $1', [leadId]);
-        const lead = leadResult.rows[0];
-        
-        if (!lead) return;
-        
-        // Find eligible partners
-        const partnersQuery = `
-            SELECT p.*, COALESCE(ds.leads_received, 0) as todays_leads,
-                   COALESCE(ds.premium_leads, 0) as todays_premium
-            FROM partners p
-            LEFT JOIN distribution_stats ds ON p.id = ds.partner_id AND ds.date = CURRENT_DATE
-            WHERE p.status = 'active' 
-                AND p.country = $1 
-                AND p.niche = $2
-                AND COALESCE(ds.leads_received, 0) < p.daily_limit
-            ORDER BY COALESCE(ds.leads_received, 0) ASC, RANDOM()
-        `;
-        
-        const partnersResult = await pool.query(partnersQuery, [lead.country, lead.niche]);
-        
-        if (partnersResult.rows.length === 0) {
-            await pool.query('UPDATE leads SET status = $1 WHERE id = $2', ['failed', leadId]);
-            return;
-        }
-        
-        // Select partner based on premium/raw ratio
-        let selectedPartner = null;
-        
-        for (const partner of partnersResult.rows) {
-            const premiumRatio = parseFloat(partner.premium_ratio);
-            const currentPremiumRatio = partner.todays_leads > 0 ? 
-                partner.todays_premium / partner.todays_leads : 0;
-            
-            if (lead.type === 'premium') {
-                if (currentPremiumRatio < premiumRatio) {
-                    selectedPartner = partner;
-                    break;
-                }
-            } else {
-                const rawRatio = 1 - premiumRatio;
-                const currentRawRatio = 1 - currentPremiumRatio;
-                if (currentRawRatio < rawRatio) {
-                    selectedPartner = partner;
-                    break;
-                }
-            }
-        }
-        
-        // Fallback to first available partner if ratio-based selection fails
-        if (!selectedPartner) {
-            selectedPartner = partnersResult.rows[0];
-        }
-        
-        // Update lead and send webhook
-        await pool.query(`
-            UPDATE leads 
-            SET assigned_partner_id = $1, status = 'distributed', distributed_at = CURRENT_TIMESTAMP 
-            WHERE id = $2
-        `, [selectedPartner.id, leadId]);
-        
-        // Update distribution stats
-        await pool.query(`
-            INSERT INTO distribution_stats (partner_id, date, leads_received, premium_leads, raw_leads)
-            VALUES ($1, CURRENT_DATE, 1, $2, $3)
-            ON CONFLICT (partner_id, date) 
-            DO UPDATE SET 
-                leads_received = distribution_stats.leads_received + 1,
-                premium_leads = distribution_stats.premium_leads + $2,
-                raw_leads = distribution_stats.raw_leads + $3
-        `, [selectedPartner.id, lead.type === 'premium' ? 1 : 0, lead.type === 'raw' ? 1 : 0]);
-        
-        // Send webhook (implement webhook delivery)
-        console.log(`Lead ${leadId} distributed to partner ${selectedPartner.name}`);
-        
-    } catch (error) {
-        console.error('Lead distribution error:', error);
-        await pool.query('UPDATE leads SET status = $1 WHERE id = $2', ['failed', leadId]);
-    }
-}
 
 module.exports = router;
