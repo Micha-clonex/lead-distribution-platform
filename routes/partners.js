@@ -70,8 +70,24 @@ router.put('/:id', async (req, res) => {
         const { id } = req.params;
         const { name, email, country, niche, webhook_url, daily_limit, premium_ratio, status, timezone } = req.body;
         
+        // Validate premium_ratio
+        if (premium_ratio !== undefined && premium_ratio !== null && premium_ratio !== '') {
+            const ratio = parseFloat(premium_ratio);
+            if (isNaN(ratio) || ratio < 0 || ratio > 100) {
+                return res.status(400).json({ success: false, error: 'Premium ratio must be between 0 and 100' });
+            }
+        }
+        
+        // Validate daily_limit  
+        if (daily_limit !== undefined && daily_limit !== null && daily_limit !== '') {
+            const limit = parseInt(daily_limit);
+            if (isNaN(limit) || limit < 1) {
+                return res.status(400).json({ success: false, error: 'Daily limit must be at least 1' });
+            }
+        }
+        
         // Convert percentage input to decimal (70 -> 0.70)
-        const ratioDecimal = premium_ratio ? (parseFloat(premium_ratio) / 100) : null;
+        const ratioDecimal = premium_ratio && premium_ratio !== '' ? (parseFloat(premium_ratio) / 100) : null;
         
         await pool.query(`
             UPDATE partners 

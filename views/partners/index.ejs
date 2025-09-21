@@ -196,10 +196,118 @@
     </div>
 </div>
 
+<!-- Edit Partner Modal -->
+<div class="modal fade" id="editPartnerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="editPartnerForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Partner</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editPartnerId" name="id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Partner Name *</label>
+                            <input type="text" class="form-control" id="editPartnerName" name="name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="editPartnerEmail" name="email" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Country *</label>
+                            <select class="form-select" id="editPartnerCountry" name="country" required>
+                                <option value="">Select Country</option>
+                                <% countries.forEach(country => { %>
+                                    <option value="<%= country %>"><%= country.charAt(0).toUpperCase() + country.slice(1) %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Niche *</label>
+                            <select class="form-select" id="editPartnerNiche" name="niche" required>
+                                <option value="">Select Niche</option>
+                                <% niches.forEach(niche => { %>
+                                    <option value="<%= niche %>"><%= niche.charAt(0).toUpperCase() + niche.slice(1) %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Webhook URL *</label>
+                        <input type="url" class="form-control" id="editPartnerWebhookUrl" name="webhook_url" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Daily Limit</label>
+                            <input type="number" class="form-control" id="editPartnerDailyLimit" name="daily_limit" min="1">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Premium Ratio (%)</label>
+                            <input type="number" class="form-control" id="editPartnerPremiumRatio" name="premium_ratio" min="0" max="100" step="0.01" required>
+                            <div class="form-text">Percentage of premium leads this partner will receive</div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="editPartnerStatus" name="status">
+                                <option value="active">Active</option>
+                                <option value="paused">Paused</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Timezone</label>
+                            <select class="form-select" id="editPartnerTimezone" name="timezone">
+                                <option value="UTC">UTC</option>
+                                <option value="Europe/Berlin">Europe/Berlin</option>
+                                <option value="Europe/Vienna">Europe/Vienna</option>
+                                <option value="Europe/Madrid">Europe/Madrid</option>
+                                <option value="America/Toronto">America/Toronto</option>
+                                <option value="Europe/Rome">Europe/Rome</option>
+                                <option value="Europe/London">Europe/London</option>
+                                <option value="Europe/Oslo">Europe/Oslo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Partner</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 function editPartner(id) {
-    // TODO: Implement edit functionality
-    alert('Edit functionality coming soon!');
+    // Find partner data
+    const partners = <%= JSON.stringify(partners) %>;
+    const partner = partners.find(p => p.id == id);
+    
+    if (!partner) {
+        alert('Partner not found');
+        return;
+    }
+    
+    // Fill edit form with current data
+    document.getElementById('editPartnerId').value = partner.id;
+    document.getElementById('editPartnerName').value = partner.name;
+    document.getElementById('editPartnerEmail').value = partner.email;
+    document.getElementById('editPartnerCountry').value = partner.country;
+    document.getElementById('editPartnerNiche').value = partner.niche;
+    document.getElementById('editPartnerWebhookUrl').value = partner.webhook_url;
+    document.getElementById('editPartnerDailyLimit').value = partner.daily_limit;
+    document.getElementById('editPartnerPremiumRatio').value = (partner.premium_ratio * 100).toFixed(2);
+    document.getElementById('editPartnerStatus').value = partner.status;
+    document.getElementById('editPartnerTimezone').value = partner.timezone;
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('editPartnerModal')).show();
 }
 
 function deletePartner(id) {
@@ -217,4 +325,45 @@ function deletePartner(id) {
         });
     }
 }
+
+// Handle edit form submission
+document.getElementById('editPartnerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const id = formData.get('id');
+    
+    const data = {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        country: formData.get('country'),
+        niche: formData.get('niche'),
+        webhook_url: formData.get('webhook_url'),
+        daily_limit: formData.get('daily_limit'),
+        premium_ratio: formData.get('premium_ratio'),
+        status: formData.get('status'),
+        timezone: formData.get('timezone')
+    };
+    
+    fetch(`/partners/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editPartnerModal')).hide();
+            location.reload();
+        } else {
+            alert('Failed to update partner: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to update partner');
+    });
+});
 </script>
