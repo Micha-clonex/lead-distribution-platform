@@ -229,7 +229,17 @@ async function distributeLead(leadId) {
             return;
         }
         
-        // Find eligible partners with transaction safety
+        // **NEW: Business Hours Aware Partner Selection**
+        const businessHoursIntelligence = require('./businessHoursIntelligence');
+        
+        // Get partners prioritized by business hours availability
+        const availablePartners = await businessHoursIntelligence.getAvailablePartners(
+            lead.country, 
+            lead.niche, 
+            true // Include queueable partners
+        );
+
+        // Convert to format compatible with existing logic
         const partnersQuery = `
             SELECT p.*, COALESCE(ds.leads_received, 0) as todays_leads,
                    COALESCE(ds.premium_leads, 0) as todays_premium
@@ -245,8 +255,72 @@ async function distributeLead(leadId) {
         
         const partnersResult = await client.query(partnersQuery, [lead.country, lead.niche]);
         
-        if (partnersResult.rows.length === 0) {
-            // Try backup partner matching strategies
+        // **NEW: Business Hours Intelligence - STRICT availability filtering**
+        const immediatelyAvailable = availablePartners.filter(p => p.isAvailable);
+        const queueablePartners = availablePartners.filter(p => p.queueable && !p.isAvailable);
+        
+        // **CRITICAL FIX**: Only attempt delivery to immediately available partners
+        let partnersToTry = [];
+        
+        if (immediatelyAvailable.length > 0) {
+            // Filter database results to only include immediately available partners
+            partnersToTry = partnersResult.rows.filter(dbPartner => 
+                immediatelyAvailable.some(availablePartner => availablePartner.id === dbPartner.id)
+            ).sort((a, b) => {
+                const aAvailable = immediatelyAvailable.find(p => p.id === a.id);
+                const bAvailable = immediatelyAvailable.find(p => p.id === b.id);
+                
+                // Sort by availability score, then by load balancing
+                if (aAvailable && bAvailable) {
+                    return bAvailable.availabilityScore - aAvailable.availabilityScore;
+                }
+                return a.todays_leads - b.todays_leads;
+            });
+            
+            console.log(`Business Hours: Found ${partnersToTry.length} immediately available partners for lead ${leadId}`);
+        } else {
+            console.log(`Business Hours: No immediately available partners for lead ${leadId}, checking queuing options`);
+        }
+        
+        if (partnersToTry.length === 0) {
+            // **CRITICAL FIX**: Try business hours queuing BEFORE backup partners
+            if (queueablePartners.length > 0) {
+                // Find the best partner to queue for (soonest available + highest score)
+                const bestQueueablePartner = queueablePartners.reduce((best, current) => {
+                    if (!best) return current;
+                    
+                    const bestTime = new Date(best.nextAvailable).getTime();
+                    const currentTime = new Date(current.nextAvailable).getTime();
+                    
+                    // Prefer sooner availability, then higher availability score
+                    if (currentTime < bestTime) return current;
+                    if (currentTime === bestTime && current.availabilityScore > best.availabilityScore) return current;
+                    return best;
+                }, null);
+                
+                if (bestQueueablePartner && bestQueueablePartner.nextAvailable) {
+                    // Queue lead for business hours delivery
+                    await businessHoursIntelligence.queueLeadForBusinessHours(
+                        leadId,
+                        bestQueueablePartner.id,
+                        bestQueueablePartner.nextAvailable
+                    );
+                    
+                    // Keep lead status as pending for scheduled delivery
+                    await client.query(`
+                        UPDATE leads 
+                        SET status = 'pending'
+                        WHERE id = $1
+                    `, [leadId]);
+                    
+                    await client.query('COMMIT');
+                    
+                    console.log(`Business Hours: Lead ${leadId} queued for partner ${bestQueueablePartner.id} at ${bestQueueablePartner.nextAvailable} (${bestQueueablePartner.name})`);
+                    return;
+                }
+            }
+            
+            // Only try backup partner matching if no business hours queuing option exists
             const backupPartner = await findBackupPartner(client, lead);
             
             if (backupPartner) {
@@ -283,7 +357,8 @@ async function distributeLead(leadId) {
                 return;
             }
             
-            // No backup found - mark as failed with retry scheduling
+            
+            // No backup or queueable partner found - mark as failed with retry scheduling
             await client.query(`
                 UPDATE leads 
                 SET status = $1

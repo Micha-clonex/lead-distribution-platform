@@ -24,6 +24,7 @@ async function initDatabase() {
             timezone VARCHAR(50) DEFAULT 'UTC',
             business_hours_start TIME DEFAULT '09:00:00',
             business_hours_end TIME DEFAULT '18:00:00',
+            weekends_enabled BOOLEAN DEFAULT false,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -140,6 +141,37 @@ async function initDatabase() {
         CREATE INDEX IF NOT EXISTS idx_leads_created_status ON leads(created_at, status);
         CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_created_status ON webhook_deliveries(created_at, status);
         CREATE INDEX IF NOT EXISTS idx_system_alerts_created_severity ON system_alerts(created_at, severity, resolved);
+        
+        -- Scheduled Deliveries table for Business Hours Intelligence
+        CREATE TABLE IF NOT EXISTS scheduled_deliveries (
+            id SERIAL PRIMARY KEY,
+            lead_id INTEGER REFERENCES leads(id) ON DELETE CASCADE,
+            partner_id INTEGER REFERENCES partners(id) ON DELETE CASCADE,
+            scheduled_time TIMESTAMP NOT NULL,
+            status VARCHAR(20) DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'delivered', 'cancelled', 'failed')),
+            reason TEXT,
+            attempts INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(lead_id, partner_id)
+        );
+        
+        CREATE INDEX IF NOT EXISTS idx_scheduled_deliveries_status_time ON scheduled_deliveries(status, scheduled_time);
+        CREATE INDEX IF NOT EXISTS idx_scheduled_deliveries_partner ON scheduled_deliveries(partner_id, status);
+        CREATE INDEX IF NOT EXISTS idx_scheduled_deliveries_lead ON scheduled_deliveries(lead_id, status);
+        `);
+        
+        // **CRITICAL**: Safe schema migration for existing deployments
+        await pool.query(`
+            ALTER TABLE partners 
+            ADD COLUMN IF NOT EXISTS weekends_enabled BOOLEAN DEFAULT false
+        `);
+        
+        // Backfill any NULL values to false for data consistency
+        await pool.query(`
+            UPDATE partners 
+            SET weekends_enabled = false 
+            WHERE weekends_enabled IS NULL
         `);
         
         console.log('Database tables initialized successfully');

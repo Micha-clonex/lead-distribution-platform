@@ -59,6 +59,7 @@ const webhookRoutes = require('./routes/webhooks');
 const analyticsRoutes = require('./routes/analytics');
 const alertsRoutes = require('./routes/alerts');
 const qualityScoringRoutes = require('./routes/qualityScoring');
+const businessHoursRoutes = require('./routes/businessHours');
 const apiRoutes = require('./routes/api');
 const authRoutes = require('./routes/auth');
 
@@ -72,6 +73,7 @@ app.use('/webhooks', requireAuth, webhookRoutes);
 app.use('/analytics', requireAuth, analyticsRoutes);
 app.use('/alerts', requireAuth, alertsRoutes);
 app.use('/quality', requireAuth, qualityScoringRoutes);
+app.use('/business-hours', requireAuth, businessHoursRoutes);
 app.use('/partner-management', requireAuth, require('./routes/partnerManagement'));
 app.use('/monitoring', requireAuth, require('./routes/monitoring'));
 app.use('/api', apiRoutes); // API routes handle their own auth
@@ -156,6 +158,19 @@ cron.schedule('0 */2 * * *', async () => {
         console.log('✅ Automated partner management completed:', summary);
     } catch (error) {
         console.error('❌ Automated partner management failed:', error.message);
+    }
+});
+
+// **NEW: Business Hours Scheduled Delivery Processing (every 2 minutes)**
+cron.schedule('*/2 * * * *', async () => {
+    try {
+        const businessHoursIntelligence = require('./services/businessHoursIntelligence');
+        const processedCount = await businessHoursIntelligence.processScheduledDeliveries();
+        if (processedCount > 0) {
+            console.log(`🕐 Processed ${processedCount} business hours scheduled deliveries`);
+        }
+    } catch (error) {
+        console.error('❌ Business hours processing failed:', error.message);
     }
 });
 

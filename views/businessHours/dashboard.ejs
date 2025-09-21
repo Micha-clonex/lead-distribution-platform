@@ -1,0 +1,435 @@
+<%- contentFor('extraCSS') %>
+<link rel="stylesheet" href="/css/admin-dashboard.css">
+<style>
+/* Business Hours Dashboard Specific Styles */
+.availability-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.availability-online { background-color: #10B981; color: white; }
+.availability-offline { background-color: #6B7280; color: white; }
+.availability-soon { background-color: #F59E0B; color: white; }
+
+.timezone-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #3B82F6;
+    margin-bottom: 1rem;
+}
+
+.partner-hours-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.business-hours-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.scheduled-delivery {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid #3B82F6;
+}
+
+.scheduled-delivery.overdue {
+    border-left-color: #EF4444;
+    background: #fef2f2;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 1.5rem 0;
+}
+
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.time-display {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #1F2937;
+}
+
+@media (max-width: 768px) {
+    .partner-hours-grid {
+        grid-template-columns: 1fr;
+    }
+    .business-hours-form {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+<%- contentFor('extraJS') %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>🕐 Business Hours Intelligence Dashboard</h1>
+        <p class="admin-subtitle">Time-zone aware lead distribution and partner availability management</p>
+        
+        <!-- Date Range Filter -->
+        <form method="GET" class="date-filter-form" style="margin: 1rem 0;">
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <label for="start_date">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date" value="<%= startDate %>" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div>
+                    <label for="end_date">End Date:</label>
+                    <input type="date" id="end_date" name="end_date" value="<%= endDate %>" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <button type="submit" style="padding: 0.5rem 1rem; background-color: #3B82F6; color: white; border: none; border-radius: 4px; cursor: pointer;">Update</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Overview Statistics -->
+    <div class="stats-overview">
+        <div class="timezone-card">
+            <h3>🌍 Partner Availability</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0;">
+                <%
+                let onlineCount = partners.filter(p => p.isAvailable && p.status === 'active').length;
+                let totalActive = partners.filter(p => p.status === 'active').length;
+                let offlineCount = totalActive - onlineCount;
+                %>
+                <span class="availability-badge availability-online">Online: <%= onlineCount %></span>
+                <span class="availability-badge availability-offline">Offline: <%= offlineCount %></span>
+                <span class="availability-badge availability-soon">Availability: <%= Math.round((onlineCount / Math.max(totalActive, 1)) * 100) %>%</span>
+            </div>
+        </div>
+
+        <div class="timezone-card">
+            <h3>📦 Scheduled Deliveries</h3>
+            <div class="time-display">
+                <%= scheduledDeliveries.filter(d => d.status === 'scheduled').length %>
+            </div>
+            <p>Pending deliveries</p>
+            <small><%= scheduledDeliveries.filter(d => new Date(d.scheduled_time) < new Date()).length %> overdue</small>
+        </div>
+
+        <div class="timezone-card">
+            <h3>📊 Business Hours Performance</h3>
+            <div class="time-display">
+                <%= analytics.businessHoursPerformance.find(p => p.period_type === 'business_hours')?.conversion_rate || 0 %>%
+            </div>
+            <p>Business hours conversion</p>
+            <small>vs <%= analytics.businessHoursPerformance.find(p => p.period_type === 'outside_hours')?.conversion_rate || 0 %>% outside hours</small>
+        </div>
+
+        <div class="timezone-card">
+            <h3>🕐 Peak Hours</h3>
+            <%
+            let peakHour = analytics.hourlyDistribution.reduce((max, hour) => 
+                hour.distributed_leads > max.distributed_leads ? hour : max, 
+                { hour: 0, distributed_leads: 0 }
+            );
+            %>
+            <div class="time-display">
+                <%= peakHour.hour.toString().padStart(2, '0') %>:00
+            </div>
+            <p>Peak distribution hour</p>
+            <small><%= peakHour.distributed_leads %> leads distributed</small>
+        </div>
+    </div>
+
+    <!-- Partner Business Hours Management -->
+    <div class="admin-panel">
+        <h2>👥 Partner Business Hours Management</h2>
+        <div class="partner-hours-grid">
+            <% partners.forEach(partner => { %>
+                <div class="timezone-card">
+                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 1rem;">
+                        <div>
+                            <h4><%= partner.name %></h4>
+                            <small style="color: #6B7280;"><%= partner.country.toUpperCase() %> - <%= partner.niche.toUpperCase() %></small>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="availability-badge availability-<%= partner.isAvailable ? 'online' : 'offline' %>">
+                                <%= partner.isAvailable ? 'Online' : 'Offline' %>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin: 1rem 0;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+                            <div>
+                                <strong>Local Time:</strong><br>
+                                <span class="time-display"><%= partner.currentTime %></span>
+                            </div>
+                            <div>
+                                <strong>Business Hours:</strong><br>
+                                <span class="time-display"><%= partner.business_hours_start %> - <%= partner.business_hours_end %></span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 0.5rem; font-size: 0.9rem;">
+                            <strong>Timezone:</strong> <%= partner.timezone %>
+                        </div>
+                        <% if (partner.nextAvailable) { %>
+                            <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #6B7280;">
+                                Next available: <%= new Date(partner.nextAvailable).toLocaleString() %>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Business Hours Update Form -->
+                    <form class="business-hours-form" onsubmit="updateBusinessHours(event, <%= partner.id %>)">
+                        <div>
+                            <label>Timezone:</label>
+                            <select name="timezone" required style="padding: 0.5rem; width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+                                <% supportedTimezones.forEach(tz => { %>
+                                    <option value="<%= tz.value %>" <%= partner.timezone === tz.value ? 'selected' : '' %>>
+                                        <%= tz.label %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Start Time:</label>
+                            <input type="time" name="business_hours_start" value="<%= partner.business_hours_start %>" required 
+                                   style="padding: 0.5rem; width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label>End Time:</label>
+                            <input type="time" name="business_hours_end" value="<%= partner.business_hours_end %>" required 
+                                   style="padding: 0.5rem; width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" name="weekends_enabled" <%= partner.weekends_enabled ? 'checked' : '' %>
+                                       style="transform: scale(1.2);">
+                                Weekend Operations
+                            </label>
+                        </div>
+                        <div>
+                            <button type="submit" style="padding: 0.5rem 1rem; background-color: #3B82F6; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%;">
+                                Update Hours
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Partner Stats -->
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; font-size: 0.8rem; color: #6B7280;">
+                        📦 Today: <%= partner.todays_leads %>/<%= partner.daily_limit %> leads | 
+                        📈 Conversions: <%= partner.todays_conversions %>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    </div>
+
+    <!-- Hourly Distribution Analysis -->
+    <div class="admin-panel">
+        <h2>📈 Hourly Distribution Patterns</h2>
+        <div class="chart-container">
+            <canvas id="hourlyDistributionChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Business Hours vs Outside Hours Performance -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0;">
+        <div class="admin-panel">
+            <h2>⏰ Business vs Outside Hours</h2>
+            <div class="chart-container">
+                <canvas id="businessVsOutsideChart"></canvas>
+            </div>
+        </div>
+
+        <div class="admin-panel">
+            <h2>🌍 Timezone Performance</h2>
+            <div class="chart-container">
+                <canvas id="timezonePerformanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scheduled Deliveries -->
+    <div class="admin-panel">
+        <h2>📅 Scheduled Deliveries</h2>
+        <div style="max-height: 400px; overflow-y: auto;">
+            <% if (scheduledDeliveries.length > 0) { %>
+                <% scheduledDeliveries.forEach(delivery => { %>
+                    <div class="scheduled-delivery <%= new Date(delivery.scheduled_time) < new Date() ? 'overdue' : '' %>">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <div>
+                                <strong>Lead #<%= delivery.lead_id %></strong> → 
+                                <strong><%= delivery.partner_name %></strong>
+                            </div>
+                            <div>
+                                <span style="font-size: 0.8rem; color: #6B7280;">
+                                    Status: <%= delivery.status.charAt(0).toUpperCase() + delivery.status.slice(1) %>
+                                </span>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; font-size: 0.8rem; color: #6B7280;">
+                            <span>📍 <%= delivery.country.toUpperCase() %> - <%= delivery.niche.toUpperCase() %></span>
+                            <span>📦 <%= delivery.type.charAt(0).toUpperCase() + delivery.type.slice(1) %></span>
+                            <span>📅 <%= new Date(delivery.scheduled_time).toLocaleString() %></span>
+                            <span>🕐 <%= delivery.timezone %></span>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <p style="text-align: center; color: #6B7280; padding: 2rem;">No scheduled deliveries at the moment.</p>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<script>
+// Update Business Hours Function
+async function updateBusinessHours(event, partnerId) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    try {
+        const response = await fetch(`/business-hours/partner/${partnerId}/update`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                timezone: formData.get('timezone'),
+                business_hours_start: formData.get('business_hours_start'),
+                business_hours_end: formData.get('business_hours_end'),
+                weekends_enabled: formData.get('weekends_enabled') === 'on'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Business hours updated successfully!');
+            location.reload(); // Refresh to show updated availability
+        } else {
+            alert('Error: ' + (result.error || 'Failed to update business hours'));
+        }
+    } catch (error) {
+        alert('Error updating business hours: ' + error.message);
+    }
+}
+
+// Hourly Distribution Chart
+const hourlyCtx = document.getElementById('hourlyDistributionChart').getContext('2d');
+const hourlyChart = new Chart(hourlyCtx, {
+    type: 'line',
+    data: {
+        labels: [<% analytics.hourlyDistribution.forEach(h => { %>'<%= h.hour.toString().padStart(2, '0') %>:00', <% }); %>],
+        datasets: [
+            {
+                label: 'Distributed Leads',
+                data: [<% analytics.hourlyDistribution.forEach(h => { %><%= h.distributed_leads %>, <% }); %>],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                tension: 0.1,
+                yAxisID: 'y'
+            },
+            {
+                label: 'Conversion Rate %',
+                data: [<% analytics.hourlyDistribution.forEach(h => { %><%= h.conversion_rate || 0 %>, <% }); %>],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                tension: 0.1,
+                yAxisID: 'y1'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: { display: true, text: 'Leads Distributed' }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: { display: true, text: 'Conversion Rate %' },
+                grid: { drawOnChartArea: false },
+                max: 100
+            }
+        }
+    }
+});
+
+// Business vs Outside Hours Chart
+const businessCtx = document.getElementById('businessVsOutsideChart').getContext('2d');
+const businessChart = new Chart(businessCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [<% analytics.businessHoursPerformance.forEach(p => { %>'<%= p.period_type %>', <% }); %>],
+        datasets: [{
+            data: [<% analytics.businessHoursPerformance.forEach(p => { %><%= p.leads_distributed %>, <% }); %>],
+            backgroundColor: ['#10B981', '#EF4444'],
+            borderColor: ['#059669', '#DC2626'],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' }
+        }
+    }
+});
+
+// Timezone Performance Chart
+const timezoneCtx = document.getElementById('timezonePerformanceChart').getContext('2d');
+const timezoneChart = new Chart(timezoneCtx, {
+    type: 'bar',
+    data: {
+        labels: [<% analytics.partnerPatterns.slice(0, 8).forEach(p => { %>'<%= p.timezone %>', <% }); %>],
+        datasets: [
+            {
+                label: 'Total Leads',
+                data: [<% analytics.partnerPatterns.slice(0, 8).forEach(p => { %><%= p.total_leads %>, <% }); %>],
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                yAxisID: 'y'
+            },
+            {
+                label: 'Conversions',
+                data: [<% analytics.partnerPatterns.slice(0, 8).forEach(p => { %><%= p.conversions %>, <% }); %>],
+                backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                yAxisID: 'y'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: { display: true, text: 'Lead Count' }
+            }
+        }
+    }
+});
+</script>
