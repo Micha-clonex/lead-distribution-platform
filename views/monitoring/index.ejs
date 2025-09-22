@@ -398,7 +398,9 @@ function toggleAutoRefresh() {
 
 async function refreshData() {
     try {
-        const response = await fetch('/monitoring/api/health');
+        const response = await fetch('/monitoring/api/health', {
+            credentials: 'same-origin'
+        });
         const result = await response.json();
         
         if (result.success) {
@@ -451,7 +453,9 @@ function updateSystemMetrics(data) {
 // Load diagnostics
 async function loadDiagnostics() {
     try {
-        const response = await fetch('/monitoring/api/diagnostics');
+        const response = await fetch('/monitoring/api/diagnostics', {
+            credentials: 'same-origin'
+        });
         const result = await response.json();
         
         const diagnosticsContent = document.getElementById('diagnosticsContent');
@@ -484,7 +488,9 @@ async function loadDiagnostics() {
 // Load trends chart
 async function loadTrendsChart() {
     try {
-        const response = await fetch('/monitoring/api/trends?hours=12');
+        const response = await fetch('/monitoring/api/trends?hours=12', {
+            credentials: 'same-origin'
+        });
         const result = await response.json();
         
         if (result.success && result.trends.length > 0) {

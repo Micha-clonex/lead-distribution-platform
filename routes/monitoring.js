@@ -77,50 +77,62 @@ router.get('/api/trends', async (req, res) => {
         const hoursInput = parseInt(hours);
         const hoursBack = (isNaN(hoursInput) || hoursInput < 1) ? 24 : Math.min(hoursInput, 168); // Default 24, max 1 week
         
-        // Get hourly trends
+        // Get hourly trends - simplified query without correlated subqueries
         const trendsResult = await pool.query(`
             SELECT 
-                date_trunc('hour', created_at) as hour,
-                
+                date_trunc('hour', l.created_at) as hour,
                 COUNT(*) as total_leads,
-                COUNT(CASE WHEN status = 'distributed' THEN 1 END) as distributed_leads,
-                COUNT(CASE WHEN status = 'failed' THEN 1 END) as failed_leads,
-                
-                -- Webhook performance for this hour
-                (SELECT COUNT(*) 
-                 FROM webhook_deliveries wd 
-                 WHERE date_trunc('hour', wd.created_at) = date_trunc('hour', l.created_at)
-                ) as webhook_attempts,
-                
-                (SELECT COUNT(*) 
-                 FROM webhook_deliveries wd 
-                 WHERE date_trunc('hour', wd.created_at) = date_trunc('hour', l.created_at)
-                   AND wd.status = 'success'
-                ) as webhook_success
-                
+                COUNT(CASE WHEN l.status = 'distributed' THEN 1 END) as distributed_leads,
+                COUNT(CASE WHEN l.status = 'failed' THEN 1 END) as failed_leads
             FROM leads l
             WHERE l.created_at >= NOW() - make_interval(hours => $1)
             GROUP BY date_trunc('hour', l.created_at)
             ORDER BY hour DESC
             LIMIT $2
         `, [hoursBack, hoursBack]);
+
+        // Get webhook performance separately
+        const webhookResult = await pool.query(`
+            SELECT 
+                date_trunc('hour', wd.created_at) as hour,
+                COUNT(*) as webhook_attempts,
+                COUNT(CASE WHEN wd.status = 'success' THEN 1 END) as webhook_success
+            FROM webhook_deliveries wd
+            WHERE wd.created_at >= NOW() - make_interval(hours => $1)
+            GROUP BY date_trunc('hour', wd.created_at)
+            ORDER BY hour DESC
+        `, [hoursBack]);
         
-        const trends = trendsResult.rows.map(row => ({
-            hour: row.hour,
-            leads: {
-                total: parseInt(row.total_leads),
-                distributed: parseInt(row.distributed_leads),
-                failed: parseInt(row.failed_leads),
-                distributionRate: row.total_leads > 0 ? 
-                    Math.round((row.distributed_leads / row.total_leads) * 100) : 0
-            },
-            webhooks: {
+        // Merge webhook data with lead data by hour
+        const webhookMap = new Map();
+        webhookResult.rows.forEach(row => {
+            webhookMap.set(row.hour.toISOString(), {
                 attempts: parseInt(row.webhook_attempts) || 0,
-                success: parseInt(row.webhook_success) || 0,
-                successRate: row.webhook_attempts > 0 ? 
-                    Math.round((row.webhook_success / row.webhook_attempts) * 100) : 0
-            }
-        }));
+                success: parseInt(row.webhook_success) || 0
+            });
+        });
+
+        const trends = trendsResult.rows.map(row => {
+            const hourKey = row.hour.toISOString();
+            const webhookData = webhookMap.get(hourKey) || { attempts: 0, success: 0 };
+            
+            return {
+                hour: row.hour,
+                leads: {
+                    total: parseInt(row.total_leads),
+                    distributed: parseInt(row.distributed_leads),
+                    failed: parseInt(row.failed_leads),
+                    distributionRate: row.total_leads > 0 ? 
+                        Math.round((row.distributed_leads / row.total_leads) * 100) : 0
+                },
+                webhooks: {
+                    attempts: webhookData.attempts,
+                    success: webhookData.success,
+                    successRate: webhookData.attempts > 0 ? 
+                        Math.round((webhookData.success / webhookData.attempts) * 100) : 0
+                }
+            };
+        });
         
         res.json({
             success: true,

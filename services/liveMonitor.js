@@ -336,7 +336,7 @@ class LiveMonitor {
                 COUNT(*) as total_leads,
                 COUNT(CASE WHEN assigned_partner_id IS NOT NULL THEN 1 END) as distributed_leads,
                 COUNT(CASE WHEN assigned_partner_id IS NULL THEN 1 END) as unassigned_leads,
-                ROUND(AVG(EXTRACT(EPOCH FROM (updated_at - created_at))), 2) as avg_distribution_time
+                ROUND(AVG(EXTRACT(EPOCH FROM (COALESCE(distributed_at, created_at) - created_at))), 2) as avg_distribution_time
             FROM leads 
             WHERE created_at >= NOW() - INTERVAL '6 hours'
             GROUP BY country, niche
