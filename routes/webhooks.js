@@ -80,4 +80,31 @@ router.put('/sources/:id/toggle', async (req, res) => {
     }
 });
 
+// Get detailed delivery information
+router.get('/deliveries/:id', async (req, res) => {
+    try {
+        const deliveryId = req.params.id;
+        
+        const delivery = await pool.query(`
+            SELECT wd.*, 
+                   p.name as partner_name, p.webhook_url, p.country as partner_country, p.niche as partner_niche,
+                   l.first_name, l.last_name, l.email, l.phone, l.country as lead_country, 
+                   l.niche as lead_niche, l.type, l.source, l.created_at as lead_created_at
+            FROM webhook_deliveries wd
+            JOIN partners p ON wd.partner_id = p.id
+            JOIN leads l ON wd.lead_id = l.id
+            WHERE wd.id = $1
+        `, [deliveryId]);
+        
+        if (delivery.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Delivery not found' });
+        }
+        
+        res.json({ success: true, delivery: delivery.rows[0] });
+    } catch (error) {
+        console.error('Error fetching delivery details:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
 module.exports = router;

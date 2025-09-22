@@ -337,8 +337,127 @@ function deleteWebhookSource(id) {
 }
 
 function viewDeliveryDetails(id) {
-    // TODO: Implement view delivery details
-    alert('View delivery details functionality coming soon!');
+    fetch(`/webhooks/deliveries/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showDeliveryModal(data.delivery);
+            } else {
+                alert('Failed to load delivery details: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading delivery details:', error);
+            alert('Error loading delivery details');
+        });
+}
+
+function showDeliveryModal(delivery) {
+    const modalHtml = `
+        <div class="modal fade" id="deliveryDetailsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Webhook Delivery Details - Lead #${delivery.lead_id}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Lead Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-primary">Lead Information</h6>
+                                <table class="table table-sm">
+                                    <tr><td class="fw-bold">Name:</td><td>${delivery.first_name} ${delivery.last_name}</td></tr>
+                                    <tr><td class="fw-bold">Email:</td><td>${delivery.email}</td></tr>
+                                    <tr><td class="fw-bold">Phone:</td><td>${delivery.phone || 'N/A'}</td></tr>
+                                    <tr><td class="fw-bold">Country:</td><td>${delivery.lead_country}</td></tr>
+                                    <tr><td class="fw-bold">Niche:</td><td>${delivery.lead_niche}</td></tr>
+                                    <tr><td class="fw-bold">Type:</td><td>
+                                        <span class="badge bg-${delivery.type === 'premium' ? 'primary' : 'secondary'}">
+                                            ${delivery.type}
+                                        </span>
+                                    </td></tr>
+                                    <tr><td class="fw-bold">Source:</td><td>${delivery.source}</td></tr>
+                                    <tr><td class="fw-bold">Created:</td><td>${new Date(delivery.lead_created_at).toLocaleString()}</td></tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-success">Partner Information</h6>
+                                <table class="table table-sm">
+                                    <tr><td class="fw-bold">Partner:</td><td>${delivery.partner_name}</td></tr>
+                                    <tr><td class="fw-bold">Country:</td><td>${delivery.partner_country}</td></tr>
+                                    <tr><td class="fw-bold">Niche:</td><td>${delivery.partner_niche}</td></tr>
+                                    <tr><td class="fw-bold">Webhook URL:</td><td><code style="font-size: 0.8rem; word-break: break-all;">${delivery.webhook_url}</code></td></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Delivery Status -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="fw-bold text-warning">Delivery Status</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td class="fw-bold">Status:</td>
+                                        <td>
+                                            <span class="badge bg-${delivery.status === 'success' ? 'success' : (delivery.status === 'failed' ? 'danger' : 'warning')} fs-6">
+                                                ${delivery.status.toUpperCase()}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr><td class="fw-bold">Attempts:</td><td>${delivery.attempts}</td></tr>
+                                    <tr><td class="fw-bold">Created:</td><td>${new Date(delivery.created_at).toLocaleString()}</td></tr>
+                                    ${delivery.delivered_at ? `<tr><td class="fw-bold">Delivered:</td><td>${new Date(delivery.delivered_at).toLocaleString()}</td></tr>` : ''}
+                                    ${delivery.response_code ? `<tr><td class="fw-bold">Response Code:</td><td><span class="badge bg-${delivery.response_code >= 200 && delivery.response_code < 300 ? 'success' : 'danger'}">HTTP ${delivery.response_code}</span></td></tr>` : ''}
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Payload Sent -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-info">Payload Sent to Partner</h6>
+                            <div class="bg-light border rounded p-3">
+                                <pre style="margin: 0; font-size: 0.85rem; white-space: pre-wrap;">${delivery.payload ? JSON.stringify(JSON.parse(delivery.payload), null, 2) : 'No payload data'}</pre>
+                            </div>
+                        </div>
+
+                        <!-- Partner Response -->
+                        ${delivery.response_body ? `
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-${delivery.status === 'success' ? 'success' : 'danger'}">Partner Response</h6>
+                            <div class="bg-light border rounded p-3">
+                                <pre style="margin: 0; font-size: 0.85rem; white-space: pre-wrap; color: ${delivery.status === 'success' ? '#198754' : '#dc3545'};">${delivery.response_body}</pre>
+                            </div>
+                        </div>` : ''}
+                    </div>
+                    <div class="modal-footer">
+                        ${delivery.status === 'failed' && delivery.attempts < 3 ? `
+                        <button type="button" class="btn btn-success" onclick="retryDelivery(${delivery.id}); $('#deliveryDetailsModal').modal('hide');">
+                            <i class="fas fa-redo me-2"></i>Retry Delivery
+                        </button>` : ''}
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Remove existing modal if present
+    const existing = document.getElementById('deliveryDetailsModal');
+    if (existing) existing.remove();
+
+    // Add modal to page and show
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('deliveryDetailsModal'));
+    modal.show();
+    
+    // Clean up when modal is hidden
+    document.getElementById('deliveryDetailsModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
 }
 
 function retryDelivery(id) {
