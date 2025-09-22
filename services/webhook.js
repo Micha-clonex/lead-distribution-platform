@@ -74,7 +74,25 @@ async function sendWebhook(lead, partner) {
         return true;
         
     } catch (error) {
-        console.error(`Webhook delivery error:`, error.message);
+        console.error(`Webhook delivery error to ${partner.name}:`, error.message);
+        
+        // Extract detailed partner response information
+        const responseCode = error.response?.status || 0;
+        const partnerResponseBody = error.response?.data || error.message;
+        
+        // Create comprehensive error message with partner details
+        let errorDetails = '';
+        if (error.response?.data) {
+            // Partner returned structured error response
+            errorDetails = typeof error.response.data === 'object' 
+                ? JSON.stringify(error.response.data) 
+                : String(error.response.data);
+            console.error(`Partner ${partner.name} rejected lead ${lead.id}: ${errorDetails}`);
+        } else {
+            // Network/connection error
+            errorDetails = `Network error: ${error.message}`;
+            console.error(`Network error sending to ${partner.name}: ${error.message}`);
+        }
         
         // CRITICAL FIX: Always update delivery status, even if deliveryId is undefined
         if (typeof deliveryId !== 'undefined') {
@@ -82,7 +100,7 @@ async function sendWebhook(lead, partner) {
                 UPDATE webhook_deliveries 
                 SET status = 'failed', response_code = $1, response_body = $2
                 WHERE id = $3
-            `, [error.response?.status || 0, error.message.substring(0, 500), deliveryId]);
+            `, [responseCode, errorDetails.substring(0, 1000), deliveryId]);
         } else {
             // Fallback: Find and update any pending delivery for this lead/partner
             console.error(`DeliveryId undefined for lead ${lead.id}, partner ${partner.id} - updating pending deliveries`);
@@ -90,7 +108,7 @@ async function sendWebhook(lead, partner) {
                 UPDATE webhook_deliveries 
                 SET status = 'failed', response_code = $1, response_body = $2
                 WHERE lead_id = $3 AND partner_id = $4 AND status = 'pending'
-            `, [error.response?.status || 0, error.message.substring(0, 500), lead.id, partner.id]);
+            `, [responseCode, errorDetails.substring(0, 1000), lead.id, partner.id]);
         }
         
         // Get attempt count for alerting

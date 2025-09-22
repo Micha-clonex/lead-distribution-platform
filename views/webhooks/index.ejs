@@ -119,7 +119,7 @@
                                 <th>Webhook URL</th>
                                 <th>Status</th>
                                 <th>Attempts</th>
-                                <th>Response Code</th>
+                                <th>Partner Response</th>
                                 <th>Created</th>
                                 <th>Delivered</th>
                                 <th>Actions</th>
@@ -157,11 +157,18 @@
                                     </td>
                                     <td>
                                         <% if (delivery.response_code) { %>
-                                            <span class="badge bg-<%= delivery.response_code >= 200 && delivery.response_code < 300 ? 'success' : 'danger' %>">
-                                                <%= delivery.response_code %>
-                                            </span>
+                                            <div class="mb-1">
+                                                <span class="badge bg-<%= delivery.response_code >= 200 && delivery.response_code < 300 ? 'success' : 'danger' %>">
+                                                    HTTP <%= delivery.response_code %>
+                                                </span>
+                                            </div>
+                                        <% } %>
+                                        <% if (delivery.response_body && delivery.response_body.trim() !== '') { %>
+                                            <small class="text-<%= delivery.status === 'success' ? 'success' : 'danger' %>" style="word-break: break-word; font-size: 0.75rem;">
+                                                <%= delivery.response_body.length > 80 ? delivery.response_body.substring(0, 80) + '...' : delivery.response_body %>
+                                            </small>
                                         <% } else { %>
-                                            <span class="text-muted">-</span>
+                                            <small class="text-muted">No response details</small>
                                         <% } %>
                                     </td>
                                     <td><%= new Date(delivery.created_at).toLocaleDateString() %></td>
