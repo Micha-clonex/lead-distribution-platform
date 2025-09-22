@@ -1,25 +1,37 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Database connection singleton
+// Database connection singleton - Production optimized
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgres://') ? { rejectUnauthorized: false } : false,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000
+    max: 10, // Reduced for production
+    min: 2,  // Keep minimum connections open
+    idleTimeoutMillis: 60000, // 60 seconds
+    connectionTimeoutMillis: 10000, // 10 seconds (was 2)
+    acquireTimeoutMillis: 15000, // Wait 15s for connection from pool
+    createTimeoutMillis: 10000,
+    destroyTimeoutMillis: 5000,
+    reapIntervalMillis: 1000,
+    createRetryIntervalMillis: 200
 });
 
-// Test database connection
-async function testConnection() {
-    try {
-        await pool.query('SELECT NOW()');
-        console.log('✅ Database connection successful');
-        return true;
-    } catch (error) {
-        console.error('❌ Database connection failed:', error.message);
-        console.error('Database URL format:', process.env.DATABASE_URL ? 'Available' : 'Missing');
-        throw error;
+// Test database connection with retry
+async function testConnection(retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            await pool.query('SELECT NOW()');
+            console.log('✅ Database connection successful');
+            return true;
+        } catch (error) {
+            console.error(`❌ Database connection attempt ${i + 1}/${retries} failed:`, error.message);
+            if (i === retries - 1) {
+                console.error('Database URL format:', process.env.DATABASE_URL ? 'Available' : 'Missing');
+                throw error;
+            }
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+        }
     }
 }
 
