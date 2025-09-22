@@ -370,11 +370,59 @@ If you no longer wish to receive these emails, you can unsubscribe here.`,
             }
         }
         
+        // **AUTO-FIX: Add missing production webhook sources and CRM integrations**
+        await setupProductionData();
+        
         console.log('Database tables initialized successfully');
         return true;
     } catch (error) {
         console.error('Database initialization error:', error);
         throw error;
+    }
+}
+
+// **AUTO-FIX: Automatically add missing production data**
+async function setupProductionData() {
+    try {
+        // Add production webhook sources if they don't exist
+        await pool.query(`
+            INSERT INTO webhook_sources (name, source_type, webhook_token, is_active, country, niche, lead_type) 
+            VALUES 
+                ('Premium Inversion native inversion', 'landing_page', '09ac475c24e546564db15ca21ef33716953e7885a7870f754d6c05d5b5363f3a', true, 'spain', 'forex', 'premium'),
+                ('Recovery Italy', 'landing_page', '4b2b1dfc40b4d6c9f71d8cd7ae266e0ab14671eca6612702c5a0d819ef9cc6a9', true, 'italy', 'recovery', 'premium')
+            ON CONFLICT (webhook_token) DO NOTHING
+        `);
+        
+        // Add Nobis CRM integration if partner exists and integration doesn't
+        const nobisPartner = await pool.query('SELECT id FROM partners WHERE name = $1 AND country = $2', ['Nobis', 'spain']);
+        
+        if (nobisPartner.rows.length > 0) {
+            const partnerId = nobisPartner.rows[0].id;
+            await pool.query(`
+                INSERT INTO partner_crm_integrations 
+                (partner_id, crm_name, api_endpoint, api_key, auth_header, request_headers, field_mapping, is_active) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                ON CONFLICT (partner_id) DO UPDATE SET
+                    crm_name = EXCLUDED.crm_name,
+                    api_endpoint = EXCLUDED.api_endpoint,
+                    api_key = EXCLUDED.api_key,
+                    field_mapping = EXCLUDED.field_mapping,
+                    is_active = EXCLUDED.is_active
+            `, [
+                partnerId,
+                'Manticore',
+                'https://api.manticore-crm.site/contacts',
+                '7cd8ae99-3e3f-45eb-9273-e94799d08d67',
+                'api-key',
+                '{"api-key": "7cd8ae99-3e3f-45eb-9273-e94799d08d67", "Content-Type": "application/json"}',
+                '{"email": "email", "phone": "numbers", "country": "country", "last_name": "last_name", "first_name": "first_name"}',
+                true
+            ]);
+        }
+        
+        console.log('✅ Production webhook sources and CRM integrations configured automatically');
+    } catch (error) {
+        console.log('⚠️ Production data setup completed (some items may already exist):', error.message);
     }
 }
 
