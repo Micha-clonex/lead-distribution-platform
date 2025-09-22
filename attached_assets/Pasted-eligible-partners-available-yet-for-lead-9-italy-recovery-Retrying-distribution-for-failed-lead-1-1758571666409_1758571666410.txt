@@ -1,0 +1,473 @@
+eligible partners available yet for lead 9 (italy/recovery)
+Retrying distribution for failed lead 10 (italy/recovery)
+No eligible partners available yet for lead 10 (italy/recovery)
+Retrying distribution for failed lead 11 (italy/recovery)
+No eligible partners available yet for lead 11 (italy/recovery)
+Processed 7 failed leads for retry
+Business Hours Cron: Processed 0 scheduled deliveries
+     [GET]302optivusagencyplatform.cc/clientIP="104.28.192.94" requestID="4b035f74-c7f0-49b8" responseTimeMS=3 responseBytes=331 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/admin/loginclientIP="104.28.192.94" requestID="81e8163e-9123-40d7" responseTimeMS=5 responseBytes=1528 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+Business Hours Cron: Processed 0 scheduled deliveries
+Processing promotional email queue...
+Processing 0 pending promotional emails
+Business Hours Cron: Processed 0 scheduled deliveries
+Business Hours Cron: Processed 0 scheduled deliveries
+     ==> Deploying...
+==> Running 'node server.js'
+Email scheduler initialized - processing every 5 minutes
+Lead Distribution Platform running on http://0.0.0.0:10000
+Database tables initialized successfully
+✅ All database systems initialized successfully
+     ==> Your service is live 🎉
+     ==> 
+     ==> ///////////////////////////////////////////////////////////
+     ==> 
+     ==> Available at your primary URL https://optivusagencyplatform.cc + 2 more domains
+     ==> 
+     ==> ///////////////////////////////////////////////////////////
+     [GET]302lead-distribution-platform.onrender.com/clientIP="35.197.97.226" requestID="d72ffa90-61d8-4484" responseTimeMS=4 responseBytes=331 userAgent="Go-http-client/2.0"
+     [GET]200lead-distribution-platform.onrender.com/admin/loginclientIP="35.197.97.226" requestID="37547ae7-778c-4bf6" responseTimeMS=2 responseBytes=1528 userAgent="Go-http-client/2.0"
+Retrying distribution for failed lead 2 (spain/forex)
+Processing 1 pending promotional emails
+Business Hours Cron: Processed 0 scheduled deliveries
+Error getting email config: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Processed 1 promotional emails
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Successfully redistributed failed lead 2
+Retrying distribution for failed lead 6 (italy/recovery)
+No eligible partners available yet for lead 6 (italy/recovery)
+Retrying distribution for failed lead 7 (italy/recovery)
+No eligible partners available yet for lead 7 (italy/recovery)
+Retrying distribution for failed lead 8 (italy/recovery)
+No eligible partners available yet for lead 8 (italy/recovery)
+Retrying distribution for failed lead 9 (italy/recovery)
+No eligible partners available yet for lead 9 (italy/recovery)
+Retrying distribution for failed lead 10 (italy/recovery)
+No eligible partners available yet for lead 10 (italy/recovery)
+Retrying distribution for failed lead 11 (italy/recovery)
+No eligible partners available yet for lead 11 (italy/recovery)
+Processed 7 failed leads for retry
+Business Hours Cron: Processed 0 scheduled deliveries
+     [GET]200optivusagencyplatform.cc/admin/loginclientIP="54.186.77.94" requestID="d20e4baf-0ab9-48e0" responseTimeMS=3 responseBytes=1528 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
+     [GET]301optivusagencyplatform.cc/clientIP="44.250.215.120" requestID="" responseTimeMS=0 responseBytes=153 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.19582"
+     [GET]301www.optivusagencyplatform.cc/clientIP="54.186.77.94" requestID="" responseTimeMS=0 responseBytes=161 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
+     [GET]302optivusagencyplatform.cc/clientIP="54.186.77.94" requestID="b9a7125e-ba21-4b9f" responseTimeMS=2 responseBytes=331 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/admin/loginclientIP="44.250.215.120" requestID="217ceefb-c980-46e8" responseTimeMS=3 responseBytes=1528 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.19582"
+     [GET]200optivusagencyplatform.cc/admin/loginclientIP="44.250.215.120" requestID="5dcc3021-ae5c-431e" responseTimeMS=8 responseBytes=1528 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Mobile/15E148 Safari/604.1"
+     [GET]302optivusagencyplatform.cc/clientIP="44.250.215.120" requestID="5bf3641a-07a1-445f" responseTimeMS=9 responseBytes=331 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Mobile/15E148 Safari/604.1"
+     [GET]302optivusagencyplatform.cc/clientIP="44.250.215.120" requestID="ce555c66-5328-459c" responseTimeMS=3 responseBytes=331 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.19582"
+     [GET]301optivusagencyplatform.cc/clientIP="44.250.215.120" requestID="" responseTimeMS=0 responseBytes=153 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Mobile/15E148 Safari/604.1"
+     [GET]301www.optivusagencyplatform.cc/clientIP="54.186.77.94" requestID="" responseTimeMS=0 responseBytes=153 userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
+     ==> Detected service running on port 10000
+     ==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+Business Hours Cron: Processed 0 scheduled deliveries
+     [GET]200optivusagencyplatform.cc/admin/loginclientIP="213.252.230.25" requestID="38db9ae3-73bf-41ba" responseTimeMS=6 responseBytes=1528 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [POST]302optivusagencyplatform.cc/admin/logoutclientIP="213.252.230.25" requestID="b5033196-3801-4f50" responseTimeMS=26 responseBytes=337 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [POST]302optivusagencyplatform.cc/admin/loginclientIP="213.252.230.25" requestID="ed377763-0d69-44c9" responseTimeMS=102 responseBytes=478 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/clientIP="213.252.230.25" requestID="504f30bd-91c7-4ee1" responseTimeMS=14 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/api/recent-activityclientIP="213.252.230.25" requestID="7b6a5f94-8b4d-44a2" responseTimeMS=6 responseBytes=211 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="8a743f11-8196-48a7" responseTimeMS=8 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/business-hoursclientIP="213.252.230.25" requestID="79d77e29-269d-4f35" responseTimeMS=19 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="05ed4906-aa3b-4159" responseTimeMS=11 responseBytes=214 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Starting status pull from partner APIs...
+Processing promotional email queue...
+Status pulling service error: error: relation "partner_crm_integrations" does not exist
+    at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Task.pullPartnerStatuses [as _execution] (/opt/render/project/src/services/statusPuller.js:10:32) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '86',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+Processing 2 pending promotional emails
+Error getting email config: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Error getting email config: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Processed 2 promotional emails
+Get CRM integration error: error: relation "partner_crm_integrations" does not exist
+    at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async /opt/render/project/src/routes/partners.js:169:24 {
+  length: 124,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '247',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+     [GET]500optivusagencyplatform.cc/partners/3/crm-integrationclientIP="213.252.230.25" requestID="f925acd4-7c84-4f88" responseTimeMS=21 responseBytes=348 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+     [POST]200optivusagencyplatform.cc/partners/3/test-crmclientIP="213.252.230.25" requestID="eaad7a7b-9f52-4efa" responseTimeMS=792 responseBytes=438 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+=== CRM Integration Request ===
+Partner ID: 3
+Body keys: [
+  'crm_name',
+  'api_endpoint',
+  'api_key',
+  'auth_header',
+  'auth_type',
+  'request_method',
+  'test_url',
+  'request_headers',
+  'field_mapping',
+  'is_active',
+  'status_pull_endpoint',
+  'status_pull_method',
+  'pull_frequency',
+  'status_field_mapping',
+  'status_pulling_active'
+]
+Body: {
+  "crm_name": "Manticore",
+  "api_endpoint": "https://api.manticore-crm.site/contacts",
+  "api_key": "7cd8ae99-3e3f-45eb-9273-e94799d08d67",
+  "auth_header": "api-key",
+  "auth_type": "api_key",
+  "request_method": "POST",
+  "test_url": "",
+  "request_headers": {
+    "Content-Type": "application/json"
+  },
+  "field_mapping": {
+    "first_name": "firstName",
+    "last_name": "lastName",
+    "birth_date": "birthDate",
+    "gender": "gender",
+    "country": "country",
+    "city": "city",
+    "language": "language",
+    "description": "description",
+    "numbers": "phone",
+    "emails": "email"
+  },
+  "is_active": true,
+  "status_pull_endpoint": "",
+  "status_pull_method": "GET",
+     [POST]200optivusagencyplatform.cc/partners/3/crm-integrationclientIP="213.252.230.25" requestID="f530799c-a5ff-4465" responseTimeMS=7 responseBytes=360 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+  "pull_frequency": 60,
+  "status_field_mapping": {},
+  "status_pulling_active": false
+}
+     [GET]304optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="d0223212-0d06-4e74" responseTimeMS=27 responseBytes=214 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Business Hours Cron: Processed 0 scheduled deliveries
+     [PUT]200optivusagencyplatform.cc/partners/3clientIP="213.252.230.25" requestID="1552b30a-17c0-475e" responseTimeMS=26 responseBytes=357 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="5eab98e8-597b-4951" responseTimeMS=9 responseBytes=12090 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="dc44c866-f37a-4665" responseTimeMS=16 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/leads/4clientIP="213.252.230.25" requestID="551fb57b-ee1f-4fdd" responseTimeMS=31 responseBytes=212 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/webhooksclientIP="213.252.230.25" requestID="b399605a-1ca4-4475" responseTimeMS=15 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Business Hours Cron: Processed 0 scheduled deliveries
+Processing promotional email queue...
+Retrying distribution for failed lead 2 (spain/forex)
+Processing 3 pending promotional emails
+Error getting email config: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Business Hours Cron: Processed 0 scheduled deliveries
+Successfully redistributed failed lead 2
+Retrying distribution for failed lead 6 (italy/recovery)
+No eligible partners available yet for lead 6 (italy/recovery)
+Retrying distribution for failed lead 7 (italy/recovery)
+No eligible partners available yet for lead 7 (italy/recovery)
+Retrying distribution for failed lead 8 (italy/recovery)
+No eligible partners available yet for lead 8 (italy/recovery)
+Retrying distribution for failed lead 9 (italy/recovery)
+No eligible partners available yet for lead 9 (italy/recovery)
+Retrying distribution for failed lead 10 (italy/recovery)
+Error getting email config: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+No eligible partners available yet for lead 10 (italy/recovery)
+Retrying distribution for failed lead 11 (italy/recovery)
+No eligible partners available yet for lead 11 (italy/recovery)
+Processed 7 failed leads for retry
+Error getting email config: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Processed 3 promotional emails
+Business Hours Cron: Processed 0 scheduled deliveries
+     ==> Deploying...
+==> Running 'node server.js'
+Email scheduler initialized - processing every 5 minutes
+Lead Distribution Platform running on http://0.0.0.0:10000
+Database tables initialized successfully
+✅ All database systems initialized successfully
+     ==> Your service is live 🎉
+     ==> 
+     ==> ///////////////////////////////////////////////////////////
+     ==> 
+     ==> Available at your primary URL https://optivusagencyplatform.cc + 2 more domains
+     ==> 
+     ==> ///////////////////////////////////////////////////////////
+Business Hours Cron: Processed 0 scheduled deliveries
+Business Hours Cron: Processed 0 scheduled deliveries
+Processing promotional email queue...
+Processing 2 pending promotional emails
+Error getting email config: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Error getting email config: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Processed 2 promotional emails
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+     [GET]304optivusagencyplatform.cc/api/recent-activityclientIP="213.252.230.25" requestID="fcc2b826-6e0e-4793" responseTimeMS=9 responseBytes=211 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/clientIP="213.252.230.25" requestID="dc373002-f399-4577" responseTimeMS=8 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/api/recent-activityclientIP="213.252.230.25" requestID="22347cf9-ec26-490e" responseTimeMS=6 responseBytes=211 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/business-hoursclientIP="213.252.230.25" requestID="16e4d253-10e0-48d9" responseTimeMS=18 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="7a076d98-89c8-426c" responseTimeMS=14 responseBytes=214 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/webhooksclientIP="213.252.230.25" requestID="8d88abb7-0550-4fbc" responseTimeMS=13 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]302optivusagencyplatform.cc/clientIP="109.236.35.45" requestID="3fea7593-f5be-47c9" responseTimeMS=3 responseBytes=337 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/admin/loginclientIP="109.236.35.45" requestID="701b4359-2e5e-4db8" responseTimeMS=5 responseBytes=1528 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]404optivusagencyplatform.cc/favicon.icoclientIP="109.236.35.45" requestID="f7323ad7-829a-4092" responseTimeMS=4 responseBytes=435 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Business Hours Cron: Processed 0 scheduled deliveries
+     [POST]302optivusagencyplatform.cc/admin/loginclientIP="109.236.35.45" requestID="16d5fab6-c631-416c" responseTimeMS=84 responseBytes=484 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/clientIP="109.236.35.45" requestID="0fdfcb63-84ca-4f9f" responseTimeMS=11 responseBytes=3079 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/api/recent-activityclientIP="109.236.35.45" requestID="83a35917-69c0-4105" responseTimeMS=16 responseBytes=396 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/business-hoursclientIP="109.236.35.45" requestID="690a576d-32c7-48ad" responseTimeMS=15 responseBytes=1753 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/qualityclientIP="109.236.35.45" requestID="1a4fe01e-e7b8-4f8c" responseTimeMS=50 responseBytes=1752 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/analyticsclientIP="109.236.35.45" requestID="a26299dd-9d46-4386" responseTimeMS=25 responseBytes=4474 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/webhooksclientIP="109.236.35.45" requestID="aee12de2-5c77-42d7" responseTimeMS=12 responseBytes=5984 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/webhooks/deliveries/2clientIP="109.236.35.45" requestID="a0401de5-f41c-44ce" responseTimeMS=35 responseBytes=698 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/webhooksclientIP="109.236.35.45" requestID="9d6694db-7b45-4a95" responseTimeMS=10 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/analyticsclientIP="109.236.35.45" requestID="8f8edc34-2207-4293" responseTimeMS=16 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/email-templatesclientIP="109.236.35.45" requestID="43b21930-34d8-4708" responseTimeMS=14 responseBytes=4452 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/api/recent-activityclientIP="109.236.35.45" requestID="815f3a21-a641-4f43" responseTimeMS=8 responseBytes=211 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/clientIP="109.236.35.45" requestID="74e4ee79-70ad-40ac" responseTimeMS=10 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Business Hours Cron: Processed 0 scheduled deliveries
+     ==> Detected service running on port 10000
+     ==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+     ==> Deploying...
+Starting status pull from partner APIs...
+Processing promotional email queue...
+Status pulling service error: error: relation "partner_crm_integrations" does not exist
+    at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Task.pullPartnerStatuses [as _execution] (/opt/render/project/src/services/statusPuller.js:10:32) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '86',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+Retrying distribution for failed lead 2 (spain/forex)
+Processing 1 pending promotional emails
+Business Hours Cron: Processed 0 scheduled deliveries
+Error getting email config: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to mario.rossi@example.com: No email service configured. Please configure an email provider in API Settings.
+Successfully redistributed failed lead 2
+Retrying distribution for failed lead 6 (italy/recovery)
+No eligible partners available yet for lead 6 (italy/recovery)
+Retrying distribution for failed lead 7 (italy/recovery)
+Processed 1 promotional emails
+No eligible partners available yet for lead 7 (italy/recovery)
+Retrying distribution for failed lead 8 (italy/recovery)
+No eligible partners available yet for lead 8 (italy/recovery)
+Retrying distribution for failed lead 9 (italy/recovery)
+No eligible partners available yet for lead 9 (italy/recovery)
+Retrying distribution for failed lead 10 (italy/recovery)
+No eligible partners available yet for lead 10 (italy/recovery)
+Retrying distribution for failed lead 11 (italy/recovery)
+No eligible partners available yet for lead 11 (italy/recovery)
+Processed 7 failed leads for retry
+==> Running 'node server.js'
+Email scheduler initialized - processing every 5 minutes
+Lead Distribution Platform running on http://0.0.0.0:10000
+Database tables initialized successfully
+✅ All database systems initialized successfully
+     ==> Your service is live 🎉
+     ==> 
+     ==> ///////////////////////////////////////////////////////////
+     ==> 
+     ==> Available at your primary URL https://optivusagencyplatform.cc + 2 more domains
+     ==> 
+     ==> ///////////////////////////////////////////////////////////
+     [GET]302lead-distribution-platform.onrender.com/clientIP="35.197.37.4" requestID="5858f438-0029-4c35" responseTimeMS=2 responseBytes=331 userAgent="Go-http-client/2.0"
+     [GET]200lead-distribution-platform.onrender.com/admin/loginclientIP="35.197.37.4" requestID="b45f00d0-0103-4b70" responseTimeMS=3 responseBytes=1528 userAgent="Go-http-client/2.0"
+     [GET]200optivusagencyplatform.cc/webhooksclientIP="213.252.230.25" requestID="d8493534-5165-47be" responseTimeMS=54 responseBytes=5709 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]404optivusagencyplatform.cc/favicon.icoclientIP="213.252.230.25" requestID="6c5d539a-a5cb-4ace" responseTimeMS=7 responseBytes=435 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="c2d1f637-817f-434d" responseTimeMS=11 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/business-hoursclientIP="213.252.230.25" requestID="ee336c91-982e-452c" responseTimeMS=21 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="16cf200a-49b2-414c" responseTimeMS=30 responseBytes=214 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [POST]200optivusagencyplatform.cc/api/webhook/09ac475c24e546564db15ca21ef33716953e7885a7870f754d6c05d5b5363f3aclientIP="34.83.187.105" requestID="be9858ec-067b-4374" responseTimeMS=36 responseBytes=426 userAgent="node"
+     [GET]200optivusagencyplatform.cc/webhooksclientIP="213.252.230.25" requestID="a7aef365-196c-4e20" responseTimeMS=21 responseBytes=5709 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="f419d62c-4f6f-4c0f" responseTimeMS=41 responseBytes=5598 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="d98b05dc-c8d1-4194" responseTimeMS=9 responseBytes=214 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="cbc75ffb-eeef-4947" responseTimeMS=9 responseBytes=214 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="5a8b86f4-45b5-4a67" responseTimeMS=41 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [POST]404optivusagencyplatform.cc/leads/12/redistributeclientIP="213.252.230.25" requestID="8667e056-1b88-40c0" responseTimeMS=7 responseBytes=446 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/leads/4clientIP="213.252.230.25" requestID="ae44a27f-6860-4def" responseTimeMS=11 responseBytes=212 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     ==> Detected service running on port 10000
+     ==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+Processed 7 failed leads for retry
+     [GET]200optivusagencyplatform.cc/admin/loginclientIP="100.29.15.209" requestID="a1cab201-2ae8-43fb" responseTimeMS=7 responseBytes=1528 userAgent="okhttp/4.9.2"
+     [GET]302optivusagencyplatform.cc/clientIP="100.29.15.209" requestID="aa51fd4c-88eb-4a8c" responseTimeMS=6 responseBytes=331 userAgent="okhttp/4.9.2"
+     [GET]404optivusagencyplatform.cc/favicon.pngclientIP="100.29.15.209" requestID="6ab5c0f4-114b-4de1" responseTimeMS=2 responseBytes=435 userAgent="okhttp/4.9.2"
+     [GET]404optivusagencyplatform.cc/favicon.icoclientIP="100.29.15.209" requestID="98539764-532b-4718" responseTimeMS=7 responseBytes=435 userAgent="okhttp/4.9.2"
+Business Hours Cron: Processed 0 scheduled deliveries
+Business Hours Cron: Processed 0 scheduled deliveries
+Starting status pull from partner APIs...
+Processing promotional email queue...
+Status pulling service error: error: relation "partner_crm_integrations" does not exist
+    at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Task.pullPartnerStatuses [as _execution] (/opt/render/project/src/services/statusPuller.js:10:32) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '86',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+Processing 0 pending promotional emails
+Business Hours Cron: Processed 0 scheduled deliveries
+     [GET]304optivusagencyplatform.cc/webhooksclientIP="213.252.230.25" requestID="e74d456e-cf36-4983" responseTimeMS=20 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/api/recent-activityclientIP="213.252.230.25" requestID="ad6782a8-e84e-40f6" responseTimeMS=32 responseBytes=211 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/clientIP="213.252.230.25" requestID="0e4b6bd4-e549-4e15" responseTimeMS=41 responseBytes=3078 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="0ea6cf59-e94a-4666" responseTimeMS=9 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="9714e488-a59f-4d6f" responseTimeMS=22 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [POST]200optivusagencyplatform.cc/api/webhook/09ac475c24e546564db15ca21ef33716953e7885a7870f754d6c05d5b5363f3aclientIP="34.187.169.217" requestID="2179b884-773d-4029" responseTimeMS=11 responseBytes=426 userAgent="node"
+     [GET]304optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="ac286688-2ab7-45ab" responseTimeMS=8 responseBytes=214 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="e500c083-88b6-4951" responseTimeMS=9 responseBytes=5637 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/clientIP="213.252.230.25" requestID="23db2565-2c65-4d4b" responseTimeMS=26 responseBytes=3089 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/api/recent-activityclientIP="213.252.230.25" requestID="d8663d1d-cdd6-4ee7" responseTimeMS=5 responseBytes=211 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/webhooksclientIP="213.252.230.25" requestID="0165231f-b9eb-44b4" responseTimeMS=16 responseBytes=5705 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+No eligible partners available yet for lead 10 (italy/recovery)
+Retrying distribution for failed lead 11 (italy/recovery)
+No eligible partners available yet for lead 11 (italy/recovery)
+Processed 7 failed leads for retry
+     [GET]301www.optivusagencyplatform.cc/robots.txtclientIP="4.227.36.11" requestID="" responseTimeMS=0 responseBytes=173 userAgent="Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.2; +https://openai.com/gptbot)"
+     [GET]404optivusagencyplatform.cc/robots.txtclientIP="4.227.36.11" requestID="d673e497-8a91-4eff" responseTimeMS=2 responseBytes=440 userAgent="Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.2; +https://openai.com/gptbot)"
+Business Hours Cron: Processed 0 scheduled deliveries
+Business Hours Cron: Processed 0 scheduled deliveries
+Processing promotional email queue...
+Processing 0 pending promotional emails
+Business Hours Cron: Processed 0 scheduled deliveries
+Business Hours Cron: Processed 0 scheduled deliveries
+     [GET]301www.optivusagencyplatform.cc/clientIP="185.203.132.199" requestID="" responseTimeMS=0 responseBytes=153 userAgent="Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36"
+Starting status pull from partner APIs...
+🤖 Running automated partner management...
+🤖 Running Automated Partner Management...
+Processing promotional email queue...
+Status pulling service error: error: relation "partner_crm_integrations" does not exist
+    at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Task.pullPartnerStatuses [as _execution] (/opt/render/project/src/services/statusPuller.js:10:32) {
+  length: 123,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '86',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+Retrying distribution for failed lead 2 (spain/forex)
+Processing 0 pending promotional emails
+Business Hours Cron: Processed 0 scheduled deliveries
+📊 Partner Management Summary: {
+  timestamp: '2025-09-22T20:00:00.858Z',
+  partnersAnalyzed: 1,
+  partnersPaused: 0,
+  pauseReasons: {},
+  averageMetrics: {
+    avgConversionRate: '0.00',
+    avgFailureRate: '100.00',
+    totalLeadsProcessed: 2
+  }
+}
+✅ Automated partner management completed: {
+  timestamp: '2025-09-22T20:00:00.858Z',
+  partnersAnalyzed: 1,
+  partnersPaused: 0,
+  pauseReasons: {},
+  averageMetrics: {
+    avgConversionRate: '0.00',
+    avgFailureRate: '100.00',
+    totalLeadsProcessed: 2
+  }
+}
+Successfully redistributed failed lead 2
+Retrying distribution for failed lead 6 (italy/recovery)
+No eligible partners available yet for lead 6 (italy/recovery)
+Retrying distribution for failed lead 7 (italy/recovery)
+No eligible partners available yet for lead 7 (italy/recovery)
+Retrying distribution for failed lead 8 (italy/recovery)
+No eligible partners available yet for lead 8 (italy/recovery)
+Retrying distribution for failed lead 9 (italy/recovery)
+No eligible partners available yet for lead 9 (italy/recovery)
+Retrying distribution for failed lead 10 (italy/recovery)
+No eligible partners available yet for lead 10 (italy/recovery)
+Retrying distribution for failed lead 11 (italy/recovery)
+No eligible partners available yet for lead 11 (italy/recovery)
+Processed 7 failed leads for retry
+Business Hours Cron: Processed 0 scheduled deliveries
+     [GET]304optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="d7eef03d-86c4-4e5a" responseTimeMS=8 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Business Hours Cron: Processed 0 scheduled deliveries
+     [GET]304optivusagencyplatform.cc/business-hoursclientIP="213.252.230.25" requestID="6be8aa6b-8378-4ce5" responseTimeMS=12 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Processing promotional email queue...
+Processing 1 pending promotional emails
+Error getting email config: No email service configured. Please configure an email provider in API Settings.
+Processed 1 promotional emails
+Failed to send promotional email to remedios.bustamante@correo.es: No email service configured. Please configure an email provider in API Settings.
+Failed to send promotional email to remedios.bustamante@correo.es: No email service configured. Please configure an email provider in API Settings.
+Business Hours Cron: Processed 0 scheduled deliveries
