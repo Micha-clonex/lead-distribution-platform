@@ -79,20 +79,28 @@ router.get('/', async (req, res) => {
 // Add new partner
 router.post('/', async (req, res) => {
     try {
-        const { name, email, country, niche, daily_limit, premium_ratio, timezone } = req.body;
+        const { name, email, country, niche, daily_limit, premium_ratio, timezone, webhook_url } = req.body;
         
         // Convert percentage input to decimal (70 -> 0.70)
         const ratioDecimal = premium_ratio ? (parseFloat(premium_ratio) / 100) : 0.70;
         
+        // Validate required fields
+        if (!name || !email || !country || !niche) {
+            return res.redirect('/partners?error=Name, email, country, and niche are required');
+        }
+        
+        // Provide default webhook URL if not provided
+        const finalWebhookUrl = webhook_url || 'https://example.com/webhook';
+        
         await pool.query(`
-            INSERT INTO partners (name, email, country, niche, daily_limit, premium_ratio, timezone)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-        `, [name, email, country, niche, daily_limit || 50, ratioDecimal, timezone || 'UTC']);
+            INSERT INTO partners (name, email, country, niche, daily_limit, premium_ratio, timezone, webhook_url)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [name, email, country, niche, daily_limit || 50, ratioDecimal, timezone || 'UTC', finalWebhookUrl]);
         
         res.redirect('/partners?success=Partner added successfully');
     } catch (error) {
         console.error('Partner creation error:', error);
-        res.redirect('/partners?error=Failed to add partner');
+        res.redirect('/partners?error=Failed to add partner: ' + error.message);
     }
 });
 
