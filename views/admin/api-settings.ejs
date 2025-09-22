@@ -1,4 +1,26 @@
-<%- include('../partials/admin-header') %>
+<%- contentFor('head') %>
+<style>
+.api-card {
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+    transition: box-shadow 0.3s;
+}
+.api-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.btn-action {
+    margin: 0 2px;
+    padding: 5px 10px;
+    font-size: 12px;
+}
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+</style>
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">API Settings</h1>
@@ -426,4 +448,3 @@ document.getElementById('settingModal').addEventListener('hidden.bs.modal', func
 });
 </script>
 
-<%- include('../partials/admin-footer') %>
