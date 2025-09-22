@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/db');
+const { requireAuth } = require('../middleware/auth');
 const crypto = require('crypto');
+
+// Apply authentication to all webhook routes
+router.use(requireAuth);
 
 // Get webhook sources and deliveries
 router.get('/', async (req, res) => {
@@ -19,6 +23,8 @@ router.get('/', async (req, res) => {
             FROM webhook_deliveries wd
             JOIN partners p ON wd.partner_id = p.id
             JOIN leads l ON wd.lead_id = l.id
+            WHERE wd.webhook_url NOT LIKE 'internal://%' 
+              AND wd.status != 'migrated'
             ORDER BY wd.created_at DESC
             LIMIT 100
         `);
