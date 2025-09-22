@@ -184,7 +184,20 @@ initEmailScheduler();
 // Start server
 app.listen(PORT, '0.0.0.0', async () => {
     console.log(`Lead Distribution Platform running on http://0.0.0.0:${PORT}`);
-    await initDatabase();
+    try {
+        // Initialize main database tables first
+        await initDatabase();
+        
+        // Initialize AlertSystem after main database is ready
+        const AlertSystem = require('./services/alertSystem');
+        const alertSystem = new AlertSystem();
+        await alertSystem.initializeDatabase();
+        
+        console.log('✅ All database systems initialized successfully');
+    } catch (error) {
+        console.error('❌ Database initialization failed:', error);
+        process.exit(1);
+    }
 });
 
 module.exports = { pool };

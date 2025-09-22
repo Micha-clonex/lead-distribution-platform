@@ -12,7 +12,7 @@ class AlertSystem {
         };
         
         this.lastAlerts = new Map();
-        this.initializeDatabase();
+        // Database initialization moved to explicit call after main db init
     }
 
     async initializeDatabase() {
