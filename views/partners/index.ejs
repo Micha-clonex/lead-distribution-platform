@@ -910,6 +910,9 @@ function saveCRMIntegration() {
         status_pulling_active: document.getElementById('statusPullingActive') ? document.getElementById('statusPullingActive').checked : false
     };
     
+    console.log('Sending CRM integration data:', data);
+    console.log('Partner ID:', partnerId);
+    
     fetch(`/partners/${partnerId}/crm-integration`, {
         method: 'POST',
         headers: {
