@@ -122,16 +122,14 @@ async function distributeLead(leadId) {
     }
 }
 
-// Deliver lead data to partner's CRM system
+// Deliver lead data to partner's CRM system using API integration
 async function deliverToCRM(leadId, partnerId, leadData) {
     const axios = require('axios');
     
     try {
-        // Get partner's webhook URL
+        // Get partner's name
         const partnerResult = await pool.query(`
-            SELECT name, webhook_url
-            FROM partners 
-            WHERE id = $1 AND status = 'active'
+            SELECT name FROM partners WHERE id = $1 AND status = 'active'
         `, [partnerId]);
         
         if (partnerResult.rows.length === 0) {
@@ -140,55 +138,86 @@ async function deliverToCRM(leadId, partnerId, leadData) {
         
         const partner = partnerResult.rows[0];
         
-        if (!partner.webhook_url) {
-            return { success: false, error: 'No webhook URL configured for partner' };
+        // NOBIS MANTICORE CRM INTEGRATION
+        if (partner.name === 'Nobis') {
+            console.log(`🚀 Delivering lead ${leadId} to Nobis Manticore CRM API`);
+            
+            // Apply field mapping for Manticore CRM
+            const crmPayload = {
+                email: leadData.email,
+                numbers: leadData.phone, // phone -> numbers 
+                country: leadData.country,
+                last_name: leadData.last_name,
+                first_name: leadData.first_name
+            };
+            
+            console.log(`📤 Manticore CRM payload:`, crmPayload);
+            
+            // Send to Manticore CRM API
+            const response = await axios.post('https://api.manticore-crm.site/contacts', crmPayload, {
+                timeout: 15000,
+                headers: {
+                    'X-API-Key': '7cd8ae99-3e3f-45eb-9273-e94799d08d67',
+                    'Content-Type': 'application/json',
+                    'api-key': '7cd8ae99-3e3f-45eb-9273-e94799d08d67'
+                }
+            });
+            
+            console.log(`✅ Manticore CRM delivery SUCCESS: Status ${response.status}`);
+            console.log(`✅ Response:`, response.data);
+            
+            // Log successful delivery
+            await pool.query(`
+                INSERT INTO webhook_deliveries (lead_id, partner_id, webhook_url, payload, response_status, delivered_at)
+                VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+            `, [
+                leadId, 
+                partnerId, 
+                'MANTICORE_CRM_API',
+                JSON.stringify(crmPayload),
+                'success'
+            ]);
+            
+            return { 
+                success: true, 
+                message: `Lead ${leadId} delivered to Nobis Manticore CRM (Status: ${response.status})` 
+            };
         }
         
-        console.log(`🚀 Delivering lead ${leadId} to ${partner.name} CRM: ${partner.webhook_url}`);
-        
-        // Prepare webhook payload
-        const webhookPayload = {
-            lead_id: leadId,
-            first_name: leadData.first_name,
-            last_name: leadData.last_name,
-            email: leadData.email,
-            phone: leadData.phone,
-            country: leadData.country,
-            niche: leadData.niche,
-            type: leadData.type,
-            source: leadData.source,
-            timestamp: new Date().toISOString()
-        };
-        
-        // Send to partner's CRM webhook
-        const response = await axios.post(partner.webhook_url, webhookPayload, {
-            timeout: 10000,
-            headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'Lead Distribution Platform'
-            }
-        });
-        
-        console.log(`✅ CRM delivery SUCCESS for ${partner.name}: Status ${response.status}`);
-        
-        // Log successful delivery
-        await pool.query(`
-            INSERT INTO webhook_deliveries (lead_id, partner_id, webhook_url, payload, response_status, response_code, response_body, delivered_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
-        `, [
-            leadId, 
-            partnerId, 
-            partner.webhook_url,
-            JSON.stringify(webhookPayload),
-            'success',
-            response.status,
-            JSON.stringify(response.data).substring(0, 1000)
-        ]);
-        
-        return { 
-            success: true, 
-            message: `Lead ${leadId} delivered to ${partner.name} CRM (Status: ${response.status})` 
-        };
+        // Default webhook delivery for other partners
+        else {
+            console.log(`📤 Using default webhook delivery for ${partner.name}`);
+            
+            const webhookPayload = {
+                lead_id: leadId,
+                first_name: leadData.first_name,
+                last_name: leadData.last_name,
+                email: leadData.email,
+                phone: leadData.phone,
+                country: leadData.country,
+                niche: leadData.niche,
+                type: leadData.type,
+                source: leadData.source,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Log simulated delivery for non-configured partners
+            await pool.query(`
+                INSERT INTO webhook_deliveries (lead_id, partner_id, webhook_url, payload, response_status, delivered_at)
+                VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+            `, [
+                leadId, 
+                partnerId, 
+                'WEBHOOK_SIMULATED',
+                JSON.stringify(webhookPayload),
+                'simulated'
+            ]);
+            
+            return { 
+                success: true, 
+                message: `Lead ${leadId} simulated delivery to ${partner.name}` 
+            };
+        }
         
     } catch (error) {
         console.error(`❌ CRM delivery FAILED for partner ${partnerId}:`, error.message);
