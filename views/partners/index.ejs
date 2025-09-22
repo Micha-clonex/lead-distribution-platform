@@ -368,13 +368,24 @@
                     <input type="hidden" id="crmPartnerId" name="partner_id">
                     
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Partner Name</label>
                             <input type="text" class="form-control" id="crmPartnerName" readonly>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">CRM System Name *</label>
                             <input type="text" class="form-control" id="crmName" name="crm_name" placeholder="e.g., Manticore CRM" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">CRM Type</label>
+                            <select class="form-select" id="crmType" name="crm_type" onchange="updateCrmTemplateFields()">
+                                <option value="generic">Generic (Default)</option>
+                                <option value="manticore">Manticore CRM</option>
+                                <option value="salesforce">Salesforce</option>
+                                <option value="hubspot">HubSpot</option>
+                                <option value="custom">Custom (Use Field Mapping)</option>
+                            </select>
+                            <div class="form-text">Select CRM type for optimized test payloads</div>
                         </div>
                     </div>
                     
@@ -923,7 +934,9 @@ function testCRMIntegration() {
         api_endpoint: document.getElementById('crmEndpoint').value,
         api_key: document.getElementById('crmApiKey').value,
         auth_header: document.getElementById('crmAuthHeader').value,
-        request_method: document.getElementById('crmMethod').value
+        request_method: document.getElementById('crmMethod').value,
+        crm_type: document.getElementById('crmType').value,
+        field_mapping: document.getElementById('crmFieldMapping').value
     };
     
     if (!data.api_endpoint || !data.api_key) {
@@ -971,6 +984,54 @@ function previewCRM() {
         window.open(testUrl, '_blank');
     } else {
         alert('No preview URL configured');
+    }
+}
+
+// Update CRM field mapping based on selected template
+function updateCrmTemplateFields() {
+    const crmType = document.getElementById('crmType').value;
+    const fieldMappingTextarea = document.getElementById('crmFieldMapping');
+    
+    const templates = {
+        'manticore': {
+            "first_name": "firstName",
+            "last_name": "lastName", 
+            "birth_date": "birthDate",
+            "gender": "gender",
+            "country": "country",
+            "city": "city",
+            "language": "language",
+            "description": "description",
+            "numbers": "phone",
+            "emails": "email"
+        },
+        'generic': {
+            "firstName": "firstName",
+            "lastName": "lastName", 
+            "email": "email",
+            "phone": "phone",
+            "country": "country",
+            "source": "source"
+        },
+        'salesforce': {
+            "FirstName": "firstName",
+            "LastName": "lastName",
+            "Email": "email", 
+            "Phone": "phone",
+            "Company": "company",
+            "LeadSource": "source"
+        },
+        'hubspot': {
+            "properties.firstname": "firstName",
+            "properties.lastname": "lastName",
+            "properties.email": "email",
+            "properties.phone": "phone",
+            "properties.lifecyclestage": "leadStage"
+        }
+    };
+    
+    if (crmType !== 'custom' && templates[crmType]) {
+        fieldMappingTextarea.value = JSON.stringify(templates[crmType], null, 2);
     }
 }
 

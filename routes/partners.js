@@ -318,18 +318,90 @@ router.post('/:id/test-crm', async (req, res) => {
             return res.json({ success: false, error: 'Invalid request method' });
         }
         
-        const testPayload = {
-            first_name: 'John',
-            last_name: 'Wick',
-            birth_date: '1990-01-01',
-            gender: 'M',
-            country: 'Germany',
-            city: 'Berlin',
-            language: 'English',
-            description: 'Test lead from Lead Distribution Platform',
-            numbers: '+1234567890',
-            emails: 'test@example.com'
+        // Get CRM type or use field mapping to determine test payload format
+        const { crm_type, field_mapping } = req.body;
+        
+        // Define different CRM test payload templates
+        const crmTemplates = {
+            'manticore': {
+                first_name: 'John',
+                last_name: 'Wick',
+                birth_date: '1990-01-01',
+                gender: 'M',
+                country: 'Germany',
+                city: 'Berlin',
+                language: 'English',
+                description: 'Test lead from Lead Distribution Platform',
+                numbers: '+1234567890',
+                emails: 'test@example.com'
+            },
+            'generic': {
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'test@example.com',
+                phone: '+1234567890',
+                country: 'test',
+                source: 'Lead Platform Test'
+            },
+            'salesforce': {
+                FirstName: 'John',
+                LastName: 'Doe',
+                Email: 'test@example.com',
+                Phone: '+1234567890',
+                Company: 'Test Company',
+                LeadSource: 'API Test'
+            },
+            'hubspot': {
+                properties: {
+                    firstname: 'John',
+                    lastname: 'Doe',
+                    email: 'test@example.com',
+                    phone: '+1234567890',
+                    lifecyclestage: 'lead'
+                }
+            }
         };
+        
+        // Determine which template to use
+        let testPayload;
+        
+        if (crm_type && crmTemplates[crm_type.toLowerCase()]) {
+            // Use specific CRM template
+            testPayload = crmTemplates[crm_type.toLowerCase()];
+        } else if (field_mapping && field_mapping.trim()) {
+            // Use field mapping to transform generic payload
+            try {
+                const mapping = JSON.parse(field_mapping);
+                const genericData = {
+                    firstName: 'John',
+                    lastName: 'Doe',
+                    email: 'test@example.com',
+                    phone: '+1234567890',
+                    country: 'Germany',
+                    source: 'Lead Platform Test',
+                    description: 'Test lead submission'
+                };
+                
+                testPayload = {};
+                Object.keys(mapping).forEach(targetField => {
+                    const sourceField = mapping[targetField];
+                    if (genericData[sourceField]) {
+                        testPayload[targetField] = genericData[sourceField];
+                    }
+                });
+                
+                // Add some default fields if mapping is incomplete
+                if (Object.keys(testPayload).length === 0) {
+                    testPayload = crmTemplates.generic;
+                }
+            } catch (e) {
+                // Fall back to generic if mapping is invalid
+                testPayload = crmTemplates.generic;
+            }
+        } else {
+            // Default to generic format
+            testPayload = crmTemplates.generic;
+        }
         
         const headers = {
             'Content-Type': 'application/json'
