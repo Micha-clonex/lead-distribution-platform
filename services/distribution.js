@@ -439,10 +439,14 @@ async function distributeLead(leadId) {
         });
         
     } catch (error) {
-        await client.query('ROLLBACK');
+        try {
+            await client.query('ROLLBACK');
+        } catch (rollbackError) {
+            console.error('Rollback error:', rollbackError);
+        }
         console.error('Lead distribution error:', error);
         
-        // Mark lead as failed
+        // Mark lead as failed using separate connection
         try {
             await pool.query('UPDATE leads SET status = $1 WHERE id = $2', ['failed', leadId]);
         } catch (updateError) {
@@ -451,7 +455,11 @@ async function distributeLead(leadId) {
         
         throw error;
     } finally {
-        client.release();
+        try {
+            client.release();
+        } catch (releaseError) {
+            console.error('Client release error:', releaseError);
+        }
     }
 }
 
