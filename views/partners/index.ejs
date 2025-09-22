@@ -991,47 +991,64 @@ function previewCRM() {
 function updateCrmTemplateFields() {
     const crmType = document.getElementById('crmType').value;
     const fieldMappingTextarea = document.getElementById('crmFieldMapping');
+    const authHeaderInput = document.getElementById('crmAuthHeader');
     
     const templates = {
         'manticore': {
-            "first_name": "firstName",
-            "last_name": "lastName", 
-            "birth_date": "birthDate",
-            "gender": "gender",
-            "country": "country",
-            "city": "city",
-            "language": "language",
-            "description": "description",
-            "numbers": "phone",
-            "emails": "email"
+            fieldMapping: {
+                "first_name": "firstName",
+                "last_name": "lastName", 
+                "birth_date": "birthDate",
+                "gender": "gender",
+                "country": "country",
+                "city": "city",
+                "language": "language",
+                "description": "description",
+                "numbers": "phone",
+                "emails": "email"
+            },
+            authHeader: "api-key"  // Manticore requires this specific header
         },
         'generic': {
-            "firstName": "firstName",
-            "lastName": "lastName", 
-            "email": "email",
-            "phone": "phone",
-            "country": "country",
-            "source": "source"
+            fieldMapping: {
+                "firstName": "firstName",
+                "lastName": "lastName", 
+                "email": "email",
+                "phone": "phone",
+                "country": "country",
+                "source": "source"
+            },
+            authHeader: "X-API-Key"
         },
         'salesforce': {
-            "FirstName": "firstName",
-            "LastName": "lastName",
-            "Email": "email", 
-            "Phone": "phone",
-            "Company": "company",
-            "LeadSource": "source"
+            fieldMapping: {
+                "FirstName": "firstName",
+                "LastName": "lastName",
+                "Email": "email", 
+                "Phone": "phone",
+                "Company": "company",
+                "LeadSource": "source"
+            },
+            authHeader: "Authorization"
         },
         'hubspot': {
-            "properties.firstname": "firstName",
-            "properties.lastname": "lastName",
-            "properties.email": "email",
-            "properties.phone": "phone",
-            "properties.lifecyclestage": "leadStage"
+            fieldMapping: {
+                "properties.firstname": "firstName",
+                "properties.lastname": "lastName",
+                "properties.email": "email",
+                "properties.phone": "phone",
+                "properties.lifecyclestage": "leadStage"
+            },
+            authHeader: "Authorization"
         }
     };
     
     if (crmType !== 'custom' && templates[crmType]) {
-        fieldMappingTextarea.value = JSON.stringify(templates[crmType], null, 2);
+        const template = templates[crmType];
+        fieldMappingTextarea.value = JSON.stringify(template.fieldMapping, null, 2);
+        if (authHeaderInput && template.authHeader) {
+            authHeaderInput.value = template.authHeader;
+        }
     }
 }
 
