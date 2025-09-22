@@ -145,9 +145,9 @@ cron.schedule('0 0 * * *', async () => {
 // CRM delivery monitoring (disabled - using real-time CRM integration)
 // cron.schedule('*/5 * * * *', retryFailedWebhooks);
 
-// Failed leads retry cron job (every 10 minutes)
-const { retryFailedLeads } = require('./services/distribution');
-cron.schedule('*/10 * * * *', retryFailedLeads);
+// Failed leads retry cron job (every 10 minutes) - DISABLED for now
+// const { retryFailedLeads } = require('./services/distribution');
+// cron.schedule('*/10 * * * *', retryFailedLeads);
 
 // Partner status pulling cron job (every 15 minutes)
 cron.schedule('*/15 * * * *', pullPartnerStatuses);

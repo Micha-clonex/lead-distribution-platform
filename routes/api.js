@@ -256,7 +256,6 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
                 console.error(`Distribution failed for lead ${leadId}:`, error);
             });
         });
-        
         res.json({ 
             success: true, 
             lead_id: leadId,
