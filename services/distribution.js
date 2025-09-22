@@ -411,14 +411,12 @@ async function distributeLead(leadId) {
         
         await client.query('COMMIT');
         
-        // Send webhook and CRM delivery asynchronously (outside transaction)
+        // Deliver to partner's CRM system directly (no webhooks needed)
         setImmediate(async () => {
             try {
-                // Send traditional webhook
-                await sendWebhook(lead, selectedPartner);
                 console.log(`Lead ${leadId} distributed to partner ${selectedPartner.name}`);
                 
-                // Also deliver to partner's CRM system
+                // Deliver directly to partner's CRM system via API integration
                 const crmResult = await deliverToCRM(leadId, selectedPartner.id, {
                     first_name: lead.first_name,
                     last_name: lead.last_name,
@@ -431,12 +429,12 @@ async function distributeLead(leadId) {
                 });
                 
                 if (crmResult.success) {
-                    console.log(`CRM Delivery: ${crmResult.message}`);
+                    console.log(`✅ CRM Integration Delivery Success: ${crmResult.message}`);
                 } else {
-                    console.error(`CRM Delivery Failed: ${crmResult.error}`);
+                    console.error(`❌ CRM Integration Delivery Failed: ${crmResult.error}`);
                 }
             } catch (error) {
-                console.error(`Delivery failed for lead ${leadId}:`, error);
+                console.error(`CRM delivery failed for lead ${leadId}:`, error);
             }
         });
         
