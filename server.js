@@ -78,6 +78,7 @@ app.use('/partner-management', requireAuth, require('./routes/partnerManagement'
 app.use('/monitoring', requireAuth, require('./routes/monitoring'));
 app.use('/email-templates', requireAuth, require('./routes/emailTemplates'));
 app.use('/api-settings', requireAuth, require('./routes/apiSettings'));
+app.use('/profile', requireAuth, require('./routes/profile'));
 app.use('/api', apiRoutes); // API routes handle their own auth
 
 // Dashboard route (protected)

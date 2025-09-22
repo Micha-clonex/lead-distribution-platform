@@ -44,11 +44,29 @@ async function createAdmin(username, password, email) {
     return result.rows[0];
 }
 
+// Update admin password
+async function updateAdminPassword(adminId, newPassword) {
+    const hashedPassword = await hashPassword(newPassword);
+    const result = await pool.query(
+        'UPDATE admin_users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, username, email',
+        [hashedPassword, adminId]
+    );
+    return result.rows[0];
+}
+
+// Get admin by ID
+async function getAdminById(adminId) {
+    const result = await pool.query('SELECT * FROM admin_users WHERE id = $1', [adminId]);
+    return result.rows[0];
+}
+
 module.exports = {
     requireAuth,
     requireGuest,
     hashPassword,
     comparePassword,
     getAdminByUsername,
-    createAdmin
+    getAdminById,
+    createAdmin,
+    updateAdminPassword
 };
