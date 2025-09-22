@@ -186,34 +186,15 @@ router.get('/:id/crm-integration', async (req, res) => {
 router.post('/:id/crm-integration', async (req, res) => {
     try {
         const { id } = req.params;
-        console.log('CRM Integration save request for partner:', id);
-        console.log('Request body:', req.body);
         
-        const {
-            crm_name,
-            api_endpoint,
-            api_key,
-            auth_header,
-            auth_type,
-            request_method,
-            test_url,
-            request_headers,
-            field_mapping,
-            is_active,
-            status_pull_endpoint,
-            status_pull_method,
-            pull_frequency,
-            status_field_mapping,
-            status_pulling_active
-        } = req.body;
+        // Simple response first to test basic functionality
+        console.log('=== CRM Integration Request ===');
+        console.log('Partner ID:', id);
+        console.log('Body keys:', Object.keys(req.body));
+        console.log('Body:', JSON.stringify(req.body, null, 2));
         
-        // Validate required fields
-        if (!crm_name || !crm_name.trim()) {
-            return res.status(400).json({ error: 'CRM name is required' });
-        }
-        if (!api_endpoint || !api_endpoint.trim()) {
-            return res.status(400).json({ error: 'API endpoint is required' });
-        }
+        res.json({ success: true, message: 'Test response - server is working' });
+        return;
         
         // Validate API endpoint URL
         if (api_endpoint) {
