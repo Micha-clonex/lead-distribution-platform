@@ -79,7 +79,7 @@ router.get('/', async (req, res) => {
 // Add new partner
 router.post('/', async (req, res) => {
     try {
-        const { name, email, country, niche, daily_limit, premium_ratio, timezone, webhook_url } = req.body;
+        const { name, email, country, niche, daily_limit, premium_ratio, timezone } = req.body;
         
         // Convert percentage input to decimal (70 -> 0.70)
         const ratioDecimal = premium_ratio ? (parseFloat(premium_ratio) / 100) : 0.70;
@@ -89,13 +89,13 @@ router.post('/', async (req, res) => {
             return res.redirect('/partners?error=Name, email, country, and niche are required');
         }
         
-        // Provide default webhook URL if not provided
-        const finalWebhookUrl = webhook_url || 'https://example.com/webhook';
+        // Since external webhooks are not used, provide internal default
+        const defaultWebhookUrl = 'internal://partner-endpoint';
         
         await pool.query(`
             INSERT INTO partners (name, email, country, niche, daily_limit, premium_ratio, timezone, webhook_url)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        `, [name, email, country, niche, daily_limit || 50, ratioDecimal, timezone || 'UTC', finalWebhookUrl]);
+        `, [name, email, country, niche, daily_limit || 50, ratioDecimal, timezone || 'UTC', defaultWebhookUrl]);
         
         res.redirect('/partners?success=Partner added successfully');
     } catch (error) {
