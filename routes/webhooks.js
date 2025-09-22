@@ -6,7 +6,14 @@ const crypto = require('crypto');
 // Get webhook sources and deliveries
 router.get('/', async (req, res) => {
     try {
-        const sourcesResult = await pool.query('SELECT * FROM webhook_sources ORDER BY created_at DESC');
+        // Get webhook sources with lead count
+        const sourcesResult = await pool.query(`
+            SELECT ws.*, 
+                   COALESCE((SELECT COUNT(*) FROM leads l WHERE l.source = ws.name), 0) as leads_received
+            FROM webhook_sources ws 
+            ORDER BY ws.created_at DESC
+        `);
+        
         const deliveriesResult = await pool.query(`
             SELECT wd.*, p.name as partner_name, l.email as lead_email 
             FROM webhook_deliveries wd
