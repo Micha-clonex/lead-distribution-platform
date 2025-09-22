@@ -76,35 +76,43 @@ async function sendWebhook(lead, partner) {
     } catch (error) {
         console.error(`Webhook delivery error:`, error.message);
         
-        // Update delivery status as failed (only if deliveryId exists)
+        // CRITICAL FIX: Always update delivery status, even if deliveryId is undefined
         if (typeof deliveryId !== 'undefined') {
             await pool.query(`
                 UPDATE webhook_deliveries 
                 SET status = 'failed', response_code = $1, response_body = $2
                 WHERE id = $3
             `, [error.response?.status || 0, error.message.substring(0, 500), deliveryId]);
+        } else {
+            // Fallback: Find and update any pending delivery for this lead/partner
+            console.error(`DeliveryId undefined for lead ${lead.id}, partner ${partner.id} - updating pending deliveries`);
+            await pool.query(`
+                UPDATE webhook_deliveries 
+                SET status = 'failed', response_code = $1, response_body = $2
+                WHERE lead_id = $3 AND partner_id = $4 AND status = 'pending'
+            `, [error.response?.status || 0, error.message.substring(0, 500), lead.id, partner.id]);
+        }
+        
+        // Get attempt count for alerting
+        try {
+            const delivery = await pool.query(`
+                SELECT attempts FROM webhook_deliveries WHERE id = $1
+            `, [deliveryId]);
             
-            // Get attempt count for alerting
-            try {
-                const delivery = await pool.query(`
-                    SELECT attempts FROM webhook_deliveries WHERE id = $1
-                `, [deliveryId]);
-                
-                const attempts = delivery.rows[0]?.attempts || 0;
-                
-                // Alert on multiple failures (final attempt)
-                if (attempts >= 3) {
-                    const alertSystem = require('./alertSystem');
-                    await alertSystem.alertPartnerOffline({
-                        id: partner.id,
-                        name: partner.name,
-                        country: partner.country || 'unknown',
-                        niche: partner.niche || 'unknown'
-                    });
-                }
-            } catch (alertError) {
-                console.error('Failed to send partner offline alert:', alertError);
+            const attempts = delivery.rows[0]?.attempts || 0;
+            
+            // Alert on multiple failures (final attempt)
+            if (attempts >= 3) {
+                const alertSystem = require('./alertSystem');
+                await alertSystem.alertPartnerOffline({
+                    id: partner.id,
+                    name: partner.name,
+                    country: partner.country || 'unknown',
+                    niche: partner.niche || 'unknown'
+                });
             }
+        } catch (alertError) {
+            console.error('Failed to send partner offline alert:', alertError);
         }
         
         throw error;
