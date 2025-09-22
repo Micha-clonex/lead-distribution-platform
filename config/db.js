@@ -4,12 +4,30 @@ require('dotenv').config();
 // Database connection singleton
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgres://') ? { rejectUnauthorized: false } : false,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000
 });
+
+// Test database connection
+async function testConnection() {
+    try {
+        await pool.query('SELECT NOW()');
+        console.log('✅ Database connection successful');
+        return true;
+    } catch (error) {
+        console.error('❌ Database connection failed:', error.message);
+        console.error('Database URL format:', process.env.DATABASE_URL ? 'Available' : 'Missing');
+        throw error;
+    }
+}
 
 // Database initialization function
 async function initDatabase() {
     try {
+        // Test connection first
+        await testConnection();
         await pool.query(`
         CREATE TABLE IF NOT EXISTS partners (
             id SERIAL PRIMARY KEY,
@@ -426,4 +444,4 @@ async function setupProductionData() {
     }
 }
 
-module.exports = { pool, initDatabase };
+module.exports = { pool, initDatabase, testConnection };
