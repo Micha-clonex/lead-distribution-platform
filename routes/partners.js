@@ -319,16 +319,16 @@ router.post('/:id/test-crm', async (req, res) => {
         }
         
         const testPayload = {
-            firstName: 'John',
-            lastName: 'Doe',
-            email: 'test@example.com',
-            phone: '+1234567890',
-            country: 'test',
-            source: 'Lead Platform Test',
-            subject: 'Test Lead Submission',
-            message: 'This is a test lead from the Lead Distribution Platform',
-            campaign: 'test_campaign',
-            leadSource: 'API Test'
+            first_name: 'John',
+            last_name: 'Wick',
+            birth_date: '1990-01-01',
+            gender: 'M',
+            country: 'Germany',
+            city: 'Berlin',
+            language: 'English',
+            description: 'Test lead from Lead Distribution Platform',
+            numbers: '+1234567890',
+            emails: 'test@example.com'
         };
         
         const headers = {
