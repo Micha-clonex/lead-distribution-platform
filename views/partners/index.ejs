@@ -877,12 +877,17 @@ function saveCRMIntegration() {
     const partnerId = formData.get('partner_id');
     
     // Validate JSON fields
-    let headers, fieldMapping;
+    let headers, fieldMapping, statusFieldMapping;
     try {
         headers = JSON.parse(document.getElementById('crmHeaders').value || '{}');
         fieldMapping = JSON.parse(document.getElementById('crmFieldMapping').value || '{}');
+        
+        // Handle status field mapping safely
+        const statusFieldMappingElement = document.getElementById('statusFieldMapping');
+        const statusFieldMappingValue = statusFieldMappingElement ? statusFieldMappingElement.value : '{}';
+        statusFieldMapping = JSON.parse(statusFieldMappingValue || '{}');
     } catch (e) {
-        alert('Invalid JSON in headers or field mapping');
+        alert('Invalid JSON in headers, field mapping, or status field mapping: ' + e.message);
         return;
     }
     
@@ -891,18 +896,18 @@ function saveCRMIntegration() {
         api_endpoint: formData.get('api_endpoint'),
         api_key: formData.get('api_key'),
         auth_header: formData.get('auth_header'),
-        auth_type: document.getElementById('crmAuthType').value,
+        auth_type: document.getElementById('crmAuthType') ? document.getElementById('crmAuthType').value : 'api_key',
         request_method: formData.get('request_method'),
         test_url: formData.get('test_url'),
         request_headers: headers,
         field_mapping: fieldMapping,
-        is_active: document.getElementById('crmIsActive').checked,
-        // Status pulling configuration
-        status_pull_endpoint: document.getElementById('statusPullEndpoint').value,
-        status_pull_method: document.getElementById('statusPullMethod').value,
-        pull_frequency: document.getElementById('pullFrequency').value,
-        status_field_mapping: document.getElementById('statusFieldMapping').value,
-        status_pulling_active: document.getElementById('statusPullingActive').checked
+        is_active: document.getElementById('crmIsActive') ? document.getElementById('crmIsActive').checked : false,
+        // Status pulling configuration - handle missing elements gracefully
+        status_pull_endpoint: document.getElementById('statusPullEndpoint') ? document.getElementById('statusPullEndpoint').value : '',
+        status_pull_method: document.getElementById('statusPullMethod') ? document.getElementById('statusPullMethod').value : 'GET',
+        pull_frequency: document.getElementById('pullFrequency') ? parseInt(document.getElementById('pullFrequency').value) || 60 : 60,
+        status_field_mapping: statusFieldMapping,
+        status_pulling_active: document.getElementById('statusPullingActive') ? document.getElementById('statusPullingActive').checked : false
     };
     
     fetch(`/partners/${partnerId}/crm-integration`, {
@@ -912,7 +917,14 @@ function saveCRMIntegration() {
         },
         body: JSON.stringify(data)
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(`HTTP ${response.status}: ${text}`);
+            });
+        }
+        return response.json();
+    })
     .then(result => {
         if (result.success) {
             bootstrap.Modal.getInstance(document.getElementById('crmIntegrationModal')).hide();
@@ -923,8 +935,8 @@ function saveCRMIntegration() {
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to save CRM integration');
+        console.error('Save CRM Error:', error);
+        alert('Failed to save CRM integration: ' + error.message);
     });
 }
 

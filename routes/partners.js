@@ -278,7 +278,9 @@ router.post('/:id/crm-integration', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         console.error('Save CRM integration error:', error);
-        res.status(500).json({ error: 'Failed to save CRM integration' });
+        console.error('Request body:', req.body);
+        console.error('Partner ID:', id);
+        res.status(500).json({ error: 'Failed to save CRM integration', details: error.message });
     }
 });
 
