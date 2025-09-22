@@ -55,6 +55,11 @@ class AlertSystem {
                 ON alert_subscriptions (alert_type, notification_method, target)
             `);
             
+            // Add performance index for monitoring dashboard
+            await pool.query(`
+                CREATE INDEX IF NOT EXISTS idx_system_alerts_created_severity ON system_alerts(created_at, severity, resolved)
+            `);
+            
             // Insert default console notifications
             await pool.query(`
                 INSERT INTO alert_subscriptions (alert_type, notification_method, target, is_active)

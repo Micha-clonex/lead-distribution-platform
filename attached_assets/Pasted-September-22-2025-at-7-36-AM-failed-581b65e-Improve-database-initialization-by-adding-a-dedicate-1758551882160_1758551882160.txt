@@ -1,0 +1,131 @@
+September 22, 2025 at 7:36 AM
+failed
+581b65e
+Improve database initialization by adding a dedicated alert system Add explicit initialization for the alert system's database tables after the main database tables are ready, ensuring proper setup and preventing initialization errors. Replit-Commit-Author: Agent Replit-Commit-Session-Id: 6e7dfced-2009-4a7e-b2e3-481aa8852ee9 Replit-Commit-Checkpoint-Type: full_checkpoint Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/cc59f89f-be1b-4630-87bc-5db65a04e1a5/6e7dfced-2009-4a7e-b2e3-481aa8852ee9/NiE5AWq
+
+Rollback
+Exited with status 1 while running your code.
+Read our docs for common ways to troubleshoot your deploy.
+
+All logs
+Search
+Search
+
+Sep 22, 7:35 AM - 7:38 AM
+PDT
+
+Menu
+
+==> Cloning from https://github.com/Micha-clonex/lead-distribution-platform
+==> Checking out commit 581b65e4ad04388884f05235b9b02a2b6d711704 in branch main
+==> Using Node.js version 22.16.0 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'npm install'...
+added 140 packages, and audited 141 packages in 3s
+18 packages are looking for funding
+  run `npm fund` for details
+found 0 vulnerabilities
+==> Uploading build...
+==> Uploaded in 4.9s. Compression took 2.2s
+==> Build successful 🎉
+==> Deploying...
+==> Running 'node server.js'
+Email scheduler initialized - processing every 5 minutes
+Lead Distribution Platform running on http://0.0.0.0:10000
+Database initialization error: error: relation "system_alerts" does not exist
+    at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async initDatabase (/opt/render/project/src/config/db.js:13:9)
+    at async Server.<anonymous> (/opt/render/project/src/server.js:189:9) {
+  length: 111,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'namespace.c',
+  line: '636',
+  routine: 'RangeVarGetRelidExtended'
+}
+❌ Database initialization failed: error: relation "system_alerts" does not exist
+    at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async initDatabase (/opt/render/project/src/config/db.js:13:9)
+    at async Server.<anonymous> (/opt/render/project/src/server.js:189:9) {
+  length: 111,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'namespace.c',
+  line: '636',
+  routine: 'RangeVarGetRelidExtended'
+}
+==> Exited with status 1
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+==> Running 'node server.js'
+Email scheduler initialized - processing every 5 minutes
+Lead Distribution Platform running on http://0.0.0.0:10000
+Database initialization error: error: relation "system_alerts" does not exist
+    at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async initDatabase (/opt/render/project/src/config/db.js:13:9)
+    at async Server.<anonymous> (/opt/render/project/src/server.js:189:9) {
+  length: 111,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'namespace.c',
+  line: '636',
+  routine: 'RangeVarGetRelidExtended'
+}
+❌ Database initialization failed: error: relation "system_alerts" does not exist
+    at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async initDatabase (/opt/render/project/src/config/db.js:13:9)
+    at async Server.<anonymous> (/opt/render/project/src/server.js:189:9) {
+  length: 111,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'namespace.c',
+  line: '636',
+  routine: 'RangeVarGetRelidExtended'
+}

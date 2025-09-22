@@ -140,7 +140,6 @@ async function initDatabase() {
         -- Performance indexes for Live Monitoring Dashboard
         CREATE INDEX IF NOT EXISTS idx_leads_created_status ON leads(created_at, status);
         CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_created_status ON webhook_deliveries(created_at, status);
-        CREATE INDEX IF NOT EXISTS idx_system_alerts_created_severity ON system_alerts(created_at, severity, resolved);
         
         -- Scheduled Deliveries table for Business Hours Intelligence
         CREATE TABLE IF NOT EXISTS scheduled_deliveries (

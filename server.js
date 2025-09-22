@@ -189,8 +189,7 @@ app.listen(PORT, '0.0.0.0', async () => {
         await initDatabase();
         
         // Initialize AlertSystem after main database is ready
-        const AlertSystem = require('./services/alertSystem');
-        const alertSystem = new AlertSystem();
+        const alertSystem = require('./services/alertSystem');
         await alertSystem.initializeDatabase();
         
         console.log('✅ All database systems initialized successfully');
