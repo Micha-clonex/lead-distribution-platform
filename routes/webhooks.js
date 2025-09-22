@@ -100,7 +100,34 @@ router.get('/deliveries/:id', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Delivery not found' });
         }
         
-        res.json({ success: true, delivery: delivery.rows[0] });
+        const deliveryData = delivery.rows[0];
+        
+        // Fix JSON parsing issues with payload
+        if (deliveryData.payload) {
+            try {
+                // Handle double-encoded JSON
+                if (typeof deliveryData.payload === 'string') {
+                    deliveryData.payload = JSON.parse(deliveryData.payload);
+                }
+            } catch (e) {
+                console.error('Payload JSON parsing error:', e);
+                deliveryData.payload = { error: 'Invalid JSON payload' };
+            }
+        }
+        
+        // Fix JSON parsing issues with response_body
+        if (deliveryData.response_body) {
+            try {
+                if (typeof deliveryData.response_body === 'string') {
+                    deliveryData.response_body = JSON.parse(deliveryData.response_body);
+                }
+            } catch (e) {
+                // Keep as string if it's not valid JSON
+                // deliveryData.response_body remains as string
+            }
+        }
+        
+        res.json({ success: true, delivery: deliveryData });
     } catch (error) {
         console.error('Error fetching delivery details:', error);
         res.status(500).json({ success: false, message: 'Server error' });

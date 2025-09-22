@@ -80,7 +80,11 @@ router.get('/', async (req, res) => {
 
     } catch (error) {
         console.error('Business hours dashboard error:', error);
-        res.status(500).render('error', { error: 'Failed to load business hours dashboard' });
+        console.error('Error stack:', error.stack);
+        res.status(500).render('error', { 
+            error: 'Failed to load business hours dashboard',
+            message: error.message 
+        });
     }
 });
 
