@@ -122,102 +122,117 @@ async function distributeLead(leadId) {
     }
 }
 
-// Deliver lead data to partner's CRM system using API integration
+// Deliver lead data to partner's CRM system using dynamic CRM integration settings
 async function deliverToCRM(leadId, partnerId, leadData) {
     const axios = require('axios');
     
     try {
-        // Get partner's name
-        const partnerResult = await pool.query(`
-            SELECT name FROM partners WHERE id = $1 AND status = 'active'
+        // Get partner's CRM integration settings
+        const crmResult = await pool.query(`
+            SELECT 
+                p.name as partner_name,
+                crm.crm_name,
+                crm.api_endpoint,
+                crm.api_key,
+                crm.auth_header,
+                crm.request_method,
+                crm.request_headers,
+                crm.field_mapping,
+                crm.is_active
+            FROM partners p
+            LEFT JOIN partner_crm_integrations crm ON p.id = crm.partner_id 
+            WHERE p.id = $1 AND p.status = 'active'
         `, [partnerId]);
         
-        if (partnerResult.rows.length === 0) {
+        if (crmResult.rows.length === 0) {
             return { success: false, error: 'Partner not found or inactive' };
         }
         
-        const partner = partnerResult.rows[0];
+        const { partner_name, crm_name, api_endpoint, api_key, auth_header, request_method, request_headers, field_mapping, is_active } = crmResult.rows[0];
         
-        // NOBIS MANTICORE CRM INTEGRATION
-        if (partner.name === 'Nobis') {
-            console.log(`🚀 Delivering lead ${leadId} to Nobis Manticore CRM API`);
+        // Check if CRM integration is configured and active
+        if (!is_active || !api_endpoint) {
+            console.log(`⚠️ No active CRM integration for ${partner_name} - skipping delivery`);
             
-            // Apply field mapping for Manticore CRM
-            const crmPayload = {
-                email: leadData.email,
-                numbers: leadData.phone, // phone -> numbers 
-                country: leadData.country,
-                last_name: leadData.last_name,
-                first_name: leadData.first_name
-            };
-            
-            console.log(`📤 Manticore CRM payload:`, crmPayload);
-            
-            // Send to Manticore CRM API
-            const response = await axios.post('https://api.manticore-crm.site/contacts', crmPayload, {
-                timeout: 15000,
-                headers: {
-                    'X-API-Key': '7cd8ae99-3e3f-45eb-9273-e94799d08d67',
-                    'Content-Type': 'application/json',
-                    'api-key': '7cd8ae99-3e3f-45eb-9273-e94799d08d67'
-                }
-            });
-            
-            console.log(`✅ Manticore CRM delivery SUCCESS: Status ${response.status}`);
-            console.log(`✅ Response:`, response.data);
-            
-            // Log successful delivery
+            // Log skipped delivery
             await pool.query(`
                 INSERT INTO webhook_deliveries (lead_id, partner_id, webhook_url, payload, response_status, delivered_at)
                 VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
             `, [
                 leadId, 
                 partnerId, 
-                'MANTICORE_CRM_API',
-                JSON.stringify(crmPayload),
-                'success'
+                'NO_CRM_INTEGRATION',
+                JSON.stringify({ reason: 'No active CRM integration configured' }),
+                0
             ]);
             
             return { 
                 success: true, 
-                message: `Lead ${leadId} delivered to Nobis Manticore CRM (Status: ${response.status})` 
+                message: `No CRM integration configured for ${partner_name} - delivery skipped` 
             };
         }
         
-        // Default webhook delivery for other partners
-        else {
-            console.log(`📤 Using default webhook delivery for ${partner.name}`);
-            
-            const webhookPayload = {
-                lead_id: leadId,
-                first_name: leadData.first_name,
-                last_name: leadData.last_name,
-                email: leadData.email,
-                phone: leadData.phone,
-                country: leadData.country,
-                niche: leadData.niche,
-                type: leadData.type,
-                source: leadData.source,
-                timestamp: new Date().toISOString()
-            };
-            
-            // Log simulated delivery for non-configured partners
-            await pool.query(`
-                INSERT INTO webhook_deliveries (lead_id, partner_id, webhook_url, payload, response_status, delivered_at)
-                VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
-            `, [
-                leadId, 
-                partnerId, 
-                'WEBHOOK_SIMULATED',
-                JSON.stringify(webhookPayload),
-                'simulated'
-            ]);
-            
-            return { 
-                success: true, 
-                message: `Lead ${leadId} simulated delivery to ${partner.name}` 
-            };
+        console.log(`🚀 Delivering lead ${leadId} to ${partner_name} ${crm_name} CRM API`);
+        
+        // Apply field mapping from CRM integration settings
+        const crmPayload = {};
+        const fieldMap = field_mapping || {};
+        
+        // Map lead fields to CRM fields based on stored configuration
+        Object.keys(fieldMap).forEach(leadField => {
+            const crmField = fieldMap[leadField];
+            if (leadData[leadField]) {
+                crmPayload[crmField] = leadData[leadField];
+            }
+        });
+        
+        // If no field mapping, use default mapping
+        if (Object.keys(crmPayload).length === 0) {
+            crmPayload.email = leadData.email;
+            crmPayload.phone = leadData.phone;
+            crmPayload.country = leadData.country;
+            crmPayload.last_name = leadData.last_name;
+            crmPayload.first_name = leadData.first_name;
         }
+        
+        console.log(`📤 ${crm_name} CRM payload:`, crmPayload);
+        
+        // Prepare headers from stored configuration
+        const headers = request_headers || {};
+        
+        // Add API key to headers if configured
+        if (api_key && auth_header) {
+            headers[auth_header] = api_key;
+        }
+        
+        // Send to partner's CRM API
+        const response = await axios({
+            method: request_method || 'POST',
+            url: api_endpoint,
+            data: crmPayload,
+            timeout: 15000,
+            headers: headers
+        });
+        
+        console.log(`✅ ${crm_name} CRM delivery SUCCESS: Status ${response.status}`);
+        console.log(`✅ Response:`, response.data);
+        
+        // Log successful delivery
+        await pool.query(`
+            INSERT INTO webhook_deliveries (lead_id, partner_id, webhook_url, payload, response_status, delivered_at)
+            VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+        `, [
+            leadId, 
+            partnerId, 
+            `${crm_name}_CRM_API`,
+            JSON.stringify(crmPayload),
+            response.status
+        ]);
+        
+        return { 
+            success: true, 
+            message: `Lead ${leadId} delivered to ${partner_name} ${crm_name} CRM (Status: ${response.status})` 
+        };
         
     } catch (error) {
         console.error(`❌ CRM delivery FAILED for partner ${partnerId}:`, error.message);
@@ -232,7 +247,7 @@ async function deliverToCRM(leadId, partnerId, leadData) {
                 partnerId, 
                 'CRM_DELIVERY_FAILED',
                 JSON.stringify({ error: error.message }),
-                'failed'
+                error.response?.status || 0
             ]);
         } catch (logError) {
             console.error('Failed to log CRM delivery error:', logError);
