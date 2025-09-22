@@ -248,15 +248,21 @@ async function initDatabase() {
             CREATE INDEX IF NOT EXISTS idx_email_queue_status_scheduled ON email_queue(status, scheduled_at);
             CREATE INDEX IF NOT EXISTS idx_email_queue_lead ON email_queue(lead_id);
             CREATE INDEX IF NOT EXISTS idx_email_logs_sent_at ON email_logs(sent_at);
+            
+            -- Unique constraint for ON CONFLICT clause in email scheduling
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_email_queue_lead_template_unique ON email_queue(lead_id, template_id);
         `);
         
-        // Insert default promotional email template if not exists
-        await pool.query(`
-            INSERT INTO email_templates (name, subject, html_content, text_content, is_active)
-            VALUES (
+        // Insert default promotional email template using parameterized query
+        try {
+            await pool.query(`
+                INSERT INTO email_templates (name, subject, html_content, text_content, is_active)
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (name) DO NOTHING
+            `, [
                 'promotional_default',
                 'Exclusive Trading Opportunity - Don\'t Miss Out!',
-                '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+                `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
                         <h1 style="margin: 0; font-size: 28px;">Special Trading Opportunity</h1>
                         <p style="margin: 10px 0 0; font-size: 16px; opacity: 0.9;">Exclusive access to premium trading signals</p>
@@ -282,15 +288,15 @@ async function initDatabase() {
                             </a>
                         </div>
                         <p style="color: #666; line-height: 1.6; font-size: 14px;">
-                            <strong>Limited Time:</strong> This exclusive offer is only available for the next 48 hours. Don\'t miss your chance to join thousands of successful traders!
+                            <strong>Limited Time:</strong> This exclusive offer is only available for the next 48 hours. Don't miss your chance to join thousands of successful traders!
                         </p>
                         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
                         <p style="color: #999; font-size: 12px; text-align: center;">
                             If you no longer wish to receive these emails, you can <a href="#" style="color: #667eea;">unsubscribe here</a>.
                         </p>
                     </div>
-                </div>',
-                'Hello {{first_name}},
+                </div>`,
+                `Hello {{first_name}},
 
 We noticed you recently showed interest in trading opportunities. We have an exclusive offer that could significantly boost your trading success!
 
@@ -301,15 +307,19 @@ WHAT YOU GET:
 • Risk management strategies
 • 24/7 personal trading support
 
-LIMITED TIME: This exclusive offer is only available for the next 48 hours. Don\'t miss your chance to join thousands of successful traders!
+LIMITED TIME: This exclusive offer is only available for the next 48 hours. Don't miss your chance to join thousands of successful traders!
 
 Start Trading Now: [LINK]
 
-If you no longer wish to receive these emails, you can unsubscribe here.',
+If you no longer wish to receive these emails, you can unsubscribe here.`,
                 true
-            )
-            ON CONFLICT (name) DO NOTHING
-        `);
+            ]);
+        } catch (error) {
+            // Ignore duplicate key errors
+            if (error.code !== '23505') {
+                throw error;
+            }
+        }
         
         console.log('Database tables initialized successfully');
         return true;

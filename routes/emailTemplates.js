@@ -1,7 +1,8 @@
 const express = require('express');
 const { pool } = require('../config/db');
 const { requireAuth } = require('../middleware/auth');
-const { sendTestEmail, getEmailStats } = require('../services/emailScheduler');
+const { getEmailStats } = require('../services/emailScheduler');
+const { sendTestEmail } = require('../services/emailService');
 
 const router = express.Router();
 
