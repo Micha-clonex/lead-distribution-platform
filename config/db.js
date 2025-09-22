@@ -253,6 +253,22 @@ async function initDatabase() {
             CREATE UNIQUE INDEX IF NOT EXISTS idx_email_queue_lead_template_unique ON email_queue(lead_id, template_id);
         `);
         
+        // **NEW: API Settings table for managing external service credentials**
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS api_settings (
+                id SERIAL PRIMARY KEY,
+                service_name VARCHAR(100) NOT NULL UNIQUE,
+                service_type VARCHAR(50) NOT NULL,
+                settings JSONB NOT NULL,
+                is_active BOOLEAN DEFAULT true,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_api_settings_service_type ON api_settings(service_type);
+            CREATE INDEX IF NOT EXISTS idx_api_settings_active ON api_settings(is_active);
+        `);
+        
         // Insert default promotional email template using parameterized query
         try {
             await pool.query(`
