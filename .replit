@@ -1,6 +1,7 @@
 modules = ["php", "nodejs-20", "postgresql-16"]
 [agent]
 expertMode = true
+integrations = ["replitmail:1.0.0"]
 
 [nix]
 channel = "stable-25_05"

@@ -203,6 +203,114 @@ async function initDatabase() {
             WHERE recovery_fields_format IS NULL
         `);
         
+        // **NEW: Email marketing system tables**
+        await pool.query(`
+            -- Email templates table
+            CREATE TABLE IF NOT EXISTS email_templates (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL UNIQUE,
+                subject VARCHAR(500) NOT NULL,
+                html_content TEXT NOT NULL,
+                text_content TEXT NOT NULL,
+                is_active BOOLEAN DEFAULT true,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            -- Email queue for delayed sending
+            CREATE TABLE IF NOT EXISTS email_queue (
+                id SERIAL PRIMARY KEY,
+                lead_id INTEGER REFERENCES leads(id) ON DELETE CASCADE,
+                email_address VARCHAR(255) NOT NULL,
+                template_id INTEGER REFERENCES email_templates(id),
+                scheduled_at TIMESTAMP NOT NULL,
+                status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed')),
+                attempts INTEGER DEFAULT 0,
+                last_attempt_at TIMESTAMP,
+                error_message TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            -- Email sending log
+            CREATE TABLE IF NOT EXISTS email_logs (
+                id SERIAL PRIMARY KEY,
+                queue_id INTEGER REFERENCES email_queue(id),
+                email_address VARCHAR(255) NOT NULL,
+                template_name VARCHAR(255),
+                subject VARCHAR(500),
+                status VARCHAR(20) NOT NULL,
+                message_id VARCHAR(255),
+                response_data JSONB,
+                sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            -- Indexes for email performance
+            CREATE INDEX IF NOT EXISTS idx_email_queue_status_scheduled ON email_queue(status, scheduled_at);
+            CREATE INDEX IF NOT EXISTS idx_email_queue_lead ON email_queue(lead_id);
+            CREATE INDEX IF NOT EXISTS idx_email_logs_sent_at ON email_logs(sent_at);
+        `);
+        
+        // Insert default promotional email template if not exists
+        await pool.query(`
+            INSERT INTO email_templates (name, subject, html_content, text_content, is_active)
+            VALUES (
+                'promotional_default',
+                'Exclusive Trading Opportunity - Don\'t Miss Out!',
+                '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                        <h1 style="margin: 0; font-size: 28px;">Special Trading Opportunity</h1>
+                        <p style="margin: 10px 0 0; font-size: 16px; opacity: 0.9;">Exclusive access to premium trading signals</p>
+                    </div>
+                    <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <h2 style="color: #333; margin-top: 0;">Hello {{first_name}},</h2>
+                        <p style="color: #666; line-height: 1.6; font-size: 16px;">
+                            We noticed you recently showed interest in trading opportunities. We have an exclusive offer that could significantly boost your trading success!
+                        </p>
+                        <div style="background: #f8f9fa; padding: 20px; border-left: 4px solid #667eea; margin: 20px 0;">
+                            <h3 style="color: #667eea; margin-top: 0;">What you get:</h3>
+                            <ul style="color: #666; line-height: 1.8;">
+                                <li>🎯 Premium trading signals with 85% accuracy</li>
+                                <li>📈 Real-time market analysis and insights</li>
+                                <li>💰 Potential returns of up to 200% monthly</li>
+                                <li>🔒 Risk management strategies</li>
+                                <li>📞 24/7 personal trading support</li>
+                            </ul>
+                        </div>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="#" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold; font-size: 18px;">
+                                🚀 Start Trading Now
+                            </a>
+                        </div>
+                        <p style="color: #666; line-height: 1.6; font-size: 14px;">
+                            <strong>Limited Time:</strong> This exclusive offer is only available for the next 48 hours. Don\'t miss your chance to join thousands of successful traders!
+                        </p>
+                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                        <p style="color: #999; font-size: 12px; text-align: center;">
+                            If you no longer wish to receive these emails, you can <a href="#" style="color: #667eea;">unsubscribe here</a>.
+                        </p>
+                    </div>
+                </div>',
+                'Hello {{first_name}},
+
+We noticed you recently showed interest in trading opportunities. We have an exclusive offer that could significantly boost your trading success!
+
+WHAT YOU GET:
+• Premium trading signals with 85% accuracy
+• Real-time market analysis and insights  
+• Potential returns of up to 200% monthly
+• Risk management strategies
+• 24/7 personal trading support
+
+LIMITED TIME: This exclusive offer is only available for the next 48 hours. Don\'t miss your chance to join thousands of successful traders!
+
+Start Trading Now: [LINK]
+
+If you no longer wish to receive these emails, you can unsubscribe here.',
+                true
+            )
+            ON CONFLICT (name) DO NOTHING
+        `);
+        
         console.log('Database tables initialized successfully');
         return true;
     } catch (error) {

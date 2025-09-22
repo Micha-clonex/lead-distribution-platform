@@ -231,6 +231,25 @@ router.post('/webhook/:token', webhookRateLimit(200), async (req, res) => {
         
         const leadId = leadResult.rows[0].id;
         
+        // **NEW: Schedule promotional email for 30 minutes after lead arrival**
+        const { schedulePromotionalEmail } = require('../services/emailScheduler');
+        setImmediate(() => {
+            // Create lead object for email scheduling
+            const leadForEmail = {
+                id: leadId,
+                email: enrichedData.email,
+                first_name: enrichedData.first_name,
+                last_name: enrichedData.last_name,
+                country: finalCountry,
+                niche: finalNiche
+            };
+            
+            // Schedule promotional email if email is present
+            schedulePromotionalEmail(leadForEmail).catch(error => {
+                console.error(`Email scheduling failed for lead ${leadId}:`, error);
+            });
+        });
+        
         // Trigger distribution asynchronously
         setImmediate(() => {
             distributeLead(leadId).catch(error => {

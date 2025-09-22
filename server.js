@@ -76,6 +76,7 @@ app.use('/quality', requireAuth, qualityScoringRoutes);
 app.use('/business-hours', requireAuth, businessHoursRoutes);
 app.use('/partner-management', requireAuth, require('./routes/partnerManagement'));
 app.use('/monitoring', requireAuth, require('./routes/monitoring'));
+app.use('/email-templates', requireAuth, require('./routes/emailTemplates'));
 app.use('/api', apiRoutes); // API routes handle their own auth
 
 // Dashboard route (protected)
@@ -173,6 +174,10 @@ cron.schedule('*/2 * * * *', async () => {
         console.error('❌ Business hours processing failed:', error.message);
     }
 });
+
+// **NEW: Email Marketing System - Initialize email scheduler**
+const { initEmailScheduler } = require('./services/emailScheduler');
+initEmailScheduler();
 
 // Start server
 app.listen(PORT, '0.0.0.0', async () => {
