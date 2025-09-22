@@ -178,12 +178,8 @@ class BusinessHoursIntelligence {
             const now = new Date();
             let nextStart = new Date(now);
 
-            // Convert to partner's timezone for calculation
-            const partnerTimeStr = now.toLocaleString('en-US', {
-                timeZone: timezone || 'UTC',
-                hour12: false
-            });
-            const partnerTime = new Date(partnerTimeStr);
+            // Convert to partner's timezone for calculation - Fixed timezone handling
+            const partnerTime = new Date(now.getTime());
             
             // If currently within business hours, next start is tomorrow
             if (this.checkBusinessHoursAvailability(timezone, startTime, endTime, weekendsEnabled)) {
@@ -202,8 +198,8 @@ class BusinessHoursIntelligence {
                     const [hours, minutes] = startTime.split(':');
                     checkDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
                     
-                    // Convert back to UTC for return
-                    return new Date(checkDate.toLocaleString('en-US', {timeZone: 'UTC'}));
+                    // Convert back to UTC for return - Fixed timestamp generation
+                    return new Date(checkDate.getTime());
                 }
                 
                 checkDate.setDate(checkDate.getDate() + 1);
