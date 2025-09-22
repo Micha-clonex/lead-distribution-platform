@@ -124,10 +124,12 @@ async function distributeLead(leadId) {
 
 // Deliver lead data to partner's CRM system
 async function deliverToCRM(leadId, partnerId, leadData) {
+    const axios = require('axios');
+    
     try {
-        // Get partner's CRM configuration
+        // Get partner's webhook URL
         const partnerResult = await pool.query(`
-            SELECT name, webhook_url, api_key, crm_fields_mapping
+            SELECT name, webhook_url
             FROM partners 
             WHERE id = $1 AND status = 'active'
         `, [partnerId]);
@@ -138,40 +140,70 @@ async function deliverToCRM(leadId, partnerId, leadData) {
         
         const partner = partnerResult.rows[0];
         
-        // For now, just simulate success (real CRM integration would go here)
-        console.log(`Simulating CRM delivery for partner ${partner.name}`);
+        if (!partner.webhook_url) {
+            return { success: false, error: 'No webhook URL configured for partner' };
+        }
         
-        // Log delivery attempt
+        console.log(`🚀 Delivering lead ${leadId} to ${partner.name} CRM: ${partner.webhook_url}`);
+        
+        // Prepare webhook payload
+        const webhookPayload = {
+            lead_id: leadId,
+            first_name: leadData.first_name,
+            last_name: leadData.last_name,
+            email: leadData.email,
+            phone: leadData.phone,
+            country: leadData.country,
+            niche: leadData.niche,
+            type: leadData.type,
+            source: leadData.source,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Send to partner's CRM webhook
+        const response = await axios.post(partner.webhook_url, webhookPayload, {
+            timeout: 10000,
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'Lead Distribution Platform'
+            }
+        });
+        
+        console.log(`✅ CRM delivery SUCCESS for ${partner.name}: Status ${response.status}`);
+        
+        // Log successful delivery
         await pool.query(`
-            INSERT INTO webhook_deliveries (lead_id, partner_id, webhook_url, payload, response_status, delivered_at)
-            VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+            INSERT INTO webhook_deliveries (lead_id, partner_id, webhook_url, payload, response_status, response_code, response_body, delivered_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
         `, [
             leadId, 
             partnerId, 
-            'CRM_SIMULATED',
-            JSON.stringify(leadData),
-            200
+            partner.webhook_url,
+            JSON.stringify(webhookPayload),
+            'success',
+            response.status,
+            JSON.stringify(response.data).substring(0, 1000)
         ]);
         
         return { 
             success: true, 
-            message: `Lead ${leadId} delivered to ${partner.name} CRM` 
+            message: `Lead ${leadId} delivered to ${partner.name} CRM (Status: ${response.status})` 
         };
+        
     } catch (error) {
-        console.error('CRM delivery error:', error);
+        console.error(`❌ CRM delivery FAILED for partner ${partnerId}:`, error.message);
         
         // Log failed delivery
         try {
             await pool.query(`
-                INSERT INTO webhook_deliveries (lead_id, partner_id, webhook_url, payload, response_status, error_message, delivered_at)
-                VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+                INSERT INTO webhook_deliveries (lead_id, partner_id, webhook_url, payload, response_status, delivered_at)
+                VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
             `, [
                 leadId, 
                 partnerId, 
                 'CRM_DELIVERY_FAILED',
-                JSON.stringify({ error: 'Failed to map or send data' }),
-                0,
-                error.message?.substring(0, 500)
+                JSON.stringify({ error: error.message }),
+                'failed'
             ]);
         } catch (logError) {
             console.error('Failed to log CRM delivery error:', logError);
