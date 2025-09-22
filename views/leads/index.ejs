@@ -226,8 +226,144 @@
 
 <script>
 function viewLead(id) {
-    // TODO: Implement view lead details
-    alert('View lead details functionality coming soon!');
+    fetch(`/leads/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showLeadDetailsModal(data.lead);
+            } else {
+                alert('Failed to load lead details: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching lead details:', error);
+            alert('Failed to load lead details');
+        });
+}
+
+function showLeadDetailsModal(lead) {
+    const modalHtml = `
+        <div class="modal fade" id="leadDetailsModal" tabindex="-1" aria-labelledby="leadDetailsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="leadDetailsModalLabel">
+                            <i class="fas fa-user me-2"></i>Lead Details - ${lead.first_name} ${lead.last_name}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Lead Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3"><i class="fas fa-info-circle me-2"></i>Lead Information</h6>
+                                <table class="table table-sm">
+                                    <tr><td><strong>ID:</strong></td><td>${lead.id}</td></tr>
+                                    <tr><td><strong>Name:</strong></td><td>${lead.first_name} ${lead.last_name}</td></tr>
+                                    <tr><td><strong>Email:</strong></td><td>${lead.email}</td></tr>
+                                    <tr><td><strong>Phone:</strong></td><td>${lead.phone || 'N/A'}</td></tr>
+                                    <tr><td><strong>Country:</strong></td><td><span class="badge bg-info">${lead.country}</span></td></tr>
+                                    <tr><td><strong>Niche:</strong></td><td><span class="badge bg-${lead.niche === 'forex' ? 'success' : 'warning'}">${lead.niche}</span></td></tr>
+                                    <tr><td><strong>Type:</strong></td><td><span class="badge bg-${lead.type === 'premium' ? 'primary' : 'secondary'}">${lead.type}</span></td></tr>
+                                    <tr><td><strong>Source:</strong></td><td>${lead.source}</td></tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3"><i class="fas fa-chart-line me-2"></i>Status & Assignment</h6>
+                                <table class="table table-sm">
+                                    <tr><td><strong>Status:</strong></td><td><span class="badge bg-${getStatusBadgeColor(lead.status)}">${lead.status}</span></td></tr>
+                                    <tr><td><strong>Assigned Partner:</strong></td><td>${lead.partner_name || 'Not assigned'}</td></tr>
+                                    <tr><td><strong>Created:</strong></td><td>${new Date(lead.created_at).toLocaleString()}</td></tr>
+                                    <tr><td><strong>Updated:</strong></td><td>${new Date(lead.updated_at).toLocaleString()}</td></tr>
+                                    ${lead.converted_at ? `<tr><td><strong>Converted:</strong></td><td>${new Date(lead.converted_at).toLocaleString()}</td></tr>` : ''}
+                                    ${lead.conversion_value ? `<tr><td><strong>Value:</strong></td><td>$${lead.conversion_value}</td></tr>` : ''}
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Recovery Specific Data -->
+                        ${lead.niche === 'recovery' && lead.data ? `
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-shield-alt me-2"></i>Recovery Information</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    ${typeof lead.data === 'string' ? JSON.parse(lead.data).amount_lost : lead.data.amount_lost ? `<p><strong>Amount Lost:</strong> $${typeof lead.data === 'string' ? JSON.parse(lead.data).amount_lost : lead.data.amount_lost}</p>` : ''}
+                                </div>
+                                <div class="col-md-6">
+                                    ${typeof lead.data === 'string' ? JSON.parse(lead.data).fraud_type : lead.data.fraud_type ? `<p><strong>Fraud Type:</strong> ${typeof lead.data === 'string' ? JSON.parse(lead.data).fraud_type : lead.data.fraud_type}</p>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- Webhook Deliveries -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-paper-plane me-2"></i>Webhook Delivery History</h6>
+                            ${lead.deliveries && lead.deliveries.length > 0 ? `
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Partner</th>
+                                                <th>Status</th>
+                                                <th>Response</th>
+                                                <th>Sent At</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${lead.deliveries.map(delivery => `
+                                                <tr>
+                                                    <td>${delivery.partner_name}</td>
+                                                    <td><span class="badge bg-${delivery.status === 'success' ? 'success' : delivery.status === 'failed' ? 'danger' : 'warning'}">${delivery.status}</span></td>
+                                                    <td class="text-muted small">${delivery.response_body ? delivery.response_body.substring(0, 50) + '...' : 'N/A'}</td>
+                                                    <td>${new Date(delivery.created_at).toLocaleString()}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : '<p class="text-muted">No webhook deliveries yet.</p>'}
+                        </div>
+
+                        <!-- Raw Data -->
+                        ${lead.data ? `
+                        <div class="mb-3">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-database me-2"></i>Raw Data</h6>
+                            <pre class="bg-light p-3 rounded small">${JSON.stringify(typeof lead.data === 'string' ? JSON.parse(lead.data) : lead.data, null, 2)}</pre>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        ${lead.status === 'pending' ? `<button type="button" class="btn btn-warning" onclick="redistributeLead(${lead.id}); bootstrap.Modal.getInstance(document.getElementById('leadDetailsModal')).hide();">Redistribute</button>` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove any existing modal
+    const existingModal = document.getElementById('leadDetailsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('leadDetailsModal'));
+    modal.show();
+}
+
+function getStatusBadgeColor(status) {
+    switch(status) {
+        case 'pending': return 'warning';
+        case 'distributed': return 'info';
+        case 'converted': return 'success';
+        case 'failed': return 'danger';
+        default: return 'secondary';
+    }
 }
 
 function redistributeLead(id) {

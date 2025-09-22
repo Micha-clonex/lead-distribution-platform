@@ -57,6 +57,43 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Get single lead details
+router.get('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await pool.query(`
+            SELECT l.*, p.name as partner_name, p.webhook_url as partner_webhook_url,
+                   ws.name as source_name, ws.description as source_description
+            FROM leads l 
+            LEFT JOIN partners p ON l.assigned_partner_id = p.id
+            LEFT JOIN webhook_sources ws ON l.source = ws.name
+            WHERE l.id = $1
+        `, [id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Lead not found' });
+        }
+        
+        const lead = result.rows[0];
+        
+        // Get webhook delivery history for this lead
+        const deliveriesResult = await pool.query(`
+            SELECT wd.*, p.name as partner_name
+            FROM webhook_deliveries wd
+            JOIN partners p ON wd.partner_id = p.id
+            WHERE wd.lead_id = $1
+            ORDER BY wd.created_at DESC
+        `, [id]);
+        
+        lead.deliveries = deliveriesResult.rows;
+        
+        res.json({ success: true, lead });
+    } catch (error) {
+        console.error('Lead details fetch error:', error);
+        res.status(500).json({ error: 'Failed to fetch lead details' });
+    }
+});
+
 // Manual lead injection
 router.post('/inject', async (req, res) => {
     try {
