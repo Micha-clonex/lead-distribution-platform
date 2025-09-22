@@ -54,6 +54,7 @@ async function initDatabase() {
             webhook_url TEXT NOT NULL,
             payload JSONB,
             response_code INTEGER,
+            response_status INTEGER,
             response_body TEXT,
             attempts INTEGER DEFAULT 1,
             status VARCHAR(20) DEFAULT 'pending',
@@ -266,6 +267,39 @@ async function initDatabase() {
             
             CREATE INDEX IF NOT EXISTS idx_api_settings_service_type ON api_settings(service_type);
             CREATE INDEX IF NOT EXISTS idx_api_settings_active ON api_settings(is_active);
+        `);
+        
+        // **CRITICAL: CRM Integrations table for partner API configurations**
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS partner_crm_integrations (
+                id SERIAL PRIMARY KEY,
+                partner_id INTEGER REFERENCES partners(id) ON DELETE CASCADE,
+                crm_name VARCHAR(255) NOT NULL,
+                api_endpoint TEXT NOT NULL,
+                api_key TEXT NOT NULL,
+                auth_header VARCHAR(255) DEFAULT 'api-key',
+                request_method VARCHAR(10) DEFAULT 'POST',
+                request_headers JSONB DEFAULT '{}',
+                field_mapping JSONB DEFAULT '{}',
+                is_active BOOLEAN DEFAULT true,
+                test_url TEXT,
+                status_pull_endpoint TEXT,
+                status_pull_method VARCHAR(10) DEFAULT 'GET',
+                status_field_mapping JSONB DEFAULT '{}',
+                pull_frequency INTEGER DEFAULT 60,
+                last_status_pull TIMESTAMP,
+                auto_enrich_data BOOLEAN DEFAULT true,
+                default_country VARCHAR(50),
+                default_country_code VARCHAR(10),
+                required_fields JSONB DEFAULT '[]',
+                optional_fields JSONB DEFAULT '[]',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_partner_crm_partner ON partner_crm_integrations(partner_id);
+            CREATE INDEX IF NOT EXISTS idx_partner_crm_active ON partner_crm_integrations(is_active);
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_partner_crm_unique ON partner_crm_integrations(partner_id);
         `);
         
         // Insert default promotional email template using parameterized query
