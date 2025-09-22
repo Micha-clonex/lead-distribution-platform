@@ -186,6 +186,9 @@ router.get('/:id/crm-integration', async (req, res) => {
 router.post('/:id/crm-integration', async (req, res) => {
     try {
         const { id } = req.params;
+        console.log('CRM Integration save request for partner:', id);
+        console.log('Request body:', req.body);
+        
         const {
             crm_name,
             api_endpoint,
@@ -203,6 +206,14 @@ router.post('/:id/crm-integration', async (req, res) => {
             status_field_mapping,
             status_pulling_active
         } = req.body;
+        
+        // Validate required fields
+        if (!crm_name || !crm_name.trim()) {
+            return res.status(400).json({ error: 'CRM name is required' });
+        }
+        if (!api_endpoint || !api_endpoint.trim()) {
+            return res.status(400).json({ error: 'API endpoint is required' });
+        }
         
         // Validate API endpoint URL
         if (api_endpoint) {
