@@ -1,19 +1,39 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Database connection singleton - Production optimized
+// Database connection singleton - Production optimized with crash prevention
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgres://') ? { rejectUnauthorized: false } : false,
-    max: 10, // Reduced for production
-    min: 2,  // Keep minimum connections open
-    idleTimeoutMillis: 60000, // 60 seconds
-    connectionTimeoutMillis: 10000, // 10 seconds (was 2)
-    acquireTimeoutMillis: 15000, // Wait 15s for connection from pool
-    createTimeoutMillis: 10000,
-    destroyTimeoutMillis: 5000,
-    reapIntervalMillis: 1000,
-    createRetryIntervalMillis: 200
+    max: 8, // Further reduced for stability
+    min: 1,  // Reduced minimum to prevent too many idle connections
+    idleTimeoutMillis: 30000, // Shorter idle timeout (30 seconds)
+    connectionTimeoutMillis: 8000, // Shorter connection timeout
+    acquireTimeoutMillis: 10000, // Reduced wait time
+    createTimeoutMillis: 8000,
+    destroyTimeoutMillis: 3000,
+    reapIntervalMillis: 2000, // More frequent cleanup
+    createRetryIntervalMillis: 500
+});
+
+// Add error event handlers to prevent crashes
+pool.on('error', (err, client) => {
+    console.error('❌ Database pool error:', err.message);
+    console.error('Error code:', err.code);
+    
+    // Don't let pool errors crash the application
+    if (err.code === '57P01' || err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
+        console.log('⚠️ Database connection issue detected, but continuing operation...');
+        // The pool will automatically attempt to recreate connections
+    }
+});
+
+pool.on('connect', (client) => {
+    console.log('✅ New database client connected');
+});
+
+pool.on('remove', (client) => {
+    console.log('⚠️ Database client removed from pool');
 });
 
 // Test database connection with retry

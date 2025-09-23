@@ -442,7 +442,7 @@ function showDeliveryModal(delivery) {
                         <div class="mb-4">
                             <h6 class="fw-bold text-info">Payload Sent to Partner</h6>
                             <div class="bg-light border rounded p-3">
-                                <pre style="margin: 0; font-size: 0.85rem; white-space: pre-wrap;">${delivery.payload ? JSON.stringify(JSON.parse(delivery.payload), null, 2) : 'No payload data'}</pre>
+                                <pre style="margin: 0; font-size: 0.85rem; white-space: pre-wrap;">${delivery.payload ? JSON.stringify(delivery.payload, null, 2) : 'No payload data'}</pre>
                             </div>
                         </div>
 
@@ -451,7 +451,7 @@ function showDeliveryModal(delivery) {
                         <div class="mb-4">
                             <h6 class="fw-bold text-${delivery.status === 'success' ? 'success' : 'danger'}">Partner Response</h6>
                             <div class="bg-light border rounded p-3">
-                                <pre style="margin: 0; font-size: 0.85rem; white-space: pre-wrap; color: ${delivery.status === 'success' ? '#198754' : '#dc3545'};">${delivery.response_body}</pre>
+                                <pre style="margin: 0; font-size: 0.85rem; white-space: pre-wrap; color: ${delivery.status === 'success' ? '#198754' : '#dc3545'};">${typeof delivery.response_body === 'object' ? JSON.stringify(delivery.response_body, null, 2) : delivery.response_body}</pre>
                             </div>
                         </div>` : ''}
                     </div>

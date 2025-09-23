@@ -21,6 +21,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
+// Disable caching for dynamic content to prevent browser cache issues
+app.use((req, res, next) => {
+    // Set cache control headers for EJS pages and API responses
+    if (req.path.startsWith('/partners') || req.path.startsWith('/webhooks') || 
+        req.path.startsWith('/leads') || req.path.startsWith('/analytics') || 
+        req.path.includes('/api/')) {
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+    }
+    next();
+});
+
 // Session configuration
 app.use(session({
     store: new pgSession({
