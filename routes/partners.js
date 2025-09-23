@@ -162,7 +162,8 @@ router.get('/', async (req, res) => {
 // Add new partner
 router.post('/', async (req, res) => {
     try {
-        const { name, email, country, niche, daily_limit, premium_ratio, timezone } = req.body;
+        const { name, email, country, niche, daily_limit, premium_ratio, timezone, 
+                webhook_url, phone_format, required_fields, default_values, field_mapping } = req.body;
         
         // Convert percentage input to decimal (70 -> 0.70)
         const ratioDecimal = premium_ratio ? (parseFloat(premium_ratio) / 100) : 0.70;
@@ -172,13 +173,53 @@ router.post('/', async (req, res) => {
             return res.redirect('/partners?error=Name, email, country, and niche are required');
         }
         
-        // Since external webhooks are not used, provide internal default
-        const defaultWebhookUrl = 'internal://partner-endpoint';
+        // Parse and validate JSON fields (more tolerant parsing)
+        let parsedFieldMapping = {};
+        let parsedDefaultValues = {};
+        let parsedRequiredFields = [];
+        
+        try {
+            if (field_mapping) {
+                parsedFieldMapping = typeof field_mapping === 'string' ? 
+                                   (field_mapping.trim() ? JSON.parse(field_mapping) : {}) : 
+                                   field_mapping;
+            }
+        } catch (e) {
+            return res.redirect('/partners?error=Invalid field mapping format');
+        }
+        
+        try {
+            if (default_values) {
+                parsedDefaultValues = typeof default_values === 'string' ? 
+                                    (default_values.trim() ? JSON.parse(default_values) : {}) : 
+                                    default_values;
+            }
+        } catch (e) {
+            return res.redirect('/partners?error=Invalid default values format');
+        }
+        
+        if (required_fields) {
+            parsedRequiredFields = Array.isArray(required_fields) ? required_fields : 
+                                  (typeof required_fields === 'string' ? required_fields.split(',').map(f => f.trim()).filter(f => f) : []);
+        }
+        
+        // SECURITY: Validate webhook URL if provided (SSRF protection)
+        const finalWebhookUrl = webhook_url || 'internal://partner-endpoint';
+        if (webhook_url && webhook_url !== 'internal://partner-endpoint') {
+            const { validateWebhookUrl } = require('../services/webhook');
+            const urlValidation = validateWebhookUrl(webhook_url);
+            if (!urlValidation.valid) {
+                return res.redirect(`/partners?error=Invalid webhook URL: ${urlValidation.error}`);
+            }
+        }
         
         await pool.query(`
-            INSERT INTO partners (name, email, country, niche, daily_limit, premium_ratio, timezone, webhook_url)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        `, [name, email, country, niche, daily_limit || 50, ratioDecimal, timezone || 'UTC', defaultWebhookUrl]);
+            INSERT INTO partners (name, email, country, niche, daily_limit, premium_ratio, timezone, 
+                                webhook_url, phone_format, required_fields, default_values, field_mapping)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        `, [name, email, country, niche, daily_limit || 50, ratioDecimal, timezone || 'UTC', 
+            finalWebhookUrl, phone_format || 'with_plus', parsedRequiredFields, 
+            JSON.stringify(parsedDefaultValues), JSON.stringify(parsedFieldMapping)]);
         
         res.redirect('/partners?success=Partner added successfully');
     } catch (error) {
@@ -191,7 +232,8 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, email, country, niche, daily_limit, premium_ratio, status, timezone, recovery_fields_format } = req.body;
+        const { name, email, country, niche, daily_limit, premium_ratio, status, timezone, recovery_fields_format,
+                webhook_url, phone_format, required_fields, default_values, field_mapping } = req.body;
         
         // Validate premium_ratio
         if (premium_ratio !== undefined && premium_ratio !== null && premium_ratio !== '') {
@@ -209,9 +251,49 @@ router.put('/:id', async (req, res) => {
             }
         }
         
-        // **NEW: Validate recovery_fields_format**
+        // Validate recovery_fields_format
         if (recovery_fields_format && !['separate', 'notes'].includes(recovery_fields_format)) {
             return res.status(400).json({ success: false, error: 'Recovery fields format must be either "separate" or "notes"' });
+        }
+        
+        // Validate phone_format
+        if (phone_format && !['with_plus', 'no_plus', 'country_code', 'local_format'].includes(phone_format)) {
+            return res.status(400).json({ success: false, error: 'Invalid phone format' });
+        }
+        
+        // Parse and validate JSON fields
+        let parsedFieldMapping = {};
+        let parsedDefaultValues = {};
+        let parsedRequiredFields = [];
+        
+        try {
+            if (field_mapping && field_mapping.trim()) {
+                parsedFieldMapping = JSON.parse(field_mapping);
+            }
+        } catch (e) {
+            return res.status(400).json({ success: false, error: 'Invalid field mapping JSON' });
+        }
+        
+        try {
+            if (default_values && default_values.trim()) {
+                parsedDefaultValues = JSON.parse(default_values);
+            }
+        } catch (e) {
+            return res.status(400).json({ success: false, error: 'Invalid default values JSON' });
+        }
+        
+        if (required_fields) {
+            parsedRequiredFields = Array.isArray(required_fields) ? required_fields : 
+                                  (typeof required_fields === 'string' ? required_fields.split(',').map(f => f.trim()).filter(f => f) : []);
+        }
+        
+        // SECURITY: Validate webhook URL if provided (SSRF protection)
+        if (webhook_url && webhook_url !== 'internal://partner-endpoint' && !webhook_url.startsWith('internal://')) {
+            const { validateWebhookUrl } = require('../services/webhook');
+            const urlValidation = validateWebhookUrl(webhook_url);
+            if (!urlValidation.valid) {
+                return res.status(400).json({ success: false, error: `Invalid webhook URL: ${urlValidation.error}` });
+            }
         }
         
         // Convert percentage input to decimal (70 -> 0.70)
@@ -221,9 +303,13 @@ router.put('/:id', async (req, res) => {
             UPDATE partners 
             SET name = $1, email = $2, country = $3, niche = $4, 
                 daily_limit = $5, premium_ratio = $6, status = $7, timezone = $8, 
-                recovery_fields_format = $9, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $10
-        `, [name, email, country, niche, daily_limit, ratioDecimal, status, timezone, recovery_fields_format || 'separate', id]);
+                recovery_fields_format = $9, webhook_url = $10, phone_format = $11, 
+                required_fields = $12, default_values = $13, field_mapping = $14,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $15
+        `, [name, email, country, niche, daily_limit, ratioDecimal, status, timezone, 
+            recovery_fields_format || 'separate', webhook_url, phone_format || 'with_plus',
+            parsedRequiredFields, JSON.stringify(parsedDefaultValues), JSON.stringify(parsedFieldMapping), id]);
         
         res.json({ success: true, message: 'Partner updated successfully' });
     } catch (error) {

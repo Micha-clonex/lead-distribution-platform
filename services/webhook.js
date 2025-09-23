@@ -1,6 +1,43 @@
 const axios = require('axios');
 const { pool } = require('../config/db');
 
+/**
+ * SECURITY: Validates webhook URLs to prevent SSRF attacks
+ */
+function validateWebhookUrl(url) {
+    try {
+        const parsedUrl = new URL(url);
+        const hostname = parsedUrl.hostname;
+        
+        // Only allow HTTPS
+        if (parsedUrl.protocol !== 'https:') {
+            return { valid: false, error: 'Only HTTPS URLs are allowed' };
+        }
+        
+        // Block private/reserved IP ranges
+        const privatePatterns = [
+            /^127\./, // 127.0.0.0/8 - Loopback
+            /^192\.168\./, // 192.168.0.0/16 - Private
+            /^10\./, // 10.0.0.0/8 - Private  
+            /^172\.(1[6-9]|2[0-9]|3[0-1])\./, // 172.16.0.0/12 - Private
+            /^169\.254\./, // 169.254.0.0/16 - Link-local
+            /^0\./, // 0.0.0.0/8 - Current network
+            /^224\./, // 224.0.0.0/4 - Multicast
+            /^100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\./ // 100.64.0.0/10 - Shared address space
+        ];
+        
+        // Block localhost and private hostnames
+        if (hostname === 'localhost' || hostname === '::1' || 
+            privatePatterns.some(pattern => pattern.test(hostname))) {
+            return { valid: false, error: 'Private/reserved IP addresses are not allowed' };
+        }
+        
+        return { valid: true };
+    } catch (error) {
+        return { valid: false, error: 'Invalid URL format' };
+    }
+}
+
 // Send webhook to partner with improved retry logic
 async function sendWebhook(lead, partner) {
     try {
@@ -54,9 +91,31 @@ async function sendWebhook(lead, partner) {
         `, [deliveryId]);
         const currentAttempt = delivery.rows[0].attempts;
         
-        // Send webhook with timeout
+        // Handle internal endpoints - route to CRM delivery system instead
+        if (partner.webhook_url.startsWith('internal://')) {
+            console.log(`🔄 Internal endpoint detected: Routing lead ${lead.id} to CRM delivery system for ${partner.name}`);
+            
+            // Mark webhook as skipped and let CRM delivery handle it
+            await pool.query(`
+                UPDATE webhook_deliveries 
+                SET status = 'failed', response_code = 0, response_body = 'Routed to CRM delivery (internal endpoint)'
+                WHERE id = $1
+            `, [deliveryId]);
+            
+            // Return false to trigger CRM fallback in distribution logic
+            return false;
+        }
+        
+        // SECURITY: Validate external webhook URL before sending (SSRF protection)
+        const urlValidation = validateWebhookUrl(partner.webhook_url);
+        if (!urlValidation.valid) {
+            throw new Error(`Invalid webhook URL: ${urlValidation.error}`);
+        }
+        
+        // Send webhook with timeout and strict redirect policy
         const response = await axios.post(partner.webhook_url, payload, {
             timeout: 15000,
+            maxRedirects: 0, // Prevent redirect-based SSRF
             headers: {
                 'Content-Type': 'application/json',
                 'User-Agent': 'LeadDistribution/1.0'
@@ -384,4 +443,4 @@ function applyFieldMapping(data, partner) {
     return mappedPayload;
 }
 
-module.exports = { sendWebhook, retryFailedWebhooks, createPayloadForPartner };
+module.exports = { sendWebhook, retryFailedWebhooks, createPayloadForPartner, validateWebhookUrl };
