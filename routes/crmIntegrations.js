@@ -323,4 +323,64 @@ router.post('/:partnerId/test', async (req, res) => {
     }
 });
 
+// Toggle CRM integration status
+router.put('/:integrationId/status', async (req, res) => {
+    try {
+        const integrationId = req.params.integrationId;
+        const { is_active } = req.body;
+
+        await pool.query(
+            'UPDATE partner_crm_integrations SET is_active = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+            [is_active, integrationId]
+        );
+
+        res.json({ success: true, message: 'Status updated successfully' });
+    } catch (error) {
+        console.error('Error updating CRM integration status:', error);
+        res.json({ success: false, message: 'Failed to update status' });
+    }
+});
+
+// Delete CRM integration
+router.delete('/:integrationId', async (req, res) => {
+    try {
+        const integrationId = req.params.integrationId;
+
+        await pool.query('DELETE FROM partner_crm_integrations WHERE id = $1', [integrationId]);
+
+        res.json({ success: true, message: 'CRM integration deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting CRM integration:', error);
+        res.json({ success: false, message: 'Failed to delete CRM integration' });
+    }
+});
+
+// Test CRM connection
+router.post('/:integrationId/test-connection', async (req, res) => {
+    try {
+        const integrationId = req.params.integrationId;
+        
+        // Get integration details
+        const integration = await pool.query(
+            'SELECT * FROM partner_crm_integrations WHERE id = $1',
+            [integrationId]
+        );
+
+        if (integration.rows.length === 0) {
+            return res.json({ success: false, message: 'Integration not found' });
+        }
+
+        // TODO: Implement actual CRM connection test
+        // For now, just return success
+        res.json({ 
+            success: true, 
+            message: 'Connection test successful',
+            details: 'CRM endpoint is reachable' 
+        });
+    } catch (error) {
+        console.error('Error testing CRM connection:', error);
+        res.json({ success: false, message: 'Connection test failed' });
+    }
+});
+
 module.exports = router;

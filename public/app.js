@@ -70,6 +70,22 @@ function initializeEventHandlers() {
                     if (modal) modal.hide();
                 }
                 break;
+            case 'view-crm-details':
+                window.location.href = `/crm-integrations/${id}`;
+                break;
+            case 'test-crm-connection':
+                testCRMConnection(id);
+                break;
+            case 'edit-crm-integration':
+                // TODO: Implement edit form modal or redirect to edit page
+                showToast('Edit functionality coming soon', 'info');
+                break;
+            case 'toggle-crm-status':
+                toggleCRMStatus(id, target);
+                break;
+            case 'delete-crm-integration':
+                deleteCRMIntegration(id);
+                break;
             default:
                 console.warn('Unknown action:', action);
         }
@@ -566,5 +582,77 @@ function retryDelivery(id) {
     .catch(error => {
         console.error('Retry error:', error);
         showToast('Network error retrying delivery', 'error');
+    });
+}
+
+// Test CRM connection function
+function testCRMConnection(id) {
+    fetch(`/crm-integrations/${id}/test-connection`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('CRM connection test successful', 'success');
+        } else {
+            showToast(`Connection test failed: ${data.message}`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('CRM test error:', error);
+        showToast('Network error testing CRM connection', 'error');
+    });
+}
+
+// Toggle CRM status function
+function toggleCRMStatus(id, target) {
+    // Get current status from the button or DOM
+    const button = target.closest('button');
+    const currentStatus = button.getAttribute('data-current-status') !== 'false';
+    const newStatus = !currentStatus;
+    
+    fetch(`/crm-integrations/${id}/status`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ is_active: newStatus })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`CRM integration ${newStatus ? 'activated' : 'deactivated'}`, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Failed to update CRM status', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('CRM status error:', error);
+        showToast('Network error updating CRM status', 'error');
+    });
+}
+
+// Delete CRM integration function
+function deleteCRMIntegration(id) {
+    if (!confirm('Are you sure you want to delete this CRM integration? This action cannot be undone.')) {
+        return;
+    }
+    
+    fetch(`/crm-integrations/${id}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('CRM integration deleted successfully', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Failed to delete CRM integration', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('CRM delete error:', error);
+        showToast('Network error deleting CRM integration', 'error');
     });
 }
