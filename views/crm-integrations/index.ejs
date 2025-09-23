@@ -1,0 +1,255 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">CRM Integrations</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCRMModal">
+            <i class="fas fa-plus me-2"></i>Add CRM Integration
+        </button>
+    </div>
+</div>
+
+<!-- CRM Integrations Overview -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h6 class="card-title">Total Integrations</h6>
+                <h3><%= integrations.length %></h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h6 class="card-title">Active</h6>
+                <h3><%= integrations.filter(i => i.is_active).length %></h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <h6 class="card-title">Pending</h6>
+                <h3><%= integrations.filter(i => !i.is_active).length %></h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h6 class="card-title">Last Sync</h6>
+                <h3 style="font-size: 0.9rem;">
+                    <% if (integrations.length > 0) { %>
+                        <%= integrations.filter(i => i.last_sync_at).sort((a, b) => new Date(b.last_sync_at) - new Date(a.last_sync_at))[0]?.last_sync_at ? new Date(integrations.filter(i => i.last_sync_at).sort((a, b) => new Date(b.last_sync_at) - new Date(a.last_sync_at))[0].last_sync_at).toLocaleDateString() : 'Never' %>
+                    <% } else { %>
+                        Never
+                    <% } %>
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CRM Integrations Table -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-plug me-2"></i>Partner CRM Integrations
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped data-table">
+                        <thead>
+                            <tr>
+                                <th>Partner</th>
+                                <th>CRM Platform</th>
+                                <th>Auth Method</th>
+                                <th>Status</th>
+                                <th>Last Sync</th>
+                                <th>Success Rate</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% integrations.forEach(integration => { %>
+                                <tr>
+                                    <td>
+                                        <strong><%= integration.partner_name %></strong>
+                                        <br>
+                                        <span class="badge bg-info">
+                                            <%= integration.partner_country ? integration.partner_country.charAt(0).toUpperCase() + integration.partner_country.slice(1) : 'N/A' %>
+                                        </span>
+                                        <span class="badge bg-<%= integration.partner_niche === 'forex' ? 'success' : 'warning' %>">
+                                            <%= integration.partner_niche ? integration.partner_niche.charAt(0).toUpperCase() + integration.partner_niche.slice(1) : 'N/A' %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-cogs me-2"></i>
+                                        <%= integration.platform_name || 'Custom CRM' %>
+                                        <br>
+                                        <small class="text-muted">
+                                            <%= integration.platform_version || 'Unknown Version' %>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-<%= 
+                                            integration.auth_method === 'api_key' ? 'primary' : 
+                                            (integration.auth_method === 'oauth' ? 'success' : 
+                                            (integration.auth_method === 'basic' ? 'warning' : 'secondary')) %>">
+                                            <%= integration.auth_method ? integration.auth_method.replace('_', ' ').toUpperCase() : 'Token' %>
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">
+                                            <%= integration.custom_headers_count || 0 %> custom headers
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-<%= integration.is_active ? 'success' : 'danger' %>">
+                                            <%= integration.is_active ? 'Active' : 'Inactive' %>
+                                        </span>
+                                        <% if (integration.health_status) { %>
+                                            <br>
+                                            <small class="text-<%= integration.health_status === 'healthy' ? 'success' : 'warning' %>">
+                                                <%= integration.health_status %>
+                                            </small>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (integration.last_sync_at) { %>
+                                            <%= new Date(integration.last_sync_at).toLocaleDateString() %>
+                                            <br>
+                                            <small class="text-muted">
+                                                <%= new Date(integration.last_sync_at).toLocaleTimeString() %>
+                                            </small>
+                                        <% } else { %>
+                                            <span class="text-muted">Never</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (integration.total_attempts > 0) { %>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-<%= ((integration.successful_syncs / integration.total_attempts) * 100) >= 80 ? 'success' : ((integration.successful_syncs / integration.total_attempts) * 100) >= 50 ? 'warning' : 'danger' %>" 
+                                                     style="width: <%= ((integration.successful_syncs / integration.total_attempts) * 100).toFixed(1) %>%">
+                                                    <%= ((integration.successful_syncs / integration.total_attempts) * 100).toFixed(1) %>%
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">
+                                                <%= integration.successful_syncs %>/<%= integration.total_attempts %> successful
+                                            </small>
+                                        <% } else { %>
+                                            <span class="text-muted">No data</span>
+                                        <% } %>
+                                    </td>
+                                    <td><%= new Date(integration.created_at).toLocaleDateString() %></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" data-action="view-crm-details" data-id="<%= integration.id %>" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-info" data-action="test-crm-connection" data-id="<%= integration.id %>" title="Test Connection">
+                                                <i class="fas fa-wifi"></i>
+                                            </button>
+                                            <button class="btn btn-outline-warning" data-action="edit-crm-integration" data-id="<%= integration.id %>" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-outline-<%= integration.is_active ? 'secondary' : 'success' %>" 
+                                                    data-action="toggle-crm-status" data-id="<%= integration.id %>" 
+                                                    title="<%= integration.is_active ? 'Deactivate' : 'Activate' %>">
+                                                <i class="fas fa-<%= integration.is_active ? 'pause' : 'play' %>"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" data-action="delete-crm-integration" data-id="<%= integration.id %>" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add CRM Integration Modal -->
+<div class="modal fade" id="addCRMModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form action="/crm-integrations" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add CRM Integration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Partner *</label>
+                        <select class="form-control" name="partner_id" required>
+                            <option value="">Select Partner...</option>
+                            <% partners.forEach(partner => { %>
+                                <option value="<%= partner.id %>">
+                                    <%= partner.name %> - <%= partner.country %> (<%= partner.niche %>)
+                                </option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">CRM Platform *</label>
+                            <input type="text" class="form-control" name="platform_name" required placeholder="Salesforce, HubSpot, Custom CRM...">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Platform Version</label>
+                            <input type="text" class="form-control" name="platform_version" placeholder="v2.1, Enterprise, etc.">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Authentication Method *</label>
+                        <select class="form-control" name="auth_method" required>
+                            <option value="">Select Authentication...</option>
+                            <option value="api_key">API Key</option>
+                            <option value="oauth">OAuth 2.0</option>
+                            <option value="basic">Basic Auth</option>
+                            <option value="bearer_token">Bearer Token</option>
+                            <option value="custom">Custom Headers</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Webhook/API URL *</label>
+                        <input type="url" class="form-control" name="webhook_url" required placeholder="https://partner-crm.com/api/leads">
+                        <div class="form-text">URL where leads will be sent to the partner's CRM</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Authentication Credentials</label>
+                        <textarea class="form-control" name="auth_config" rows="4" placeholder='{"api_key": "your-key", "secret": "your-secret"}'></textarea>
+                        <div class="form-text">JSON format for authentication details (API keys, tokens, etc.)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Custom Headers</label>
+                        <textarea class="form-control" name="custom_headers" rows="3" placeholder='{"X-API-Version": "2.1", "Custom-Header": "value"}'></textarea>
+                        <div class="form-text">JSON format for any custom headers required by the CRM</div>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="is_active" checked>
+                        <label class="form-check-label">
+                            Activate integration immediately
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Integration</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

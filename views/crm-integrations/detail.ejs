@@ -1,0 +1,239 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-plug me-2"></i>
+        CRM Integration: <%= integration.partner_name %>
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-outline-info" data-action="test-crm-connection" data-id="<%= integration.id %>">
+                <i class="fas fa-wifi me-2"></i>Test Connection
+            </button>
+            <button type="button" class="btn btn-outline-warning" data-action="edit-crm-integration" data-id="<%= integration.id %>">
+                <i class="fas fa-edit me-2"></i>Edit
+            </button>
+            <button type="button" class="btn btn-outline-<%= integration.is_active ? 'secondary' : 'success' %>" 
+                    data-action="toggle-crm-status" data-id="<%= integration.id %>">
+                <i class="fas fa-<%= integration.is_active ? 'pause' : 'play' %> me-2"></i>
+                <%= integration.is_active ? 'Deactivate' : 'Activate' %>
+            </button>
+        </div>
+        <a href="/crm-integrations" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to List
+        </a>
+    </div>
+</div>
+
+<!-- Integration Status -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-<%= integration.is_active ? 'success' : 'danger' %> text-white">
+            <div class="card-body">
+                <h6 class="card-title">Status</h6>
+                <h3><%= integration.is_active ? 'Active' : 'Inactive' %></h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h6 class="card-title">Total Syncs</h6>
+                <h3><%= integration.total_attempts || 0 %></h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-<%= integration.success_rate >= 80 ? 'success' : (integration.success_rate >= 50 ? 'warning' : 'danger') %> text-white">
+            <div class="card-body">
+                <h6 class="card-title">Success Rate</h6>
+                <h3><%= integration.success_rate ? integration.success_rate.toFixed(1) + '%' : '0%' %></h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h6 class="card-title">Last Sync</h6>
+                <h3 style="font-size: 0.9rem;">
+                    <%= integration.last_sync_at ? new Date(integration.last_sync_at).toLocaleDateString() : 'Never' %>
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuration Details -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-cogs me-2"></i>Integration Configuration</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <td class="fw-bold">Partner:</td>
+                        <td><%= integration.partner_name %></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Country:</td>
+                        <td>
+                            <span class="badge bg-info">
+                                <%= integration.partner_country ? integration.partner_country.charAt(0).toUpperCase() + integration.partner_country.slice(1) : 'N/A' %>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Niche:</td>
+                        <td>
+                            <span class="badge bg-<%= integration.partner_niche === 'forex' ? 'success' : 'warning' %>">
+                                <%= integration.partner_niche ? integration.partner_niche.charAt(0).toUpperCase() + integration.partner_niche.slice(1) : 'N/A' %>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">CRM Platform:</td>
+                        <td><%= integration.platform_name || 'Custom CRM' %></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Platform Version:</td>
+                        <td><%= integration.platform_version || 'Unknown' %></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Auth Method:</td>
+                        <td>
+                            <span class="badge bg-<%= 
+                                integration.auth_method === 'api_key' ? 'primary' : 
+                                (integration.auth_method === 'oauth' ? 'success' : 
+                                (integration.auth_method === 'basic' ? 'warning' : 'secondary')) %>">
+                                <%= integration.auth_method ? integration.auth_method.replace('_', ' ').toUpperCase() : 'Token' %>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Created:</td>
+                        <td><%= new Date(integration.created_at).toLocaleString() %></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-link me-2"></i>Connection Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Webhook/API URL:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" value="<%= integration.webhook_url %>" readonly>
+                        <button class="btn btn-outline-secondary" data-action="copy-url" data-value="<%= integration.webhook_url %>">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <% if (integration.auth_config) { %>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Authentication Config:</label>
+                    <pre class="bg-light p-2 border rounded"><code><%= JSON.stringify(JSON.parse(integration.auth_config), null, 2) %></code></pre>
+                </div>
+                <% } %>
+                
+                <% if (integration.custom_headers) { %>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Custom Headers:</label>
+                    <pre class="bg-light p-2 border rounded"><code><%= JSON.stringify(JSON.parse(integration.custom_headers), null, 2) %></code></pre>
+                </div>
+                <% } %>
+                
+                <% if (integration.health_status) { %>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Health Status:</label>
+                    <span class="badge bg-<%= integration.health_status === 'healthy' ? 'success' : 'warning' %> fs-6">
+                        <%= integration.health_status.toUpperCase() %>
+                    </span>
+                </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Sync History -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-history me-2"></i>Recent Sync History</h6>
+            </div>
+            <div class="card-body">
+                <% if (syncHistory && syncHistory.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-sm data-table">
+                            <thead>
+                                <tr>
+                                    <th>Lead ID</th>
+                                    <th>Status</th>
+                                    <th>Response Code</th>
+                                    <th>Response</th>
+                                    <th>Attempt</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% syncHistory.forEach(sync => { %>
+                                    <tr>
+                                        <td>
+                                            <strong>Lead #<%= sync.lead_id %></strong>
+                                            <% if (sync.lead_email) { %>
+                                                <br><small class="text-muted"><%= sync.lead_email %></small>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-<%= sync.status === 'success' ? 'success' : 'danger' %>">
+                                                <%= sync.status.toUpperCase() %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <% if (sync.response_code) { %>
+                                                <span class="badge bg-<%= sync.response_code >= 200 && sync.response_code < 300 ? 'success' : 'danger' %>">
+                                                    HTTP <%= sync.response_code %>
+                                                </span>
+                                            <% } else { %>
+                                                <span class="text-muted">-</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (sync.response_body && sync.response_body.trim() !== '') { %>
+                                                <small class="text-<%= sync.status === 'success' ? 'success' : 'danger' %>" style="word-break: break-word;">
+                                                    <%= sync.response_body.length > 60 ? sync.response_body.substring(0, 60) + '...' : sync.response_body %>
+                                                </small>
+                                            <% } else { %>
+                                                <small class="text-muted">No response</small>
+                                            <% } %>
+                                        </td>
+                                        <td><%= sync.attempts || 1 %></td>
+                                        <td>
+                                            <%= new Date(sync.created_at).toLocaleDateString() %>
+                                            <br>
+                                            <small class="text-muted">
+                                                <%= new Date(sync.created_at).toLocaleTimeString() %>
+                                            </small>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No sync history available yet. Sync attempts will appear here once leads are sent to this CRM.
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
