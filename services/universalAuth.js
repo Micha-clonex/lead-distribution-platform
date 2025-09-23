@@ -277,10 +277,36 @@ function getAllAuthTypes() {
     };
 }
 
+/**
+ * Merge auth config while preserving existing secrets
+ * @param {string} authType - Authentication type
+ * @param {object} newConfig - New configuration to merge
+ * @param {object} existingConfig - Existing configuration with potential secrets
+ * @returns {object} Merged configuration preserving secrets
+ */
+function mergeAuthConfigPreservingSecrets(authType, newConfig, existingConfig) {
+    // If no existing config, return new config
+    if (!existingConfig) {
+        return newConfig;
+    }
+
+    const merged = { ...existingConfig };
+
+    // Only update non-empty fields from new config
+    for (const [key, value] of Object.entries(newConfig)) {
+        if (value !== '' && value !== null && value !== undefined) {
+            merged[key] = value;
+        }
+    }
+
+    return merged;
+}
+
 module.exports = {
     AUTH_TYPES,
     generateAuth,
     testAuthentication,
     getAuthTemplate,
-    getAllAuthTypes
+    getAllAuthTypes,
+    mergeAuthConfigPreservingSecrets
 };
