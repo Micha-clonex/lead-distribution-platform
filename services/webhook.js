@@ -208,11 +208,12 @@ async function retryFailedWebhooks() {
 }
 
 /**
- * Create webhook payload with recovery field formatting based on partner preferences
+ * Universal Smart Transformation Service - Creates partner-specific payloads
+ * Supports field mapping, phone formatting, auto-enrichment, and niche-specific fields
  */
 async function createPayloadForPartner(lead, partner) {
-    // Base payload with standard fields
-    const basePayload = {
+    // Step 1: Create base lead data with all available fields
+    const baseData = {
         lead_id: lead.id,
         first_name: lead.first_name,
         last_name: lead.last_name,
@@ -225,40 +226,162 @@ async function createPayloadForPartner(lead, partner) {
         timestamp: lead.created_at,
         postback_url: `${process.env.APP_URL || 'http://localhost:5000'}/api/postback/${partner.id}`
     };
-    
-    // **NEW: Recovery-specific field handling**
+
+    // Step 2: Add niche-specific fields
     if (lead.niche === 'recovery' && lead.data) {
         const leadData = typeof lead.data === 'string' ? JSON.parse(lead.data) : lead.data;
         const recoveryData = leadData.enriched || leadData.original || leadData;
         
-        // Extract recovery-specific fields
-        const amountLost = recoveryData.amount_lost || recoveryData.amountLost;
-        const fraudType = recoveryData.fraud_type || recoveryData.fraudType || recoveryData.type_of_fraud;
-        
-        // Format according to partner preference
-        if (partner.recovery_fields_format === 'notes' && (amountLost || fraudType)) {
-            // **OPTION 1: Combined into notes field**
-            let notes = '';
-            if (amountLost) {
-                notes += `Amount Lost: ${amountLost}`;
-            }
-            if (fraudType) {
-                if (notes) notes += ' | ';
-                notes += `Fraud Type: ${fraudType}`;
-            }
-            basePayload.notes = notes;
-        } else {
-            // **OPTION 2: Separate fields (default)**
-            if (amountLost) {
-                basePayload.amount_lost = amountLost;
-            }
-            if (fraudType) {
-                basePayload.fraud_type = fraudType;
+        // Add recovery-specific fields to base data
+        baseData.amount_lost = recoveryData.amount_lost || recoveryData.amountLost;
+        baseData.fraud_type = recoveryData.fraud_type || recoveryData.fraudType || recoveryData.type_of_fraud;
+    }
+
+    // Step 3: Auto-enrich missing required fields
+    const enrichedData = await autoEnrichMissingFields(baseData, partner);
+    
+    // Step 4: Format phone number according to partner preference
+    const phoneFormattedData = formatPhoneForPartner(enrichedData, partner);
+    
+    // Step 5: Apply partner-specific field mapping
+    const finalPayload = applyFieldMapping(phoneFormattedData, partner);
+    
+    return finalPayload;
+}
+
+/**
+ * Auto-enrichment: Fill missing required fields with smart defaults
+ */
+async function autoEnrichMissingFields(data, partner) {
+    const enrichedData = { ...data };
+    
+    // Get partner's required fields and default values
+    const requiredFields = partner.required_fields || [];
+    const defaultValues = partner.default_values || {};
+    
+    // Auto-fill missing required fields
+    for (const field of requiredFields) {
+        if (!enrichedData[field] || enrichedData[field] === '') {
+            // Try to auto-fill from various sources
+            switch (field) {
+                case 'country':
+                    enrichedData[field] = defaultValues.country || partner.country || data.country;
+                    break;
+                case 'source':
+                    enrichedData[field] = defaultValues.source || data.source || 'Lead Distribution Platform';
+                    break;
+                case 'niche':
+                    enrichedData[field] = defaultValues.niche || partner.niche || data.niche;
+                    break;
+                case 'type':
+                    enrichedData[field] = defaultValues.type || data.type || 'raw';
+                    break;
+                default:
+                    // Use default value if specified
+                    if (defaultValues[field]) {
+                        enrichedData[field] = defaultValues[field];
+                    }
+                    break;
             }
         }
     }
     
-    return basePayload;
+    return enrichedData;
+}
+
+/**
+ * Phone formatting based on partner preferences
+ */
+function formatPhoneForPartner(data, partner) {
+    const formattedData = { ...data };
+    
+    if (!data.phone) return formattedData;
+    
+    const phoneFormat = partner.phone_format || 'with_plus';
+    let phone = data.phone.toString().replace(/\s+/g, ''); // Remove spaces
+    
+    // Extract country code mapping for phone formatting
+    const countryCodeMap = {
+        'IT': '+39',
+        'DE': '+49', 
+        'ES': '+34',
+        'CA': '+1',
+        'UK': '+44',
+        'NO': '+47',
+        'AT': '+43'
+    };
+    
+    const countryCode = countryCodeMap[partner.country] || countryCodeMap[data.country] || '+1';
+    
+    switch (phoneFormat) {
+        case 'with_plus':
+            // Format: +39123456789
+            if (!phone.startsWith('+')) {
+                // Remove leading zeros and add country code
+                phone = phone.replace(/^0+/, '');
+                formattedData.phone = countryCode + phone;
+            } else {
+                formattedData.phone = phone;
+            }
+            break;
+            
+        case 'no_plus':
+            // Format: 123456789 (remove all prefixes)
+            formattedData.phone = phone.replace(/^\+?[0-9]{1,4}/, '').replace(/^0+/, '');
+            break;
+            
+        case 'country_code':
+            // Format: 0039123456789
+            if (!phone.startsWith('00')) {
+                phone = phone.replace(/^\+/, '00').replace(/^0+/, '');
+                formattedData.phone = '00' + countryCode.substring(1) + phone;
+            } else {
+                formattedData.phone = phone;
+            }
+            break;
+            
+        case 'local_format':
+            // Format: 0123456789 (local format with leading 0)
+            phone = phone.replace(/^\+?[0-9]{1,4}/, '').replace(/^0+/, '');
+            formattedData.phone = '0' + phone;
+            break;
+            
+        default:
+            // Keep original format
+            formattedData.phone = phone;
+    }
+    
+    return formattedData;
+}
+
+/**
+ * Apply partner-specific field mapping to transform field names and structure
+ */
+function applyFieldMapping(data, partner) {
+    const fieldMapping = partner.field_mapping || {};
+    
+    // If no custom mapping, return data as-is with standard field names
+    if (Object.keys(fieldMapping).length === 0) {
+        return data;
+    }
+    
+    const mappedPayload = {};
+    
+    // Apply field mappings
+    for (const [originalField, mappedField] of Object.entries(fieldMapping)) {
+        if (data[originalField] !== undefined && data[originalField] !== null) {
+            mappedPayload[mappedField] = data[originalField];
+        }
+    }
+    
+    // Add any unmapped fields that weren't specified in mapping
+    for (const [field, value] of Object.entries(data)) {
+        if (!fieldMapping[field] && value !== undefined && value !== null) {
+            mappedPayload[field] = value;
+        }
+    }
+    
+    return mappedPayload;
 }
 
 module.exports = { sendWebhook, retryFailedWebhooks, createPayloadForPartner };
