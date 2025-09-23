@@ -260,6 +260,29 @@ async function initDatabase() {
             WHERE recovery_fields_format IS NULL
         `);
         
+        // **NEW: Authentication configuration for partners**
+        await pool.query(`
+            ALTER TABLE partners 
+            ADD COLUMN IF NOT EXISTS auth_type VARCHAR(50) DEFAULT 'none'
+        `);
+        
+        await pool.query(`
+            ALTER TABLE partners 
+            ADD COLUMN IF NOT EXISTS auth_config JSONB DEFAULT '{}'
+        `);
+        
+        await pool.query(`
+            ALTER TABLE partners 
+            ADD COLUMN IF NOT EXISTS content_type VARCHAR(100) DEFAULT 'application/json'
+        `);
+        
+        // Backfill partners with default auth configuration
+        await pool.query(`
+            UPDATE partners 
+            SET auth_type = 'none', auth_config = '{}', content_type = 'application/json'
+            WHERE auth_type IS NULL OR auth_config IS NULL OR content_type IS NULL
+        `);
+        
         // **NEW: Email marketing system tables**
         await pool.query(`
             -- Email templates table

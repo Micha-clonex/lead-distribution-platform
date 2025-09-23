@@ -332,43 +332,48 @@ router.put('/:id', async (req, res) => {
                                   (typeof required_fields === 'string' ? required_fields.split(',').map(f => f.trim()).filter(f => f) : []);
         }
         
-        // Parse authentication configuration
+        // Parse authentication configuration and merge with existing secrets
         let authConfig = {};
         const authType = auth_type || 'none';
         
+        // Get existing partner auth config for secret preservation
+        const existingPartner = await pool.query('SELECT auth_config FROM partners WHERE id = $1', [id]);
+        const existingAuthConfig = existingPartner.rows[0]?.auth_config || {};
+        
         if (authType !== 'none') {
+            let incomingConfig = {};
+            
             switch (authType) {
                 case 'bearer_token':
-                    if (auth_bearer_token) {
-                        authConfig = { token: auth_bearer_token };
-                    }
+                    incomingConfig = { token: auth_bearer_token };
                     break;
                 case 'api_key':
-                    if (auth_api_key) {
-                        authConfig = { 
-                            header_name: auth_header_name || 'X-API-Key',
-                            key: auth_api_key 
-                        };
-                    }
+                    incomingConfig = { 
+                        header_name: auth_header_name || 'X-API-Key',
+                        key: auth_api_key 
+                    };
                     break;
                 case 'basic_auth':
-                    if (auth_username && auth_password) {
-                        authConfig = { 
-                            username: auth_username,
-                            password: auth_password 
-                        };
-                    }
+                    incomingConfig = { 
+                        username: auth_username,
+                        password: auth_password 
+                    };
                     break;
                 case 'custom_header':
                     if (auth_custom_headers) {
                         try {
-                            authConfig = { headers: JSON.parse(auth_custom_headers) };
+                            incomingConfig = { headers: JSON.parse(auth_custom_headers) };
                         } catch (e) {
                             return res.status(400).json({ success: false, error: 'Invalid custom headers format - must be valid JSON' });
                         }
                     }
                     break;
+                default:
+                    return res.status(400).json({ success: false, error: 'Invalid authentication type' });
             }
+            
+            // Use the secret-preserving merge function
+            authConfig = mergeAuthConfigPreservingSecrets(authType, existingAuthConfig, incomingConfig);
         }
         
         // SECURITY: Validate webhook URL if provided (SSRF protection)

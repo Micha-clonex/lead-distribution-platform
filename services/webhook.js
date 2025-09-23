@@ -112,14 +112,38 @@ async function sendWebhook(lead, partner) {
             throw new Error(`Invalid webhook URL: ${urlValidation.error}`);
         }
         
+        // Prepare authentication and content type
+        const { generateAuth } = require('./universalAuth');
+        let requestHeaders = {
+            'User-Agent': 'LeadDistribution/1.0'
+        };
+        let requestUrl = partner.webhook_url;
+        
+        // Apply authentication if configured
+        if (partner.auth_type && partner.auth_type !== 'none' && partner.auth_config) {
+            const authResult = generateAuth(partner.auth_type, partner.auth_config, partner.webhook_url);
+            
+            if (authResult.isValid) {
+                // Merge authentication headers
+                Object.assign(requestHeaders, authResult.headers);
+                // Use potentially modified URL (for query param auth)
+                requestUrl = authResult.url;
+            } else {
+                console.warn(`Authentication failed for partner ${partner.name}: ${authResult.error}`);
+                throw new Error(`Authentication configuration error: ${authResult.error}`);
+            }
+        }
+        
+        // Set content type (default to JSON if not specified)
+        requestHeaders['Content-Type'] = partner.content_type || 'application/json';
+        
+        console.log(`Sending webhook to ${partner.name} with auth type: ${partner.auth_type || 'none'}, content type: ${partner.content_type || 'application/json'}`);
+        
         // Send webhook with timeout and strict redirect policy
-        const response = await axios.post(partner.webhook_url, payload, {
+        const response = await axios.post(requestUrl, payload, {
             timeout: 15000,
             maxRedirects: 0, // Prevent redirect-based SSRF
-            headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'LeadDistribution/1.0'
-            }
+            headers: requestHeaders
         });
         
         // Update delivery status on success
