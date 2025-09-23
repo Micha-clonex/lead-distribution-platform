@@ -75,6 +75,10 @@ async function initDatabase() {
             business_hours_start TIME DEFAULT '09:00:00',
             business_hours_end TIME DEFAULT '18:00:00',
             weekends_enabled BOOLEAN DEFAULT false,
+            field_mapping JSONB DEFAULT '{}',
+            phone_format VARCHAR(50) DEFAULT 'with_plus',
+            required_fields TEXT[] DEFAULT '{}',
+            default_values JSONB DEFAULT '{}',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
