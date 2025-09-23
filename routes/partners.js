@@ -167,11 +167,38 @@ router.get('/:id/crm-integration', async (req, res) => {
         const { id } = req.params;
         
         const result = await pool.query(
-            'SELECT id, partner_id, crm_name, api_endpoint, auth_header, request_method, test_url, request_headers, field_mapping, is_active, created_at, updated_at, CASE WHEN api_key IS NOT NULL AND api_key != \'\' THEN true ELSE false END as api_key_set FROM partner_crm_integrations WHERE partner_id = $1',
+            'SELECT id, partner_id, crm_name, api_endpoint, auth_type, auth_config, auth_header, request_method, test_url, request_headers, field_mapping, is_active, created_at, updated_at, CASE WHEN api_key IS NOT NULL AND api_key != \'\' THEN true ELSE false END as api_key_set FROM partner_crm_integrations WHERE partner_id = $1',
             [id]
         );
         
         const integration = result.rows[0];
+        
+        // Mask sensitive data in auth_config for security
+        if (integration && integration.auth_config) {
+            const maskedConfig = { ...integration.auth_config };
+            
+            // Mask common sensitive fields
+            if (maskedConfig.token) maskedConfig.token = '***masked***';
+            if (maskedConfig.key) maskedConfig.key = '***masked***';
+            if (maskedConfig.password) maskedConfig.password = '***masked***';
+            if (maskedConfig.access_token) maskedConfig.access_token = '***masked***';
+            if (maskedConfig.param_value) maskedConfig.param_value = '***masked***';
+            if (maskedConfig.secret) maskedConfig.secret = '***masked***';
+            if (maskedConfig.client_secret) maskedConfig.client_secret = '***masked***';
+            
+            // Mask custom headers that might contain secrets
+            if (maskedConfig.headers) {
+                Object.keys(maskedConfig.headers).forEach(key => {
+                    if (key.toLowerCase().includes('token') || 
+                        key.toLowerCase().includes('key') || 
+                        key.toLowerCase().includes('auth')) {
+                        maskedConfig.headers[key] = '***masked***';
+                    }
+                });
+            }
+            
+            integration.auth_config = maskedConfig;
+        }
         
         res.json({
             success: true,
@@ -186,15 +213,15 @@ router.get('/:id/crm-integration', async (req, res) => {
 router.post('/:id/crm-integration', async (req, res) => {
     try {
         const { id } = req.params;
+        const { 
+            crm_name, api_endpoint, request_method, field_mapping, is_active, test_url,
+            auth_type, auth_config, request_headers
+        } = req.body;
         
-        // Simple response first to test basic functionality
         console.log('=== CRM Integration Request ===');
         console.log('Partner ID:', id);
-        console.log('Body keys:', Object.keys(req.body));
-        console.log('Body:', JSON.stringify(req.body, null, 2));
-        
-        res.json({ success: true, message: 'Test response - server is working' });
-        return;
+        console.log('Auth Type:', auth_type);
+        console.log('CRM Name:', crm_name);
         
         // Validate API endpoint URL
         if (api_endpoint) {
@@ -214,6 +241,19 @@ router.post('/:id/crm-integration', async (req, res) => {
             return res.status(400).json({ error: 'Invalid request method. Only POST and PUT are allowed.' });
         }
         
+        // Validate required fields
+        if (!crm_name || !api_endpoint) {
+            return res.status(400).json({ error: 'CRM name and API endpoint are required' });
+        }
+        
+        // Validate auth_type if provided
+        const { AUTH_TYPES } = require('../services/universalAuth');
+        if (auth_type && !Object.values(AUTH_TYPES).includes(auth_type)) {
+            return res.status(400).json({ 
+                error: `Invalid auth_type. Must be one of: ${Object.values(AUTH_TYPES).join(', ')}` 
+            });
+        }
+        
         // Check if integration already exists
         const existingResult = await pool.query(
             'SELECT id FROM partner_crm_integrations WHERE partner_id = $1',
@@ -221,50 +261,44 @@ router.post('/:id/crm-integration', async (req, res) => {
         );
         
         if (existingResult.rows.length > 0) {
-            // Update existing integration - only update API key if provided
-            if (api_key && api_key.trim()) {
-                await pool.query(`
-                    UPDATE partner_crm_integrations 
-                    SET crm_name = $1, api_endpoint = $2, api_key = $3, auth_header = $4,
-                        request_method = $5, test_url = $6, request_headers = $7,
-                        field_mapping = $8, is_active = $9, status_pull_endpoint = $10,
-                        status_pull_method = $11, pull_frequency = $12, status_field_mapping = $13,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE partner_id = $14
-                `, [crm_name, api_endpoint, api_key, auth_header, request_method, 
-                    test_url, JSON.stringify(request_headers), JSON.stringify(field_mapping), 
-                    is_active, status_pull_endpoint, status_pull_method || 'GET', 
-                    pull_frequency || 60, JSON.stringify(status_field_mapping), id]);
-            } else {
-                // Don't update API key if empty (keep existing)
-                await pool.query(`
-                    UPDATE partner_crm_integrations 
-                    SET crm_name = $1, api_endpoint = $2, auth_header = $3,
-                        request_method = $4, test_url = $5, request_headers = $6,
-                        field_mapping = $7, is_active = $8, status_pull_endpoint = $9,
-                        status_pull_method = $10, pull_frequency = $11, status_field_mapping = $12,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE partner_id = $13
-                `, [crm_name, api_endpoint, auth_header, request_method, 
-                    test_url, JSON.stringify(request_headers), JSON.stringify(field_mapping), 
-                    is_active, status_pull_endpoint, status_pull_method || 'GET', 
-                    pull_frequency || 60, JSON.stringify(status_field_mapping), id]);
-            }
+            // Update existing integration with universal auth
+            await pool.query(`
+                UPDATE partner_crm_integrations 
+                SET crm_name = $1, api_endpoint = $2, auth_type = $3, auth_config = $4,
+                    request_method = $5, test_url = $6, request_headers = $7,
+                    field_mapping = $8, is_active = $9, updated_at = CURRENT_TIMESTAMP
+                WHERE partner_id = $10
+            `, [
+                crm_name, 
+                api_endpoint, 
+                auth_type || 'api_key', 
+                JSON.stringify(auth_config || {}),
+                request_method || 'POST',
+                test_url,
+                JSON.stringify(request_headers || {}),
+                JSON.stringify(field_mapping || {}),
+                is_active !== false, // Default to true
+                id
+            ]);
         } else {
-            // Create new integration - require API key
-            if (!api_key || !api_key.trim()) {
-                return res.status(400).json({ error: 'API key is required for new integrations' });
-            }
+            // Create new integration with universal auth
             await pool.query(`
                 INSERT INTO partner_crm_integrations 
-                (partner_id, crm_name, api_endpoint, api_key, auth_header, request_method,
-                 test_url, request_headers, field_mapping, is_active, status_pull_endpoint,
-                 status_pull_method, pull_frequency, status_field_mapping)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-            `, [id, crm_name, api_endpoint, api_key, auth_header, request_method,
-                test_url, JSON.stringify(request_headers), JSON.stringify(field_mapping), 
-                is_active, status_pull_endpoint, status_pull_method || 'GET', 
-                pull_frequency || 60, JSON.stringify(status_field_mapping)]);
+                (partner_id, crm_name, api_endpoint, auth_type, auth_config, request_method,
+                 test_url, request_headers, field_mapping, is_active)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            `, [
+                id, 
+                crm_name, 
+                api_endpoint, 
+                auth_type || 'api_key', 
+                JSON.stringify(auth_config || {}),
+                request_method || 'POST',
+                test_url,
+                JSON.stringify(request_headers || {}),
+                JSON.stringify(field_mapping || {}),
+                is_active !== false // Default to true
+            ]);
         }
         
         res.json({ success: true });
@@ -278,7 +312,7 @@ router.post('/:id/crm-integration', async (req, res) => {
 
 router.post('/:id/test-crm', async (req, res) => {
     try {
-        const { api_endpoint, api_key, auth_header, request_method } = req.body;
+        const { api_endpoint, auth_type, auth_config, request_method, test_payload } = req.body;
         
         // Basic SSRF protection - validate URL
         if (!api_endpoint || typeof api_endpoint !== 'string') {
@@ -306,10 +340,10 @@ router.post('/:id/test-crm', async (req, res) => {
             return res.json({ success: false, error: 'Private IP addresses not allowed' });
         }
         
-        // Validate method
-        const allowedMethods = ['POST', 'PUT'];
+        // Validate method - include GET for testing ping endpoints
+        const allowedMethods = ['GET', 'POST', 'PUT'];
         if (!allowedMethods.includes(request_method?.toUpperCase())) {
-            return res.json({ success: false, error: 'Invalid request method' });
+            return res.json({ success: false, error: 'Invalid request method. Allowed: GET, POST, PUT' });
         }
         
         // Get CRM type or use field mapping to determine test payload format
@@ -401,14 +435,41 @@ router.post('/:id/test-crm', async (req, res) => {
             'Content-Type': 'application/json'
         };
         
-        if (auth_header && api_key) {
-            headers[auth_header] = api_key;
+        // Apply universal authentication if configured
+        let testEndpoint = api_endpoint;
+        if (auth_type && auth_config) {
+            const { generateAuth } = require('../services/universalAuth');
+            try {
+                const authData = await generateAuth(auth_type, auth_config, api_endpoint);
+                
+                // Apply headers from universal auth
+                if (authData.headers) {
+                    Object.assign(headers, authData.headers);
+                }
+                
+                // Apply query parameters if needed (for query_param auth)
+                if (authData.params && Object.keys(authData.params).length > 0) {
+                    const testUrl = new URL(api_endpoint);
+                    Object.keys(authData.params).forEach(key => {
+                        testUrl.searchParams.set(key, authData.params[key]);
+                    });
+                    testEndpoint = testUrl.toString();
+                }
+                
+                console.log(`🔐 Test using ${auth_type} authentication`);
+            } catch (authError) {
+                console.error(`❌ Authentication setup failed:`, authError.message);
+                return res.json({ 
+                    success: false, 
+                    error: `Authentication setup failed: ${authError.message}` 
+                });
+            }
         }
         
         const startTime = Date.now();
         const response = await axios({
             method: request_method.toLowerCase(),
-            url: api_endpoint,
+            url: testEndpoint,
             headers: headers,
             data: testPayload,
             timeout: 10000,

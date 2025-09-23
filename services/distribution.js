@@ -123,18 +123,53 @@ async function distributeLead(leadId) {
 }
 
 // Deliver lead data to partner's CRM system using dynamic CRM integration settings
+// SSRF protection - validates URLs to prevent internal network access
+function validateUrlForSSRF(url) {
+    try {
+        const parsedUrl = new URL(url);
+        const hostname = parsedUrl.hostname;
+        
+        // Only allow HTTPS
+        if (parsedUrl.protocol !== 'https:') {
+            return { valid: false, error: 'Only HTTPS URLs are allowed' };
+        }
+        
+        // Block private/reserved IP ranges
+        const privatePatterns = [
+            /^127\./, // 127.0.0.0/8 - Loopback
+            /^192\.168\./, // 192.168.0.0/16 - Private
+            /^10\./, // 10.0.0.0/8 - Private  
+            /^172\.(1[6-9]|2[0-9]|3[0-1])\./, // 172.16.0.0/12 - Private
+            /^169\.254\./, // 169.254.0.0/16 - Link-local
+            /^0\./, // 0.0.0.0/8 - Current network
+            /^224\./, // 224.0.0.0/4 - Multicast
+            /^100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\./ // 100.64.0.0/10 - Shared address space
+        ];
+        
+        // Block localhost and private hostnames
+        if (hostname === 'localhost' || hostname === '::1' || 
+            privatePatterns.some(pattern => pattern.test(hostname))) {
+            return { valid: false, error: 'Private/reserved IP addresses are not allowed' };
+        }
+        
+        return { valid: true };
+    } catch (error) {
+        return { valid: false, error: 'Invalid URL format' };
+    }
+}
+
 async function deliverToCRM(leadId, partnerId, leadData) {
     const axios = require('axios');
     
     try {
-        // Get partner's CRM integration settings
+        // Get partner's CRM integration settings with universal auth
         const crmResult = await pool.query(`
             SELECT 
                 p.name as partner_name,
                 crm.crm_name,
                 crm.api_endpoint,
-                crm.api_key,
-                crm.auth_header,
+                crm.auth_type,
+                crm.auth_config,
                 crm.request_method,
                 crm.request_headers,
                 crm.field_mapping,
@@ -148,7 +183,10 @@ async function deliverToCRM(leadId, partnerId, leadData) {
             return { success: false, error: 'Partner not found or inactive' };
         }
         
-        const { partner_name, crm_name, api_endpoint, api_key, auth_header, request_method, request_headers, field_mapping, is_active } = crmResult.rows[0];
+        const { partner_name, crm_name, api_endpoint, auth_type, auth_config, request_method, request_headers, field_mapping, is_active } = crmResult.rows[0];
+        
+        // Use mutable variable for the final request URL
+        let requestUrl = api_endpoint;
         
         // Check if CRM integration is configured and active
         if (!is_active || !api_endpoint) {
@@ -200,15 +238,45 @@ async function deliverToCRM(leadId, partnerId, leadData) {
         // Prepare headers from stored configuration
         const headers = request_headers || {};
         
-        // Add API key to headers if configured
-        if (api_key && auth_header) {
-            headers[auth_header] = api_key;
+        // Apply universal authentication if configured
+        if (auth_type && auth_config) {
+            const { generateAuth } = require('./universalAuth');
+            try {
+                const authResult = await generateAuth(auth_type, auth_config, api_endpoint);
+                
+                // Check if authentication setup was valid
+                if (!authResult.isValid) {
+                    console.error(`❌ Authentication validation failed for ${partner_name}: ${authResult.error}`);
+                    return { success: false, error: `Authentication validation failed: ${authResult.error}` };
+                }
+                
+                // Use the URL and headers returned by generateAuth
+                if (authResult.url) {
+                    requestUrl = authResult.url;
+                }
+                
+                if (authResult.headers) {
+                    Object.assign(headers, authResult.headers);
+                }
+                
+                console.log(`🔐 Applied ${auth_type} authentication for ${partner_name}`);
+            } catch (authError) {
+                console.error(`❌ Authentication setup failed for ${partner_name}:`, authError.message);
+                return { success: false, error: `Authentication setup failed: ${authError.message}` };
+            }
+        }
+        
+        // SSRF protection - validate final request URL
+        const ssrfValidation = validateUrlForSSRF(requestUrl);
+        if (!ssrfValidation.valid) {
+            console.error(`❌ SSRF validation failed for ${partner_name}: ${ssrfValidation.error}`);
+            return { success: false, error: `URL validation failed: ${ssrfValidation.error}` };
         }
         
         // Send to partner's CRM API
         const response = await axios({
             method: request_method || 'POST',
-            url: api_endpoint,
+            url: requestUrl,
             data: crmPayload,
             timeout: 15000,
             headers: headers
