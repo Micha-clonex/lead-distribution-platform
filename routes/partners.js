@@ -3,6 +3,89 @@ const router = express.Router();
 const { pool } = require('../config/db');
 const axios = require('axios');
 
+/**
+ * Merge authentication config while preserving existing secrets
+ * @param {string} authType - Authentication type
+ * @param {object} existingConfig - Current auth config from database
+ * @param {object} incomingConfig - New auth config from frontend
+ * @returns {object} Merged config with secrets preserved
+ */
+function mergeAuthConfigPreservingSecrets(authType, existingConfig, incomingConfig) {
+    const MASKED_VALUE = '***masked***';
+    const merged = { ...incomingConfig };
+    
+    switch (authType) {
+        case 'bearer_token':
+            // Preserve token if incoming is masked or missing
+            if (!incomingConfig.token || incomingConfig.token === MASKED_VALUE) {
+                merged.token = existingConfig.token;
+            }
+            break;
+            
+        case 'api_key':
+            // Preserve key if masked, allow header_name to change
+            if (!incomingConfig.key || incomingConfig.key === MASKED_VALUE) {
+                merged.key = existingConfig.key;
+            }
+            break;
+            
+        case 'basic_auth':
+            // Allow username to change, preserve password if masked
+            if (!incomingConfig.password || incomingConfig.password === MASKED_VALUE) {
+                merged.password = existingConfig.password;
+            }
+            break;
+            
+        case 'custom_header':
+            // Merge headers object, preserving masked values
+            if (existingConfig.headers && incomingConfig.headers) {
+                merged.headers = { ...existingConfig.headers };
+                Object.keys(incomingConfig.headers).forEach(headerName => {
+                    const incomingValue = incomingConfig.headers[headerName];
+                    if (incomingValue && incomingValue !== MASKED_VALUE) {
+                        merged.headers[headerName] = incomingValue;
+                    }
+                });
+            }
+            break;
+            
+        case 'query_param':
+            // Preserve param_value if masked, allow param_name to change
+            if (!incomingConfig.param_value || incomingConfig.param_value === MASKED_VALUE) {
+                merged.param_value = existingConfig.param_value;
+            }
+            break;
+            
+        case 'oauth2':
+            // Preserve access_token and other sensitive fields
+            if (!incomingConfig.access_token || incomingConfig.access_token === MASKED_VALUE) {
+                merged.access_token = existingConfig.access_token;
+            }
+            if (!incomingConfig.refresh_token || incomingConfig.refresh_token === MASKED_VALUE) {
+                merged.refresh_token = existingConfig.refresh_token;
+            }
+            if (!incomingConfig.client_secret || incomingConfig.client_secret === MASKED_VALUE) {
+                merged.client_secret = existingConfig.client_secret;
+            }
+            break;
+            
+        case 'custom':
+            // For custom auth, merge custom_headers preserving masked values
+            if (existingConfig.custom_headers && incomingConfig.custom_headers) {
+                merged.custom_headers = { ...existingConfig.custom_headers };
+                Object.keys(incomingConfig.custom_headers).forEach(headerName => {
+                    const incomingValue = incomingConfig.custom_headers[headerName];
+                    if (incomingValue && incomingValue !== MASKED_VALUE) {
+                        merged.custom_headers[headerName] = incomingValue;
+                    }
+                });
+            }
+            break;
+    }
+    
+    return merged;
+}
+
 // Get all partners
 router.get('/', async (req, res) => {
     try {
@@ -261,6 +344,20 @@ router.post('/:id/crm-integration', async (req, res) => {
         );
         
         if (existingResult.rows.length > 0) {
+            // For updates, merge with existing auth_config to preserve secrets
+            let mergedAuthConfig = auth_config || {};
+            
+            // Fetch existing integration to get current auth_config
+            const currentIntegration = await pool.query(
+                'SELECT auth_config FROM partner_crm_integrations WHERE partner_id = $1',
+                [id]
+            );
+            
+            if (currentIntegration.rows.length > 0) {
+                const existingAuthConfig = currentIntegration.rows[0].auth_config || {};
+                mergedAuthConfig = mergeAuthConfigPreservingSecrets(auth_type, existingAuthConfig, auth_config || {});
+            }
+            
             // Update existing integration with universal auth
             await pool.query(`
                 UPDATE partner_crm_integrations 
@@ -272,7 +369,7 @@ router.post('/:id/crm-integration', async (req, res) => {
                 crm_name, 
                 api_endpoint, 
                 auth_type || 'api_key', 
-                JSON.stringify(auth_config || {}),
+                JSON.stringify(mergedAuthConfig),
                 request_method || 'POST',
                 test_url,
                 JSON.stringify(request_headers || {}),

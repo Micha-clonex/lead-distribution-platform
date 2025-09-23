@@ -396,40 +396,50 @@
                         <div class="form-text">The URL where leads will be sent</div>
                     </div>
                     
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <label class="form-label">API Key/Token *</label>
-                            <input type="text" class="form-control" id="crmApiKey" name="api_key" 
-                                   placeholder="7cd8ae99-3e3f-45eb-9273-e94799d08d67" required>
+                    <!-- Universal Authentication System -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Authentication Settings</h6>
                         </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Authentication Type</label>
-                            <select class="form-control" id="crmAuthType" onchange="updateAuthFields()">
-                                <option value="api_key">API Key</option>
-                                <option value="bearer_token">Bearer Token</option>
-                                <option value="custom_token">Custom Token</option>
-                                <option value="custom_header">Custom Header</option>
-                            </select>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Authentication Type *</label>
+                                    <select class="form-select" id="crmAuthType" name="auth_type" onchange="updateUniversalAuthFields()" required>
+                                        <option value="">Select Authentication</option>
+                                        <option value="bearer_token">Bearer Token</option>
+                                        <option value="api_key">API Key (Header)</option>
+                                        <option value="basic_auth">Basic Authentication</option>
+                                        <option value="custom_header">Custom Header</option>
+                                        <option value="query_param">Query Parameter</option>
+                                        <option value="oauth2">OAuth2 Token</option>
+                                        <option value="custom">Custom Auth</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Request Method</label>
+                                    <select class="form-select" id="crmMethod" name="request_method">
+                                        <option value="POST">POST</option>
+                                        <option value="PUT">PUT</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch mt-4">
+                                        <input class="form-check-input" type="checkbox" id="crmIsActive" name="is_active" checked>
+                                        <label class="form-check-label" for="crmIsActive">
+                                            Enable Integration
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Auth Configuration Fields -->
+                            <div id="authConfigFields"></div>
+                            
+                            <div class="mt-3">
+                                <small class="text-muted" id="authHint">Configure authentication based on your partner's CRM requirements</small>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label" id="authHeaderLabel">Header Name</label>
-                            <input type="text" class="form-control" id="crmAuthHeader" name="auth_header" 
-                                   value="X-API-Key" placeholder="X-API-Key">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Request Method</label>
-                            <select class="form-select" id="crmMethod" name="request_method">
-                                <option value="POST">POST</option>
-                                <option value="PUT">PUT</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <small class="form-text text-muted" id="authHint">Header where your key/token will be sent</small>
                     </div>
                     
                     <div class="mb-3">
@@ -486,12 +496,6 @@
                     </div>
 
                     <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="crmIsActive" name="is_active" checked>
-                            <label class="form-check-label" for="crmIsActive">
-                                Enable CRM Integration
-                            </label>
-                        </div>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="statusPullingActive">
                             <label class="form-check-label" for="statusPullingActive">
@@ -757,34 +761,48 @@ function manageCRM(partnerId) {
                 const integration = data.integration;
                 document.getElementById('crmName').value = integration.crm_name || '';
                 document.getElementById('crmEndpoint').value = integration.api_endpoint || '';
-                // Don't populate API key for security - show placeholder if exists
-                document.getElementById('crmApiKey').value = '';
-                document.getElementById('crmApiKey').placeholder = integration.api_key_set ? 
-                    'API key configured (leave blank to keep current)' : 'Enter API key';
-                document.getElementById('crmAuthHeader').value = integration.auth_header || 'X-API-Key';
-    
-    // Populate status pulling fields
-    document.getElementById('statusPullEndpoint').value = integration.status_pull_endpoint || '';
-    document.getElementById('statusPullMethod').value = integration.status_pull_method || 'GET';
-    document.getElementById('pullFrequency').value = integration.pull_frequency || 60;
-    document.getElementById('statusFieldMapping').value = typeof integration.status_field_mapping === 'string' ? 
-        integration.status_field_mapping : JSON.stringify(integration.status_field_mapping || {});
-    document.getElementById('statusPullingActive').checked = integration.status_pull_endpoint ? true : false;
-    
-    // Set auth type (detect from header)
-    const authHeader = (integration.auth_header || '').toLowerCase();
-    let authType = 'api_key';
-    if (authHeader === 'authorization') {
-        if (integration.api_key && integration.api_key.startsWith('Bearer ')) {
-            authType = 'bearer_token';
-        } else if (integration.api_key && integration.api_key.startsWith('Token ')) {
-            authType = 'custom_token';
-        }
-    } else if (authHeader.includes('token')) {
-        authType = 'custom_header';
-    }
-    document.getElementById('crmAuthType').value = authType;
-    updateAuthFields(); // Apply the auth type styling
+                
+                // Handle Universal Authentication System
+                let authType = integration.auth_type || '';
+                
+                // For legacy data without auth_type, try to detect from old fields
+                if (!authType && integration.api_key) {
+                    const authHeader = (integration.auth_header || '').toLowerCase();
+                    if (authHeader === 'authorization') {
+                        if (integration.api_key.startsWith('Bearer ')) {
+                            authType = 'bearer_token';
+                        } else {
+                            authType = 'basic_auth'; // Could be basic auth
+                        }
+                    } else {
+                        authType = 'api_key'; // Default for legacy data
+                    }
+                }
+                
+                // Set auth type and trigger field generation
+                document.getElementById('crmAuthType').value = authType;
+                updateUniversalAuthFields(); // Generate appropriate fields
+                
+                // Populate auth fields based on type (after fields are generated)
+                setTimeout(() => {
+                    if (integration.auth_config) {
+                        // New universal auth format
+                        const authConfig = integration.auth_config;
+                        populateUniversalAuthFields(authType, authConfig);
+                    } else if (integration.api_key) {
+                        // Legacy format - convert to new format
+                        populateLegacyAuthFields(authType, integration);
+                    }
+                }, 100);
+
+                // Populate status pulling fields
+                document.getElementById('statusPullEndpoint').value = integration.status_pull_endpoint || '';
+                document.getElementById('statusPullMethod').value = integration.status_pull_method || 'GET';
+                document.getElementById('pullFrequency').value = integration.pull_frequency || 60;
+                document.getElementById('statusFieldMapping').value = typeof integration.status_field_mapping === 'string' ? 
+                    integration.status_field_mapping : JSON.stringify(integration.status_field_mapping || {});
+                document.getElementById('statusPullingActive').checked = integration.status_pull_endpoint ? true : false;
+                
                 document.getElementById('crmMethod').value = integration.request_method || 'POST';
                 document.getElementById('crmTestUrl').value = integration.test_url || '';
                 
@@ -834,40 +852,226 @@ function manageCRM(partnerId) {
 }
 
 // Handle authentication type changes
-function updateAuthFields() {
+// Universal Authentication System - Dynamic field generation
+function updateUniversalAuthFields() {
     const authType = document.getElementById('crmAuthType').value;
-    const headerLabel = document.getElementById('authHeaderLabel');
-    const headerInput = document.getElementById('crmAuthHeader');
+    const authConfigContainer = document.getElementById('authConfigFields');
     const hint = document.getElementById('authHint');
+    
+    // Clear existing fields
+    authConfigContainer.innerHTML = '';
+    
+    if (!authType) {
+        hint.textContent = 'Select an authentication type to configure';
+        return;
+    }
+    
+    let fieldsHtml = '';
     
     switch(authType) {
         case 'bearer_token':
-            headerLabel.textContent = 'Token Value';
-            headerInput.value = 'Authorization';
-            headerInput.placeholder = 'Authorization';
-            headerInput.readOnly = true;
-            hint.textContent = 'Will send as "Authorization: Bearer YOUR_TOKEN"';
+            fieldsHtml = `
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label class="form-label">Bearer Token *</label>
+                        <input type="text" class="form-control" name="auth_token" 
+                               placeholder="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..." required>
+                        <div class="form-text">Will send as: Authorization: Bearer YOUR_TOKEN</div>
+                    </div>
+                </div>`;
+            hint.textContent = 'Bearer token authentication - commonly used for JWT tokens';
             break;
-        case 'custom_token':
-            headerLabel.textContent = 'Token Value';
-            headerInput.value = 'Authorization';
-            headerInput.placeholder = 'Authorization';
-            headerInput.readOnly = true;
-            hint.textContent = 'Will send as "Authorization: Token YOUR_TOKEN"';
+            
+        case 'api_key':
+            fieldsHtml = `
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Header Name *</label>
+                        <input type="text" class="form-control" name="auth_header_name" 
+                               value="X-API-Key" placeholder="X-API-Key" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">API Key *</label>
+                        <input type="text" class="form-control" name="auth_key" 
+                               placeholder="your-api-key-here" required>
+                    </div>
+                </div>`;
+            hint.textContent = 'API key sent in custom header - most common authentication method';
             break;
+            
+        case 'basic_auth':
+            fieldsHtml = `
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Username *</label>
+                        <input type="text" class="form-control" name="auth_username" 
+                               placeholder="api_user" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Password *</label>
+                        <input type="password" class="form-control" name="auth_password" 
+                               placeholder="api_password" required>
+                    </div>
+                </div>`;
+            hint.textContent = 'HTTP Basic Authentication - username and password encoded in Authorization header';
+            break;
+            
         case 'custom_header':
-            headerLabel.textContent = 'Header Name';
-            headerInput.value = 'X-Auth-Token';
-            headerInput.placeholder = 'X-Auth-Token';
-            headerInput.readOnly = false;
-            hint.textContent = 'Custom header name for your token';
+            fieldsHtml = `
+                <div class="mb-3">
+                    <label class="form-label">Custom Headers (JSON) *</label>
+                    <textarea class="form-control" name="auth_custom_headers" rows="4" 
+                              placeholder='{"X-Custom-Auth": "value", "X-API-Token": "token"}' required></textarea>
+                    <div class="form-text">Custom authentication headers in JSON format</div>
+                </div>`;
+            hint.textContent = 'Send authentication in custom headers - define multiple headers as JSON object';
             break;
-        default: // api_key
-            headerLabel.textContent = 'Header Name';
-            headerInput.value = 'X-API-Key';
-            headerInput.placeholder = 'X-API-Key';
-            headerInput.readOnly = false;
-            hint.textContent = 'Header where your API key will be sent';
+            
+        case 'query_param':
+            fieldsHtml = `
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Parameter Name *</label>
+                        <input type="text" class="form-control" name="auth_param_name" 
+                               placeholder="token" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Parameter Value *</label>
+                        <input type="text" class="form-control" name="auth_param_value" 
+                               placeholder="your-token-value" required>
+                    </div>
+                </div>`;
+            hint.textContent = 'Authentication token sent as URL query parameter';
+            break;
+            
+        case 'oauth2':
+            fieldsHtml = `
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label class="form-label">Access Token *</label>
+                        <input type="text" class="form-control" name="auth_access_token" 
+                               placeholder="your-oauth2-access-token" required>
+                        <div class="form-text">OAuth2 access token (will be sent as Bearer token)</div>
+                    </div>
+                </div>`;
+            hint.textContent = 'OAuth2 access token authentication';
+            break;
+            
+        case 'custom':
+            fieldsHtml = `
+                <div class="mb-3">
+                    <label class="form-label">Custom Headers (JSON) *</label>
+                    <textarea class="form-control" name="auth_custom_headers" rows="4" 
+                              placeholder='{"X-Custom-Auth": "value", "X-Signature": "signature"}' required></textarea>
+                    <div class="form-text">Custom authentication headers in JSON format</div>
+                </div>`;
+            hint.textContent = 'Custom authentication - define your own headers structure';
+            break;
+    }
+    
+    authConfigContainer.innerHTML = fieldsHtml;
+}
+
+// Helper function to populate universal auth fields with existing data
+function populateUniversalAuthFields(authType, authConfig) {
+    switch(authType) {
+        case 'bearer_token':
+            const tokenInput = document.querySelector('input[name="auth_token"]');
+            if (tokenInput && authConfig.token) {
+                tokenInput.value = authConfig.token;
+            }
+            break;
+            
+        case 'api_key':
+            const headerNameInput = document.querySelector('input[name="auth_header_name"]');
+            const keyInput = document.querySelector('input[name="auth_key"]');
+            if (headerNameInput && authConfig.header_name) {
+                headerNameInput.value = authConfig.header_name;
+            }
+            if (keyInput && authConfig.key) {
+                keyInput.placeholder = 'Key configured (leave blank to keep current)';
+            }
+            break;
+            
+        case 'basic_auth':
+            const usernameInput = document.querySelector('input[name="auth_username"]');
+            const passwordInput = document.querySelector('input[name="auth_password"]');
+            if (usernameInput && authConfig.username) {
+                usernameInput.value = authConfig.username;
+            }
+            if (passwordInput && authConfig.password) {
+                passwordInput.placeholder = 'Password configured (leave blank to keep current)';
+            }
+            break;
+            
+        case 'custom_header':
+            const customHeadersTextarea = document.querySelector('textarea[name="auth_custom_headers"]');
+            if (customHeadersTextarea && authConfig.headers) {
+                customHeadersTextarea.value = JSON.stringify(authConfig.headers, null, 2);
+            }
+            break;
+            
+        case 'query_param':
+            const paramNameInput = document.querySelector('input[name="auth_param_name"]');
+            const paramValueInput = document.querySelector('input[name="auth_param_value"]');
+            if (paramNameInput && authConfig.param_name) {
+                paramNameInput.value = authConfig.param_name;
+            }
+            if (paramValueInput && authConfig.param_value) {
+                paramValueInput.placeholder = 'Value configured (leave blank to keep current)';
+            }
+            break;
+            
+        case 'oauth2':
+            const accessTokenInput = document.querySelector('input[name="auth_access_token"]');
+            if (accessTokenInput && authConfig.access_token) {
+                accessTokenInput.placeholder = 'Token configured (leave blank to keep current)';
+            }
+            break;
+            
+        case 'custom':
+            const customHeadersTextarea = document.querySelector('textarea[name="auth_custom_headers"]');
+            if (customHeadersTextarea && authConfig.custom_headers) {
+                customHeadersTextarea.value = JSON.stringify(authConfig.custom_headers, null, 2);
+            }
+            break;
+    }
+}
+
+// Helper function to convert legacy auth data to new universal auth format
+function populateLegacyAuthFields(authType, integration) {
+    switch(authType) {
+        case 'bearer_token':
+            const tokenInput = document.querySelector('input[name="auth_token"]');
+            if (tokenInput && integration.api_key) {
+                // Remove "Bearer " prefix if present
+                const token = integration.api_key.startsWith('Bearer ') ? 
+                    integration.api_key.substring(7) : integration.api_key;
+                tokenInput.value = token;
+            }
+            break;
+            
+        case 'api_key':
+            const headerNameInput = document.querySelector('input[name="auth_header_name"]');
+            const keyInput = document.querySelector('input[name="auth_key"]');
+            if (headerNameInput && integration.auth_header) {
+                headerNameInput.value = integration.auth_header;
+            }
+            if (keyInput && integration.api_key) {
+                keyInput.placeholder = 'Key configured (leave blank to keep current)';
+            }
+            break;
+            
+        case 'custom_header':
+            const customHeaderNameInput = document.querySelector('input[name="auth_header_name"]');
+            const customHeaderValueInput = document.querySelector('input[name="auth_header_value"]');
+            if (customHeaderNameInput && integration.auth_header) {
+                customHeaderNameInput.value = integration.auth_header;
+            }
+            if (customHeaderValueInput && integration.api_key) {
+                customHeaderValueInput.placeholder = 'Value configured (leave blank to keep current)';
+            }
+            break;
     }
 }
 
@@ -875,6 +1079,94 @@ function saveCRMIntegration() {
     const form = document.getElementById('crmIntegrationForm');
     const formData = new FormData(form);
     const partnerId = formData.get('partner_id');
+    
+    // Get authentication type
+    const authType = document.getElementById('crmAuthType').value;
+    if (!authType) {
+        alert('Please select an authentication type');
+        return;
+    }
+    
+    // Build universal auth configuration based on selected type
+    let authConfig = {};
+    
+    switch(authType) {
+        case 'bearer_token':
+            const bearerToken = formData.get('auth_token');
+            if (!bearerToken) {
+                alert('Please enter a bearer token');
+                return;
+            }
+            authConfig = { token: bearerToken };
+            break;
+            
+        case 'api_key':
+            const headerName = formData.get('auth_header_name');
+            const apiKey = formData.get('auth_key');
+            if (!headerName || !apiKey) {
+                alert('Please enter both header name and API key');
+                return;
+            }
+            authConfig = { header_name: headerName, key: apiKey };
+            break;
+            
+        case 'basic_auth':
+            const username = formData.get('auth_username');
+            const password = formData.get('auth_password');
+            if (!username || !password) {
+                alert('Please enter both username and password');
+                return;
+            }
+            authConfig = { username: username, password: password };
+            break;
+            
+        case 'custom_header':
+            const customHeaders = formData.get('auth_custom_headers');
+            if (!customHeaders) {
+                alert('Please enter custom headers configuration');
+                return;
+            }
+            try {
+                authConfig = { headers: JSON.parse(customHeaders) };
+            } catch (e) {
+                alert('Invalid JSON in custom headers: ' + e.message);
+                return;
+            }
+            break;
+            
+        case 'query_param':
+            const paramName = formData.get('auth_param_name');
+            const paramValue = formData.get('auth_param_value');
+            if (!paramName || !paramValue) {
+                alert('Please enter both parameter name and value');
+                return;
+            }
+            authConfig = { param_name: paramName, param_value: paramValue };
+            break;
+            
+        case 'oauth2':
+            const accessToken = formData.get('auth_access_token');
+            if (!accessToken) {
+                alert('Please enter an access token');
+                return;
+            }
+            authConfig = { access_token: accessToken };
+            break;
+            
+        case 'custom':
+            const customHeaders = formData.get('auth_custom_headers');
+            if (!customHeaders) {
+                alert('Please enter custom headers configuration');
+                return;
+            }
+            try {
+                authConfig = { custom_headers: JSON.parse(customHeaders) };
+            } catch (e) {
+                alert('Invalid JSON in custom headers: ' + e.message);
+                return;
+            }
+            break;
+    }
     
     // Validate JSON fields
     let headers, fieldMapping, statusFieldMapping;
@@ -894,9 +1186,8 @@ function saveCRMIntegration() {
     const data = {
         crm_name: formData.get('crm_name'),
         api_endpoint: formData.get('api_endpoint'),
-        api_key: formData.get('api_key'),
-        auth_header: formData.get('auth_header'),
-        auth_type: document.getElementById('crmAuthType') ? document.getElementById('crmAuthType').value : 'api_key',
+        auth_type: authType,
+        auth_config: authConfig,
         request_method: formData.get('request_method'),
         test_url: formData.get('test_url'),
         request_headers: headers,
@@ -910,8 +1201,8 @@ function saveCRMIntegration() {
         status_pulling_active: document.getElementById('statusPullingActive') ? document.getElementById('statusPullingActive').checked : false
     };
     
-    console.log('Sending CRM integration data:', data);
-    console.log('Partner ID:', partnerId);
+    console.log('Sending CRM integration request for partner:', partnerId);
+    // Note: Not logging full data to protect auth secrets
     
     fetch(`/partners/${partnerId}/crm-integration`, {
         method: 'POST',
@@ -945,17 +1236,106 @@ function saveCRMIntegration() {
 
 function testCRMIntegration() {
     const partnerId = document.getElementById('crmPartnerId').value;
+    const authType = document.getElementById('crmAuthType').value;
+    
+    if (!authType) {
+        alert('Please select an authentication type');
+        return;
+    }
+    
+    // Build the same auth config as in save function for testing
+    const formData = new FormData(document.getElementById('crmIntegrationForm'));
+    let authConfig = {};
+    
+    switch(authType) {
+        case 'bearer':
+            const bearerToken = formData.get('auth_token');
+            if (!bearerToken) {
+                alert('Please enter a bearer token');
+                return;
+            }
+            authConfig = { token: bearerToken };
+            break;
+            
+        case 'api_key':
+            const headerName = formData.get('auth_header_name');
+            const apiKey = formData.get('auth_key');
+            if (!headerName || !apiKey) {
+                alert('Please enter both header name and API key');
+                return;
+            }
+            authConfig = { header_name: headerName, key: apiKey };
+            break;
+            
+        case 'basic_auth':
+            const username = formData.get('auth_username');
+            const password = formData.get('auth_password');
+            if (!username || !password) {
+                alert('Please enter both username and password');
+                return;
+            }
+            authConfig = { username: username, password: password };
+            break;
+            
+        case 'custom_header':
+            const customHeaders = formData.get('auth_custom_headers');
+            if (!customHeaders) {
+                alert('Please enter custom headers configuration');
+                return;
+            }
+            try {
+                authConfig = { headers: JSON.parse(customHeaders) };
+            } catch (e) {
+                alert('Invalid JSON in custom headers: ' + e.message);
+                return;
+            }
+            break;
+            
+        case 'query_param':
+            const paramName = formData.get('auth_param_name');
+            const paramValue = formData.get('auth_param_value');
+            if (!paramName || !paramValue) {
+                alert('Please enter both parameter name and value');
+                return;
+            }
+            authConfig = { param_name: paramName, param_value: paramValue };
+            break;
+            
+        case 'oauth2':
+            const accessToken = formData.get('auth_access_token');
+            if (!accessToken) {
+                alert('Please enter an access token');
+                return;
+            }
+            authConfig = { access_token: accessToken };
+            break;
+            
+        case 'custom':
+            const customHeaders = formData.get('auth_custom_headers');
+            if (!customHeaders) {
+                alert('Please enter custom headers configuration');
+                return;
+            }
+            try {
+                authConfig = { custom_headers: JSON.parse(customHeaders) };
+            } catch (e) {
+                alert('Invalid JSON in custom headers: ' + e.message);
+                return;
+            }
+            break;
+    }
+
     const data = {
         api_endpoint: document.getElementById('crmEndpoint').value,
-        api_key: document.getElementById('crmApiKey').value,
-        auth_header: document.getElementById('crmAuthHeader').value,
+        auth_type: authType,
+        auth_config: authConfig,
         request_method: document.getElementById('crmMethod').value,
         crm_type: document.getElementById('crmType').value,
         field_mapping: document.getElementById('crmFieldMapping').value
     };
     
-    if (!data.api_endpoint || !data.api_key) {
-        alert('Please fill in API endpoint and API key');
+    if (!data.api_endpoint) {
+        alert('Please fill in API endpoint');
         return;
     }
     
