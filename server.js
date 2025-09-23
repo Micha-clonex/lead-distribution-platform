@@ -73,7 +73,7 @@ const analyticsRoutes = require('./routes/analytics');
 const alertsRoutes = require('./routes/alerts');
 const qualityScoringRoutes = require('./routes/qualityScoring');
 const businessHoursRoutes = require('./routes/businessHours');
-const crmIntegrationsRoutes = require('./routes/crmIntegrations');
+// const crmIntegrationsRoutes = require('./routes/crmIntegrations'); // Disabled - causing production errors
 const apiRoutes = require('./routes/api');
 const authRoutes = require('./routes/auth');
 
@@ -87,7 +87,7 @@ app.use('/webhooks', requireAuth, webhookRoutes);
 app.use('/analytics', requireAuth, analyticsRoutes);
 app.use('/alerts', requireAuth, alertsRoutes);
 app.use('/quality', requireAuth, qualityScoringRoutes);
-app.use('/crm-integrations', requireAuth, crmIntegrationsRoutes);
+// app.use('/crm-integrations', requireAuth, crmIntegrationsRoutes); // Disabled - causing production errors
 app.use('/business-hours', requireAuth, businessHoursRoutes);
 app.use('/partner-management', requireAuth, require('./routes/partnerManagement'));
 app.use('/monitoring', requireAuth, require('./routes/monitoring'));
