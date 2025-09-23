@@ -73,27 +73,60 @@ async function distributeLead(leadId) {
         
         console.log(`✅ Lead ${leadId} successfully distributed to ${selectedPartner.name}`);
         
-        // Deliver to partner's CRM system directly  
+        // Smart Webhook Delivery with Partner-Specific Transformation
         setImmediate(async () => {
             try {
-                const crmResult = await deliverToCRM(leadId, selectedPartner.id, {
-                    first_name: lead.first_name,
-                    last_name: lead.last_name,
-                    email: lead.email,
-                    phone: lead.phone,
-                    country: lead.country,
-                    niche: lead.niche,
-                    type: lead.type,
-                    source: lead.source
-                });
+                // Try smart webhook delivery first (with transformation)
+                const { sendWebhook } = require('./webhook');
+                const webhookResult = await sendWebhook(lead, selectedPartner);
                 
-                if (crmResult.success) {
-                    console.log(`✅ CRM Delivery Success: ${crmResult.message}`);
+                if (webhookResult) {
+                    console.log(`✅ Smart Webhook Delivery Success: Lead ${leadId} to ${selectedPartner.name}`);
                 } else {
-                    console.error(`❌ CRM Delivery Failed: ${crmResult.error}`);
+                    console.log(`⚠️ Smart Webhook failed, trying CRM delivery...`);
+                    
+                    // Fallback to CRM delivery for complex integrations
+                    const crmResult = await deliverToCRM(leadId, selectedPartner.id, {
+                        first_name: lead.first_name,
+                        last_name: lead.last_name,
+                        email: lead.email,
+                        phone: lead.phone,
+                        country: lead.country,
+                        niche: lead.niche,
+                        type: lead.type,
+                        source: lead.source
+                    });
+                    
+                    if (crmResult.success) {
+                        console.log(`✅ CRM Delivery Success: ${crmResult.message}`);
+                    } else {
+                        console.error(`❌ Both delivery methods failed: Webhook + CRM`);
+                    }
                 }
             } catch (error) {
-                console.error(`CRM delivery failed for lead ${leadId}:`, error);
+                console.error(`Lead delivery failed for lead ${leadId}:`, error);
+                
+                // Final fallback to CRM if webhook system completely fails
+                try {
+                    const crmResult = await deliverToCRM(leadId, selectedPartner.id, {
+                        first_name: lead.first_name,
+                        last_name: lead.last_name,
+                        email: lead.email,
+                        phone: lead.phone,
+                        country: lead.country,
+                        niche: lead.niche,
+                        type: lead.type,
+                        source: lead.source
+                    });
+                    
+                    if (crmResult.success) {
+                        console.log(`✅ CRM Fallback Success: ${crmResult.message}`);
+                    } else {
+                        console.error(`❌ Complete delivery failure for lead ${leadId}`);
+                    }
+                } catch (fallbackError) {
+                    console.error(`Complete delivery system failure for lead ${leadId}:`, fallbackError);
+                }
             }
         });
         
