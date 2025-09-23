@@ -79,6 +79,9 @@ async function initDatabase() {
             phone_format VARCHAR(50) DEFAULT 'with_plus',
             required_fields TEXT[] DEFAULT '{}',
             default_values JSONB DEFAULT '{}',
+            auth_type VARCHAR(50) DEFAULT 'none',
+            auth_config JSONB DEFAULT '{}',
+            content_type VARCHAR(100) DEFAULT 'application/json',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
