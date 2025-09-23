@@ -1,0 +1,257 @@
+
+Search
+
+Live tail
+PDT
+
+Menu
+
+     [GET]304optivusagencyplatform.cc/api/recent-activityclientIP="213.252.230.25" requestID="c627e1e8-e1e3-49df" responseTimeMS=17 responseBytes=212 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="eddd268c-48dd-43e2" responseTimeMS=9 responseBytes=214 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="f596f576-57c3-4adb" responseTimeMS=15 responseBytes=214 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/api/recent-activityclientIP="213.252.230.25" requestID="8bbe7686-31b4-4dc5" responseTimeMS=8 responseBytes=212 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/clientIP="213.252.230.25" requestID="e3d57bbc-62b1-40e2" responseTimeMS=11 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="40e4dfd6-d860-406c" responseTimeMS=12 responseBytes=214 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="a4690f60-6446-4f2a" responseTimeMS=10 responseBytes=214 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/webhooksclientIP="213.252.230.25" requestID="dc782079-bed4-4ef3" responseTimeMS=19 responseBytes=6195 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/webhooks/deliveries/2clientIP="213.252.230.25" requestID="62d1b324-e2fb-4d47" responseTimeMS=10 responseBytes=212 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/clientIP="213.252.230.25" requestID="1032d13e-de31-4fc1" responseTimeMS=11 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/api/recent-activityclientIP="213.252.230.25" requestID="d5a1e7ef-51ff-4ee7" responseTimeMS=6 responseBytes=212 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="be26ca86-cfae-45a9" responseTimeMS=11 responseBytes=214 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Business Hours Cron: Processed 0 scheduled deliveries
+Starting status pull from partner APIs...
+Processing promotional email queue...
+Found 0 partners ready for status pulling
+Status pulling cycle completed
+Business Hours Cron: Processed 0 scheduled deliveries
+Processing 0 pending promotional emails
+Business Hours Cron: Processed 0 scheduled deliveries
+Business Hours Cron: Processed 0 scheduled deliveries
+Processing promotional email queue...
+Processing 0 pending promotional emails
+Business Hours Cron: Processed 0 scheduled deliveries
+     [GET]304optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="225795fc-3dae-42d6" responseTimeMS=13 responseBytes=214 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="e3476744-40bc-44e3" responseTimeMS=11 responseBytes=214 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     ==> Deploying...
+==> Running 'node server.js'
+Email scheduler initialized - processing every 5 minutes
+Lead Distribution Platform running on http://0.0.0.0:10000
+✅ New database client connected
+✅ Database connection successful
+✅ Production webhook sources and CRM integrations configured automatically
+Database tables initialized successfully
+✅ All database systems initialized successfully
+     [GET]200lead-distribution-platform.onrender.com/admin/loginclientIP="34.82.29.197" requestID="c0df33e2-b74c-42fb" responseTimeMS=5 responseBytes=1528 userAgent="Go-http-client/2.0"
+     [GET]302lead-distribution-platform.onrender.com/clientIP="34.82.29.197" requestID="cfe012f4-fea6-4d35" responseTimeMS=5 responseBytes=331 userAgent="Go-http-client/2.0"
+     ==> Your service is live 🎉
+     ==> 
+     ==> ///////////////////////////////////////////////////////////
+     ==> 
+     ==> Available at your primary URL https://optivusagencyplatform.cc + 2 more domains
+     ==> 
+     ==> ///////////////////////////////////////////////////////////
+Business Hours Cron: Processed 0 scheduled deliveries
+Business Hours Cron: Processed 0 scheduled deliveries
+     [GET]404optivusagencyplatform.cc/favicon.icoclientIP="213.252.230.25" requestID="bc20ec02-e645-4879" responseTimeMS=9 responseBytes=435 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="a2383a2d-49cd-4012" responseTimeMS=38 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Processing promotional email queue...
+Business Hours Cron: Processed 0 scheduled deliveries
+✅ New database client connected
+Processing 0 pending promotional emails
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="6b8d8cfe-5092-41fd" responseTimeMS=11 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]404optivusagencyplatform.cc/favicon.icoclientIP="213.252.230.25" requestID="005ff664-5185-4220" responseTimeMS=6 responseBytes=435 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="3862bea1-dfbc-463b" responseTimeMS=10 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]404optivusagencyplatform.cc/favicon.icoclientIP="213.252.230.25" requestID="a05b74c7-7b26-45d8" responseTimeMS=6 responseBytes=435 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="03f68aca-44ba-41ec" responseTimeMS=10 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="42d100be-3eeb-4b79" responseTimeMS=11 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="8417579f-f798-4cac" responseTimeMS=9 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="c3b52ad9-9a48-43cc" responseTimeMS=13 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="14b38225-856c-4a5d" responseTimeMS=10 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="4c1c2a8d-c8b1-4c5c" responseTimeMS=11 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="629e68b7-f526-47f4" responseTimeMS=9 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]404optivusagencyplatform.cc/favicon.icoclientIP="213.252.230.25" requestID="52130b82-cfdb-4f6d" responseTimeMS=4 responseBytes=435 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="ca195a8d-1167-4490" responseTimeMS=9 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="4973f304-1648-41f0" responseTimeMS=10 responseBytes=6685 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/webhooksclientIP="213.252.230.25" requestID="db6164ab-e4c4-4059" responseTimeMS=12 responseBytes=6297 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]304optivusagencyplatform.cc/webhooks/deliveries/2clientIP="213.252.230.25" requestID="98255139-2d97-4e67" responseTimeMS=7 responseBytes=294 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+⚠️ Database client removed from pool
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="dfdaa1ff-04ad-4458" responseTimeMS=10 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="514e84a7-20bd-4a75" responseTimeMS=11 responseBytes=6685 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Business Hours Cron: Processed 0 scheduled deliveries
+     ==> Detected service running on port 10000
+     ==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+Business Hours Cron: Processed 0 scheduled deliveries
+     [GET]200optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="af1ec0b1-ae2c-448f" responseTimeMS=14 responseBytes=6685 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Starting status pull from partner APIs...
+Processing promotional email queue...
+Found 0 partners ready for status pulling
+Status pulling cycle completed
+✅ New database client connected
+Processing 0 pending promotional emails
+⚠️ Database client removed from pool
+⚠️ Database client removed from pool
+✅ New database client connected
+Business Hours Cron: Processed 0 scheduled deliveries
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="ade127a3-cd19-41cc" responseTimeMS=10 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Business Hours Cron: Processed 0 scheduled deliveries
+Processing promotional email queue...
+Business Hours Cron: Processed 0 scheduled deliveries
+✅ New database client connected
+Processing 0 pending promotional emails
+⚠️ Database client removed from pool
+⚠️ Database client removed from pool
+     [GET]200optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="928c2285-4a2e-4546" responseTimeMS=22 responseBytes=6685 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+✅ New database client connected
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="7b86dfa4-fdc3-44af" responseTimeMS=18 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="cc97b21a-7a7d-4ab7" responseTimeMS=12 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Business Hours Cron: Processed 0 scheduled deliveries
+Business Hours Cron: Processed 0 scheduled deliveries
+     [GET]200optivusagencyplatform.cc/partnersclientIP="213.252.230.25" requestID="120c522e-74e8-40eb" responseTimeMS=18 responseBytes=14306 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="8e2ca755-3225-409c" responseTimeMS=9 responseBytes=6685 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="e370ff8e-d1fe-4929" responseTimeMS=9 responseBytes=6685 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [OPTIONS]204optivusagencyplatform.cc/api/webhook/712e821d98c08889669599b5a054c9a6ffa62c780b147d102e8be460732df1dcclientIP="99.233.86.58" requestID="d19d7bb8-8a97-4e7b" responseTimeMS=4 responseBytes=332 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0"
+     [POST]200optivusagencyplatform.cc/api/webhook/712e821d98c08889669599b5a054c9a6ffa62c780b147d102e8be460732df1dcclientIP="99.233.86.58" requestID="d6e9f1fd-cccf-4e25" responseTimeMS=30 responseBytes=501 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0"
+Distributing lead 37 - Country: canada, Niche: recovery
+Distributing lead 37 to partner Ca (5)
+✅ Lead 37 successfully distributed to Ca
+❌ CRM delivery FAILED for partner 5: column crm.auth_type does not exist
+Failed to log CRM delivery error: error: column "response_status" of relation "webhook_deliveries" does not exist
+⚠️ Database client removed from pool
+    at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async deliverToCRM (/opt/render/project/src/services/distribution.js:310:13)
+    at async Immediate.<anonymous> (/opt/render/project/src/services/distribution.js:79:35) {
+  length: 146,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '93',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1065',
+  routine: 'checkInsertTargets'
+}
+❌ CRM Delivery Failed: CRM delivery failed: column crm.auth_type does not exist
+⚠️ Database client removed from pool
+     [GET]302optivusagencyplatform.cc/clientIP="165.227.5.28" requestID="f4585678-0877-41df" responseTimeMS=3 responseBytes=331 userAgent="python-requests/2.32.5"
+     [GET]200optivusagencyplatform.cc/admin/loginclientIP="165.227.5.28" requestID="0196a67d-9a33-4e58" responseTimeMS=17 responseBytes=1528 userAgent="python-requests/2.32.5"
+✅ New database client connected
+Business Hours Cron: Processed 0 scheduled deliveries
+     [GET]301optivusagencyplatform.cc/clientIP="192.163.163.32" requestID="" responseTimeMS=0 responseBytes=153 userAgent="Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; Zoom 3.6.0; rv:11.0) like Gecko"
+     [GET]200optivusagencyplatform.cc/admin/loginclientIP="154.30.18.42" requestID="1e48edc7-60c5-46a2" responseTimeMS=3 responseBytes=1528 userAgent="Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; Zoom 3.6.0; rv:11.0) like Gecko"
+     [GET]302optivusagencyplatform.cc/clientIP="154.30.18.42" requestID="3496b01d-ca90-4d4c" responseTimeMS=3 responseBytes=331 userAgent="Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; Zoom 3.6.0; rv:11.0) like Gecko"
+Business Hours Cron: Processed 0 scheduled deliveries
+Starting status pull from partner APIs...
+Processing promotional email queue...
+Found 0 partners ready for status pulling
+Status pulling cycle completed
+✅ New database client connected
+✅ New database client connected
+Business Hours Cron: Processed 0 scheduled deliveries
+Processing 0 pending promotional emails
+⚠️ Database client removed from pool
+⚠️ Database client removed from pool
+⚠️ Database client removed from pool
+✅ New database client connected
+Business Hours Cron: Processed 0 scheduled deliveries
+Business Hours Cron: Processed 0 scheduled deliveries
+Processing promotional email queue...
+Processing 0 pending promotional emails
+Business Hours Cron: Processed 0 scheduled deliveries
+Business Hours Cron: Processed 0 scheduled deliveries
+Processing promotional email queue...
+Business Hours Cron: Processed 0 scheduled deliveries
+✅ New database client connected
+Processing 0 pending promotional emails
+⚠️ Database client removed from pool
+⚠️ Database client removed from pool
+✅ New database client connected
+Business Hours Cron: Processed 0 scheduled deliveries
+     [GET]301optivusagencyplatform.cc/clientIP="44.210.82.111" requestID="" responseTimeMS=0 responseBytes=153 userAgent="Mozilla/5.0 (ZZ; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+Business Hours Cron: Processed 0 scheduled deliveries
+     ==> Deploying...
+==> Running 'node server.js'
+Email scheduler initialized - processing every 5 minutes
+Lead Distribution Platform running on http://0.0.0.0:10000
+✅ New database client connected
+✅ Database connection successful
+✅ Production webhook sources and CRM integrations configured automatically
+Database tables initialized successfully
+✅ All database systems initialized successfully
+     ==> Your service is live 🎉
+     ==> 
+     ==> ///////////////////////////////////////////////////////////
+     ==> 
+     ==> Available at your primary URL https://optivusagencyplatform.cc + 2 more domains
+     ==> 
+     ==> ///////////////////////////////////////////////////////////
+     [GET]302lead-distribution-platform.onrender.com/clientIP="35.197.118.178" requestID="a4ffa64b-d96c-45b9" responseTimeMS=4 responseBytes=331 userAgent="Go-http-client/2.0"
+     [GET]200lead-distribution-platform.onrender.com/admin/loginclientIP="35.197.118.178" requestID="6cd751da-58eb-4140" responseTimeMS=5 responseBytes=1528 userAgent="Go-http-client/2.0"
+     [GET]200optivusagencyplatform.cc/app.jsclientIP="213.252.230.25" requestID="73a22c1c-7437-44c3" responseTimeMS=6 responseBytes=5570 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/leadsclientIP="213.252.230.25" requestID="2af12b55-d5e6-4401" responseTimeMS=51 responseBytes=6678 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]200optivusagencyplatform.cc/theme.cssclientIP="213.252.230.25" requestID="c3e40df1-92d0-43f0" responseTimeMS=8 responseBytes=2803 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+     [GET]404optivusagencyplatform.cc/favicon.icoclientIP="213.252.230.25" requestID="e8f1a102-6019-4f0a" responseTimeMS=9 responseBytes=435 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Starting status pull from partner APIs...
+Processing promotional email queue...
+Found 0 partners ready for status pulling
+Status pulling cycle completed
+✅ New database client connected
+Processing 0 pending promotional emails
+Starting status pull from partner APIs...
+Processing promotional email queue...
+Found 0 partners ready for status pulling
+Status pulling cycle completed
+✅ New database client connected
+Processing 0 pending promotional emails
+     [GET]500optivusagencyplatform.cc/crm-integrationsclientIP="213.252.230.25" requestID="62df665f-0fea-40fb" responseTimeMS=11 responseBytes=434 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+Error loading CRM integrations: error: column crm.auth_type does not exist
+    at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async /opt/render/project/src/routes/crmIntegrations.js:14:35 {
+  length: 112,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '313',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+ReferenceError: /opt/render/project/src/views/layout.ejs:6
+    4|     <meta charset="UTF-8">
+    5|     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ >> 6|     <title><%= title || 'Lead Distribution Platform' %></title>
+    7|     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    8|     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    9|     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+title is not defined
+    at eval ("/opt/render/project/src/views/layout.ejs":12:26)
+    at layout (/opt/render/project/src/node_modules/ejs/lib/ejs.js:703:17)
+    at tryHandleCache (/opt/render/project/src/node_modules/ejs/lib/ejs.js:274:36)
+    at exports.renderFile [as engine] (/opt/render/project/src/node_modules/ejs/lib/ejs.js:491:10)
+    at View.render (/opt/render/project/src/node_modules/express/lib/view.js:135:8)
+    at tryRender (/opt/render/project/src/node_modules/express/lib/application.js:657:10)
+    at Function.render (/opt/render/project/src/node_modules/express/lib/application.js:609:3)
+    at ServerResponse.render (/opt/render/project/src/node_modules/express/lib/response.js:1049:7)
+    at /opt/render/project/src/node_modules/express-ejs-layouts/lib/express-layouts.js:113:20
+    at tryHandleCache (/opt/render/project/src/node_modules/ejs/lib/ejs.js:280:5)
+⚠️ Database client removed from pool
+⚠️ Database client removed from pool
+⚠️ Database client removed from pool
