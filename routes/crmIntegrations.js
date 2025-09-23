@@ -6,49 +6,43 @@ const { mergeAuthConfigPreservingSecrets } = require('../services/universalAuth'
 // List all CRM integrations
 router.get('/', async (req, res) => {
     try {
-        const integrations = await pool.query(`
+        // Get all partners
+        const partnersResult = await pool.query('SELECT * FROM partners ORDER BY name');
+        const partners = partnersResult.rows;
+
+        // Get CRM integrations with calculated fields
+        const integrationResult = await pool.query(`
             SELECT 
+                crm.id,
                 p.id as partner_id,
                 p.name as partner_name,
-                p.email as partner_email,
-                p.country,
-                p.niche,
-                p.status as partner_status,
-                crm.id as crm_id,
-                crm.crm_name,
-                crm.api_endpoint,
-                crm.auth_type,
-                crm.is_active as crm_active,
-                crm.test_url,
-                crm.last_status_pull,
-                crm.created_at as crm_created_at,
-                crm.updated_at as crm_updated_at
-            FROM partners p
-            LEFT JOIN partner_crm_integrations crm ON p.id = crm.partner_id
+                p.country as partner_country,
+                p.niche as partner_niche,
+                crm.crm_name as platform_name,
+                '' as platform_version,
+                crm.auth_type as auth_method,
+                crm.is_active,
+                crm.last_status_pull as last_sync_at,
+                0 as custom_headers_count,
+                'healthy' as health_status,
+                COALESCE((SELECT COUNT(*) FROM webhook_deliveries wd 
+                         JOIN leads l ON wd.lead_id = l.id 
+                         WHERE l.partner_id = p.id), 0) as total_attempts,
+                COALESCE((SELECT COUNT(*) FROM webhook_deliveries wd 
+                         JOIN leads l ON wd.lead_id = l.id 
+                         WHERE l.partner_id = p.id AND wd.status = 'success'), 0) as successful_syncs,
+                crm.created_at
+            FROM partner_crm_integrations crm
+            JOIN partners p ON crm.partner_id = p.id
             ORDER BY p.name
         `);
 
-        const partnersWithCRM = integrations.rows.map(row => ({
-            partner_id: row.partner_id,
-            partner_name: row.partner_name,
-            partner_email: row.partner_email,
-            country: row.country,
-            niche: row.niche,
-            partner_status: row.partner_status,
-            crm_status: row.crm_id ? 'configured' : 'missing',
-            crm_active: row.crm_active || false,
-            crm_name: row.crm_name || 'Not configured',
-            api_endpoint: row.api_endpoint || '',
-            auth_type: row.auth_type || '',
-            test_url: row.test_url || '',
-            last_status_pull: row.last_status_pull,
-            crm_created_at: row.crm_created_at,
-            crm_updated_at: row.crm_updated_at
-        }));
+        const integrations = integrationResult.rows;
 
         res.render('crm-integrations/index', {
             title: 'CRM Integrations',
-            partners: partnersWithCRM
+            integrations: integrations,
+            partners: partners
         });
     } catch (error) {
         console.error('Error loading CRM integrations:', error);
@@ -56,27 +50,141 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Show CRM integration detail/edit page for specific partner
-router.get('/:partnerId', async (req, res) => {
+// Show CRM integration detail/edit page for specific partner (by partner ID)
+router.get('/partner/:partnerId', async (req, res) => {
     try {
         const partnerId = req.params.partnerId;
 
-        // Get partner info
-        const partner = await pool.query('SELECT * FROM partners WHERE id = $1', [partnerId]);
-        if (partner.rows.length === 0) {
-            return res.status(404).render('error', { error: 'Partner not found' });
+        // Get integration by partner ID
+        const integrationResult = await pool.query(`
+            SELECT 
+                crm.id,
+                p.id as partner_id,
+                p.name as partner_name,
+                p.country as partner_country,
+                p.niche as partner_niche,
+                crm.crm_name as platform_name,
+                '' as platform_version,
+                crm.auth_type as auth_method,
+                crm.is_active,
+                crm.api_endpoint as webhook_url,
+                crm.auth_config,
+                crm.request_headers as custom_headers,
+                crm.last_status_pull as last_sync_at,
+                'healthy' as health_status,
+                COALESCE((SELECT COUNT(*) FROM webhook_deliveries wd 
+                         JOIN leads l ON wd.lead_id = l.id 
+                         WHERE l.partner_id = p.id), 0) as total_attempts,
+                COALESCE((SELECT COUNT(*) FROM webhook_deliveries wd 
+                         JOIN leads l ON wd.lead_id = l.id 
+                         WHERE l.partner_id = p.id AND wd.status = 'success'), 0) as successful_syncs,
+                crm.created_at
+            FROM partner_crm_integrations crm
+            JOIN partners p ON crm.partner_id = p.id
+            WHERE p.id = $1
+        `, [partnerId]);
+
+        if (integrationResult.rows.length === 0) {
+            return res.status(404).render('error', { error: 'CRM integration not found for this partner' });
         }
 
-        // Get existing CRM integration if exists
-        const integration = await pool.query(
-            'SELECT * FROM partner_crm_integrations WHERE partner_id = $1',
-            [partnerId]
-        );
+        const integration = integrationResult.rows[0];
+        integration.success_rate = integration.total_attempts > 0 ? 
+            (integration.successful_syncs / integration.total_attempts) * 100 : 0;
+
+        // Get recent sync history
+        const syncHistoryResult = await pool.query(`
+            SELECT 
+                wd.id,
+                wd.lead_id,
+                l.email as lead_email,
+                wd.status,
+                wd.response_code,
+                wd.response_body,
+                wd.attempts,
+                wd.created_at
+            FROM webhook_deliveries wd
+            JOIN leads l ON wd.lead_id = l.id
+            WHERE l.partner_id = $1
+            ORDER BY wd.created_at DESC
+            LIMIT 20
+        `, [partnerId]);
 
         res.render('crm-integrations/detail', {
-            title: `CRM Integration - ${partner.rows[0].name}`,
-            partner: partner.rows[0],
-            integration: integration.rows[0] || null
+            title: `CRM Integration - ${integration.partner_name}`,
+            integration: integration,
+            syncHistory: syncHistoryResult.rows
+        });
+    } catch (error) {
+        console.error('Error loading CRM integration detail:', error);
+        res.status(500).render('error', { error: 'Failed to load CRM integration' });
+    }
+});
+
+// Show CRM integration detail/edit page for specific integration
+router.get('/:integrationId', async (req, res) => {
+    try {
+        const integrationId = req.params.integrationId;
+
+        // Get integration with partner info and sync history
+        const integrationResult = await pool.query(`
+            SELECT 
+                crm.id,
+                p.id as partner_id,
+                p.name as partner_name,
+                p.country as partner_country,
+                p.niche as partner_niche,
+                crm.crm_name as platform_name,
+                '' as platform_version,
+                crm.auth_type as auth_method,
+                crm.is_active,
+                crm.api_endpoint as webhook_url,
+                crm.auth_config,
+                crm.request_headers as custom_headers,
+                crm.last_status_pull as last_sync_at,
+                'healthy' as health_status,
+                COALESCE((SELECT COUNT(*) FROM webhook_deliveries wd 
+                         JOIN leads l ON wd.lead_id = l.id 
+                         WHERE l.partner_id = p.id), 0) as total_attempts,
+                COALESCE((SELECT COUNT(*) FROM webhook_deliveries wd 
+                         JOIN leads l ON wd.lead_id = l.id 
+                         WHERE l.partner_id = p.id AND wd.status = 'success'), 0) as successful_syncs,
+                crm.created_at
+            FROM partner_crm_integrations crm
+            JOIN partners p ON crm.partner_id = p.id
+            WHERE crm.id = $1
+        `, [integrationId]);
+
+        if (integrationResult.rows.length === 0) {
+            return res.status(404).render('error', { error: 'CRM integration not found' });
+        }
+
+        const integration = integrationResult.rows[0];
+        integration.success_rate = integration.total_attempts > 0 ? 
+            (integration.successful_syncs / integration.total_attempts) * 100 : 0;
+
+        // Get recent sync history
+        const syncHistoryResult = await pool.query(`
+            SELECT 
+                wd.id,
+                wd.lead_id,
+                l.email as lead_email,
+                wd.status,
+                wd.response_code,
+                wd.response_body,
+                wd.attempts,
+                wd.created_at
+            FROM webhook_deliveries wd
+            JOIN leads l ON wd.lead_id = l.id
+            WHERE l.partner_id = $1
+            ORDER BY wd.created_at DESC
+            LIMIT 20
+        `, [integration.partner_id]);
+
+        res.render('crm-integrations/detail', {
+            title: `CRM Integration - ${integration.partner_name}`,
+            integration: integration,
+            syncHistory: syncHistoryResult.rows
         });
     } catch (error) {
         console.error('Error loading CRM integration detail:', error);

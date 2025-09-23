@@ -32,7 +32,16 @@ function initializeEventHandlers() {
                 deletePartner(id);
                 break;
             case 'manage-crm':
-                window.location.href = `/crm-integrations/${id}`;
+                // Check if this is from partners page (needs partner route) or integrations page
+                const idType = target.getAttribute('data-id-type') || 'partner';
+                const customUrl = target.getAttribute('data-url');
+                if (customUrl) {
+                    window.location.href = customUrl;
+                } else if (idType === 'partner') {
+                    window.location.href = `/crm-integrations/partner/${id}`;
+                } else {
+                    window.location.href = `/crm-integrations/${id}`;
+                }
                 break;
             case 'view-status':
                 viewStatus(id);
@@ -54,6 +63,12 @@ function initializeEventHandlers() {
                 break;
             case 'retry-delivery':
                 retryDelivery(id);
+                // Handle modal dismissal if specified
+                if (target.getAttribute('data-dismiss-modal')) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('deliveryDetailsModal')) || 
+                                  new bootstrap.Modal(document.getElementById('deliveryDetailsModal'));
+                    if (modal) modal.hide();
+                }
                 break;
             default:
                 console.warn('Unknown action:', action);

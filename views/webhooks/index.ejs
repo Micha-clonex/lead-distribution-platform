@@ -457,7 +457,7 @@ function showDeliveryModal(delivery) {
                     </div>
                     <div class="modal-footer">
                         ${delivery.status === 'failed' && delivery.attempts < 3 ? `
-                        <button type="button" class="btn btn-success" onclick="retryDelivery(${delivery.id}); $('#deliveryDetailsModal').modal('hide');">
+                        <button type="button" class="btn btn-success" data-action="retry-delivery" data-id="${delivery.id}" data-dismiss-modal="true">
                             <i class="fas fa-redo me-2"></i>Retry Delivery
                         </button>` : ''}
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
