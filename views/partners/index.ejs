@@ -273,6 +273,84 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Authentication Configuration -->
+                    <div class="card mt-3 mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Authentication Settings</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Authentication Type</label>
+                                    <select class="form-select" name="auth_type" id="authType">
+                                        <option value="none">No Authentication</option>
+                                        <option value="bearer_token">Bearer Token</option>
+                                        <option value="api_key">API Key Header</option>
+                                        <option value="basic_auth">Basic Auth</option>
+                                        <option value="custom_header">Custom Headers</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Content Type</label>
+                                    <select class="form-select" name="content_type">
+                                        <option value="application/json">JSON (application/json)</option>
+                                        <option value="application/x-www-form-urlencoded">Form Data (application/x-www-form-urlencoded)</option>
+                                        <option value="text/plain">Plain Text</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Dynamic Authentication Fields -->
+                            <div id="authFields">
+                                <!-- Bearer Token -->
+                                <div class="auth-config d-none" data-auth="bearer_token">
+                                    <div class="mb-3">
+                                        <label class="form-label">Bearer Token</label>
+                                        <input type="password" class="form-control" name="auth_bearer_token" placeholder="your-bearer-token-here">
+                                        <div class="form-text">Token for Authorization: Bearer {token}</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- API Key -->
+                                <div class="auth-config d-none" data-auth="api_key">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Header Name</label>
+                                            <input type="text" class="form-control" name="auth_header_name" placeholder="X-API-Key" value="X-API-Key">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">API Key</label>
+                                            <input type="password" class="form-control" name="auth_api_key" placeholder="your-api-key-here">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Basic Auth -->
+                                <div class="auth-config d-none" data-auth="basic_auth">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Username</label>
+                                            <input type="text" class="form-control" name="auth_username" placeholder="username">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Password</label>
+                                            <input type="password" class="form-control" name="auth_password" placeholder="password">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Custom Headers -->
+                                <div class="auth-config d-none" data-auth="custom_header">
+                                    <div class="mb-3">
+                                        <label class="form-label">Custom Headers (JSON Format)</label>
+                                        <textarea class="form-control" name="auth_custom_headers" rows="3" placeholder='{"X-Custom-Auth": "value", "X-Client-ID": "client123"}'></textarea>
+                                        <div class="form-text">JSON object with custom header names and values</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -384,6 +462,84 @@
                                     <label class="form-label">Required Fields</label>
                                     <input type="text" class="form-control" id="editPartnerRequiredFields" name="required_fields" placeholder="name,email,phone,country">
                                     <div class="form-text">Comma-separated list of required fields</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Authentication Configuration -->
+                    <div class="card mt-3 mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Authentication Settings</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Authentication Type</label>
+                                    <select class="form-select" name="auth_type" id="editAuthType">
+                                        <option value="none">No Authentication</option>
+                                        <option value="bearer_token">Bearer Token</option>
+                                        <option value="api_key">API Key Header</option>
+                                        <option value="basic_auth">Basic Auth</option>
+                                        <option value="custom_header">Custom Headers</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Content Type</label>
+                                    <select class="form-select" name="content_type" id="editContentType">
+                                        <option value="application/json">JSON (application/json)</option>
+                                        <option value="application/x-www-form-urlencoded">Form Data (application/x-www-form-urlencoded)</option>
+                                        <option value="text/plain">Plain Text</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Dynamic Authentication Fields -->
+                            <div id="editAuthFields">
+                                <!-- Bearer Token -->
+                                <div class="auth-config d-none" data-auth="bearer_token">
+                                    <div class="mb-3">
+                                        <label class="form-label">Bearer Token</label>
+                                        <input type="password" class="form-control" name="auth_bearer_token" id="editAuthBearerToken" placeholder="your-bearer-token-here">
+                                        <div class="form-text">Token for Authorization: Bearer {token}</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- API Key -->
+                                <div class="auth-config d-none" data-auth="api_key">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Header Name</label>
+                                            <input type="text" class="form-control" name="auth_header_name" id="editAuthHeaderName" placeholder="X-API-Key" value="X-API-Key">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">API Key</label>
+                                            <input type="password" class="form-control" name="auth_api_key" id="editAuthApiKey" placeholder="your-api-key-here">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Basic Auth -->
+                                <div class="auth-config d-none" data-auth="basic_auth">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Username</label>
+                                            <input type="text" class="form-control" name="auth_username" id="editAuthUsername" placeholder="username">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Password</label>
+                                            <input type="password" class="form-control" name="auth_password" id="editAuthPassword" placeholder="password">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Custom Headers -->
+                                <div class="auth-config d-none" data-auth="custom_header">
+                                    <div class="mb-3">
+                                        <label class="form-label">Custom Headers (JSON Format)</label>
+                                        <textarea class="form-control" name="auth_custom_headers" id="editAuthCustomHeaders" rows="3" placeholder='{"X-Custom-Auth": "value", "X-Client-ID": "client123"}'></textarea>
+                                        <div class="form-text">JSON object with custom header names and values</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1716,6 +1872,44 @@ function getStatusColor(status) {
         default: return 'secondary';
     }
 }
+
+// Handle authentication type changes
+function handleAuthTypeChange(selectElement, containerSelector) {
+    const authType = selectElement.value;
+    const container = document.querySelector(containerSelector);
+    
+    // Hide all auth config sections
+    container.querySelectorAll('.auth-config').forEach(section => {
+        section.classList.add('d-none');
+    });
+    
+    // Show the selected auth type section
+    if (authType !== 'none') {
+        const targetSection = container.querySelector(`[data-auth="${authType}"]`);
+        if (targetSection) {
+            targetSection.classList.remove('d-none');
+        }
+    }
+}
+
+// Initialize auth type handlers
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Partner form auth type handler
+    const authTypeSelect = document.getElementById('authType');
+    if (authTypeSelect) {
+        authTypeSelect.addEventListener('change', function() {
+            handleAuthTypeChange(this, '#authFields');
+        });
+    }
+    
+    // Edit Partner form auth type handler
+    const editAuthTypeSelect = document.getElementById('editAuthType');
+    if (editAuthTypeSelect) {
+        editAuthTypeSelect.addEventListener('change', function() {
+            handleAuthTypeChange(this, '#editAuthFields');
+        });
+    }
+});
 
 // Make partners data available globally for centralized JS
 window.partners = <%- JSON.stringify(partners) %>;
