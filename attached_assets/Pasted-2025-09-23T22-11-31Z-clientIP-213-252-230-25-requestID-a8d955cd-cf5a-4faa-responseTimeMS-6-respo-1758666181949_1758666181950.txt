@@ -1,0 +1,354 @@
+2025-09-23T22:11:31Z clientIP="213.252.230.25" requestID="a8d955cd-cf5a-4faa" responseTimeMS=6 responseBytes=435 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:11:31Z clientIP="213.252.230.25" requestID="d9b7580f-67e8-48a4" responseTimeMS=2 responseBytes=2803 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:11:31Z clientIP="213.252.230.25" requestID="31f50d6a-ba84-4fa5" responseTimeMS=4 responseBytes=6106 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:11:31Z clientIP="213.252.230.25" requestID="5b527fbb-338e-4c8a" responseTimeMS=4 responseBytes=6106 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:11:32Z clientIP="213.252.230.25" requestID="cfadc383-a8c5-4d5f" responseTimeMS=6 responseBytes=435 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:11:35Z clientIP="213.252.230.25" requestID="f6353bbb-01d4-42d9" responseTimeMS=18 responseBytes=434 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:11:35.674751367Z Error loading CRM integrations: error: column crm.auth_type does not exist
+2025-09-23T22:11:35.674779618Z     at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+2025-09-23T22:11:35.674795678Z     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-09-23T22:11:35.674799798Z     at async /opt/render/project/src/routes/crmIntegrations.js:14:35 {
+2025-09-23T22:11:35.674803898Z   length: 112,
+2025-09-23T22:11:35.674808338Z   severity: 'ERROR',
+2025-09-23T22:11:35.674811989Z   code: '42703',
+2025-09-23T22:11:35.674815699Z   detail: undefined,
+2025-09-23T22:11:35.674819449Z   hint: undefined,
+2025-09-23T22:11:35.674823469Z   position: '313',
+2025-09-23T22:11:35.674827799Z   internalPosition: undefined,
+2025-09-23T22:11:35.674831699Z   internalQuery: undefined,
+2025-09-23T22:11:35.674835409Z   where: undefined,
+2025-09-23T22:11:35.674839169Z   schema: undefined,
+2025-09-23T22:11:35.674843039Z   table: undefined,
+2025-09-23T22:11:35.67484685Z   column: undefined,
+2025-09-23T22:11:35.67485061Z   dataType: undefined,
+2025-09-23T22:11:35.67485457Z   constraint: undefined,
+2025-09-23T22:11:35.67485867Z   file: 'parse_relation.c',
+2025-09-23T22:11:35.67486247Z   line: '3716',
+2025-09-23T22:11:35.6748662Z   routine: 'errorMissingColumn'
+2025-09-23T22:11:35.67486979Z }
+2025-09-23T22:11:35.676348494Z ReferenceError: /opt/render/project/src/views/layout.ejs:6
+2025-09-23T22:11:35.676410226Z     4|     <meta charset="UTF-8">
+2025-09-23T22:11:35.676416076Z     5|     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+2025-09-23T22:11:35.676420496Z  >> 6|     <title><%= title || 'Lead Distribution Platform' %></title>
+2025-09-23T22:11:35.676425016Z     7|     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+2025-09-23T22:11:35.676429246Z     8|     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+2025-09-23T22:11:35.676433896Z     9|     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+2025-09-23T22:11:35.676437767Z 
+2025-09-23T22:11:35.676442436Z title is not defined
+2025-09-23T22:11:35.676447547Z     at eval ("/opt/render/project/src/views/layout.ejs":12:26)
+2025-09-23T22:11:35.676451577Z     at layout (/opt/render/project/src/node_modules/ejs/lib/ejs.js:703:17)
+2025-09-23T22:11:35.676455867Z     at tryHandleCache (/opt/render/project/src/node_modules/ejs/lib/ejs.js:274:36)
+2025-09-23T22:11:35.676460007Z     at exports.renderFile [as engine] (/opt/render/project/src/node_modules/ejs/lib/ejs.js:491:10)
+2025-09-23T22:11:35.676464347Z     at View.render (/opt/render/project/src/node_modules/express/lib/view.js:135:8)
+2025-09-23T22:11:35.676468787Z     at tryRender (/opt/render/project/src/node_modules/express/lib/application.js:657:10)
+2025-09-23T22:11:35.676472947Z     at Function.render (/opt/render/project/src/node_modules/express/lib/application.js:609:3)
+2025-09-23T22:11:35.676477377Z     at ServerResponse.render (/opt/render/project/src/node_modules/express/lib/response.js:1049:7)
+2025-09-23T22:11:35.676498128Z     at /opt/render/project/src/node_modules/express-ejs-layouts/lib/express-layouts.js:113:20
+2025-09-23T22:11:35.676500878Z     at tryHandleCache (/opt/render/project/src/node_modules/ejs/lib/ejs.js:280:5)
+2025-09-23T22:11:35.678562106Z ⚠️ Database client removed from pool
+2025-09-23T22:11:35.684157086Z ✅ New database client connected
+2025-09-23T22:11:41Z clientIP="213.252.230.25" requestID="1d97b8ec-8e99-46f9" responseTimeMS=14 responseBytes=6301 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:11:41Z clientIP="213.252.230.25" requestID="b549f417-41e6-416b" responseTimeMS=1 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:11:41Z clientIP="213.252.230.25" requestID="e9cf99f9-1845-42d3" responseTimeMS=1 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:12:00.083349893Z Business Hours Cron: Processed 0 scheduled deliveries
+2025-09-23T22:13:57.084358126Z ==> Detected service running on port 10000
+2025-09-23T22:13:57.171649718Z ==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+2025-09-23T22:14:00.199232038Z Business Hours Cron: Processed 0 scheduled deliveries
+2025-09-23T22:15:00.253409404Z Starting status pull from partner APIs...
+2025-09-23T22:15:00.253479775Z Processing promotional email queue...
+2025-09-23T22:15:00.25497996Z Found 0 partners ready for status pulling
+2025-09-23T22:15:00.254994501Z Status pulling cycle completed
+2025-09-23T22:15:00.269877646Z ✅ New database client connected
+2025-09-23T22:15:00.27435499Z Processing 0 pending promotional emails
+2025-09-23T22:15:17.83879264Z ==> Deploying...
+2025-09-23T22:15:30.25941052Z ⚠️ Database client removed from pool
+2025-09-23T22:15:30.277015039Z ⚠️ Database client removed from pool
+2025-09-23T22:15:38.090124995Z ==> Running 'node server.js'
+2025-09-23T22:15:38.332122037Z Email scheduler initialized - processing every 5 minutes
+2025-09-23T22:15:38.337600614Z Lead Distribution Platform running on http://0.0.0.0:10000
+2025-09-23T22:15:38.355320429Z ✅ New database client connected
+2025-09-23T22:15:38.358324938Z ✅ Database connection successful
+2025-09-23T22:15:38.376980502Z ✅ Production webhook sources and CRM integrations configured automatically
+2025-09-23T22:15:38.377010163Z Database tables initialized successfully
+2025-09-23T22:15:38.380552692Z ✅ All database systems initialized successfully
+2025-09-23T22:15:48.619169181Z ==> Your service is live 🎉
+2025-09-23T22:15:48.667790982Z ==> 
+2025-09-23T22:15:48.867077747Z ==> ///////////////////////////////////////////////////////////
+2025-09-23T22:15:48.895182592Z ==> 
+2025-09-23T22:15:49Z clientIP="35.230.74.10" requestID="e8c57a96-e27a-4f34" responseTimeMS=6 responseBytes=1528 userAgent="Go-http-client/2.0"
+2025-09-23T22:15:49Z clientIP="35.230.74.10" requestID="1f1dff7d-c9ef-4983" responseTimeMS=3 responseBytes=331 userAgent="Go-http-client/2.0"
+2025-09-23T22:15:49.093593537Z ==> Available at your primary URL https://optivusagencyplatform.cc + 2 more domains
+2025-09-23T22:15:49.145068428Z ==> 
+2025-09-23T22:15:49.323404577Z ==> ///////////////////////////////////////////////////////////
+2025-09-23T22:16:00Z clientIP="213.252.230.25" requestID="4843ea48-99fc-4c15" responseTimeMS=6 responseBytes=2803 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:00Z clientIP="213.252.230.25" requestID="a4146f76-0b7d-4ff3" responseTimeMS=6 responseBytes=6106 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:00Z clientIP="213.252.230.25" requestID="1e3521e0-4c55-409d" responseTimeMS=43 responseBytes=6301 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:00.319586517Z ✅ New database client connected
+2025-09-23T22:16:00.322929614Z Business Hours Cron: Processed 0 scheduled deliveries
+2025-09-23T22:16:00.353180948Z Business Hours Cron: Processed 0 scheduled deliveries
+2025-09-23T22:16:01Z clientIP="213.252.230.25" requestID="477bbece-af96-40ea" responseTimeMS=8 responseBytes=435 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:02Z clientIP="213.252.230.25" requestID="25d6c009-123b-43de" responseTimeMS=9 responseBytes=435 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:02Z clientIP="213.252.230.25" requestID="8ecee6ce-8735-4837" responseTimeMS=9 responseBytes=6301 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:02Z clientIP="213.252.230.25" requestID="e1481f89-bf4e-4c21" responseTimeMS=4 responseBytes=6106 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:02Z clientIP="213.252.230.25" requestID="3368de5b-61ae-4566" responseTimeMS=3 responseBytes=2803 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:03Z clientIP="213.252.230.25" requestID="9ca2193a-a8dd-428d" responseTimeMS=10 responseBytes=6301 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:03Z clientIP="213.252.230.25" requestID="fe5e1290-bdce-4a86" responseTimeMS=4 responseBytes=6106 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:03Z clientIP="213.252.230.25" requestID="93d403f9-44cc-4427" responseTimeMS=3 responseBytes=2803 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:04Z clientIP="213.252.230.25" requestID="62987335-e485-4441" responseTimeMS=8 responseBytes=435 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:08.01224669Z Error loading CRM integrations: error: column crm.auth_type does not exist
+2025-09-23T22:16:08.0122672Z     at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+2025-09-23T22:16:08.012270771Z     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-09-23T22:16:08Z clientIP="213.252.230.25" requestID="42984c05-5aa9-45b5" responseTimeMS=19 responseBytes=434 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:08.01227354Z     at async /opt/render/project/src/routes/crmIntegrations.js:14:35 {
+2025-09-23T22:16:08.01227602Z   length: 112,
+2025-09-23T22:16:08.012279571Z   severity: 'ERROR',
+2025-09-23T22:16:08.012282201Z   code: '42703',
+2025-09-23T22:16:08.012284891Z   detail: undefined,
+2025-09-23T22:16:08.012287361Z   hint: undefined,
+2025-09-23T22:16:08.012289841Z   position: '313',
+2025-09-23T22:16:08.012292911Z   internalPosition: undefined,
+2025-09-23T22:16:08.012295721Z   internalQuery: undefined,
+2025-09-23T22:16:08.012298821Z   where: undefined,
+2025-09-23T22:16:08.012301701Z   schema: undefined,
+2025-09-23T22:16:08.012304291Z   table: undefined,
+2025-09-23T22:16:08.012306571Z   column: undefined,
+2025-09-23T22:16:08.012323501Z   dataType: undefined,
+2025-09-23T22:16:08.012326752Z   constraint: undefined,
+2025-09-23T22:16:08.012329732Z   file: 'parse_relation.c',
+2025-09-23T22:16:08.012332512Z   line: '3716',
+2025-09-23T22:16:08.012335062Z   routine: 'errorMissingColumn'
+2025-09-23T22:16:08.012337622Z }
+2025-09-23T22:16:08.014483164Z ReferenceError: /opt/render/project/src/views/layout.ejs:6
+2025-09-23T22:16:08.014505754Z     4|     <meta charset="UTF-8">
+2025-09-23T22:16:08.014510024Z     5|     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+2025-09-23T22:16:08.014513254Z  >> 6|     <title><%= title || 'Lead Distribution Platform' %></title>
+2025-09-23T22:16:08.014516524Z     7|     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+2025-09-23T22:16:08.014520874Z     8|     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+2025-09-23T22:16:08.014524644Z     9|     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+2025-09-23T22:16:08.014527175Z 
+2025-09-23T22:16:08.014530164Z title is not defined
+2025-09-23T22:16:08.014532845Z     at eval ("/opt/render/project/src/views/layout.ejs":12:26)
+2025-09-23T22:16:08.014535615Z     at layout (/opt/render/project/src/node_modules/ejs/lib/ejs.js:703:17)
+2025-09-23T22:16:08.014538155Z     at tryHandleCache (/opt/render/project/src/node_modules/ejs/lib/ejs.js:274:36)
+2025-09-23T22:16:08.014540885Z     at exports.renderFile [as engine] (/opt/render/project/src/node_modules/ejs/lib/ejs.js:491:10)
+2025-09-23T22:16:08.014543225Z     at View.render (/opt/render/project/src/node_modules/express/lib/view.js:135:8)
+2025-09-23T22:16:08.014546225Z     at tryRender (/opt/render/project/src/node_modules/express/lib/application.js:657:10)
+2025-09-23T22:16:08.014548575Z     at Function.render (/opt/render/project/src/node_modules/express/lib/application.js:609:3)
+2025-09-23T22:16:08.014562875Z     at ServerResponse.render (/opt/render/project/src/node_modules/express/lib/response.js:1049:7)
+2025-09-23T22:16:08.014564875Z     at /opt/render/project/src/node_modules/express-ejs-layouts/lib/express-layouts.js:113:20
+2025-09-23T22:16:08.014569575Z     at tryHandleCache (/opt/render/project/src/node_modules/ejs/lib/ejs.js:280:5)
+2025-09-23T22:16:08.014958283Z ⚠️ Database client removed from pool
+2025-09-23T22:16:08.019370159Z ✅ New database client connected
+2025-09-23T22:16:19Z clientIP="213.252.230.25" requestID="690b94b9-d777-4d38" responseTimeMS=2 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:19Z clientIP="213.252.230.25" requestID="c855c47f-b3f4-43a7" responseTimeMS=2 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:19Z clientIP="213.252.230.25" requestID="7a8136d2-61ef-435c" responseTimeMS=16 responseBytes=14403 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:26.943072887Z Error loading CRM integration detail: error: column crm.auth_type does not exist
+2025-09-23T22:16:26.943106878Z     at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+2025-09-23T22:16:26.943113588Z     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-09-23T22:16:26.943118308Z     at async /opt/render/project/src/routes/crmIntegrations.js:59:35 {
+2025-09-23T22:16:26.943121998Z   length: 112,
+2025-09-23T22:16:26.943125418Z   severity: 'ERROR',
+2025-09-23T22:16:26Z clientIP="213.252.230.25" requestID="01a0fdc3-e8bf-43e8" responseTimeMS=15 responseBytes=434 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:26.943128238Z   code: '42703',
+2025-09-23T22:16:26.943131548Z   detail: undefined,
+2025-09-23T22:16:26.943136058Z   hint: undefined,
+2025-09-23T22:16:26.943140699Z   position: '313',
+2025-09-23T22:16:26.943145379Z   internalPosition: undefined,
+2025-09-23T22:16:26.943150109Z   internalQuery: undefined,
+2025-09-23T22:16:26.943154589Z   where: undefined,
+2025-09-23T22:16:26.943158839Z   schema: undefined,
+2025-09-23T22:16:26.943163089Z   table: undefined,
+2025-09-23T22:16:26.943167379Z   column: undefined,
+2025-09-23T22:16:26.943171879Z   dataType: undefined,
+2025-09-23T22:16:26.943176509Z   constraint: undefined,
+2025-09-23T22:16:26.943180759Z   file: 'parse_relation.c',
+2025-09-23T22:16:26.943184899Z   line: '3716',
+2025-09-23T22:16:26.943189849Z   routine: 'errorMissingColumn'
+2025-09-23T22:16:26.943195149Z }
+2025-09-23T22:16:26.944529786Z ReferenceError: /opt/render/project/src/views/layout.ejs:6
+2025-09-23T22:16:26.944550936Z     4|     <meta charset="UTF-8">
+2025-09-23T22:16:26.944556986Z     5|     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+2025-09-23T22:16:26.944561026Z  >> 6|     <title><%= title || 'Lead Distribution Platform' %></title>
+2025-09-23T22:16:26.944566076Z     7|     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+2025-09-23T22:16:26.944570846Z     8|     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+2025-09-23T22:16:26.944576156Z     9|     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+2025-09-23T22:16:26.944580556Z 
+2025-09-23T22:16:26.944585077Z title is not defined
+2025-09-23T22:16:26.944589337Z     at eval ("/opt/render/project/src/views/layout.ejs":12:26)
+2025-09-23T22:16:26.944620987Z     at layout (/opt/render/project/src/node_modules/ejs/lib/ejs.js:703:17)
+2025-09-23T22:16:26.944627337Z     at tryHandleCache (/opt/render/project/src/node_modules/ejs/lib/ejs.js:274:36)
+2025-09-23T22:16:26.944631657Z     at exports.renderFile [as engine] (/opt/render/project/src/node_modules/ejs/lib/ejs.js:491:10)
+2025-09-23T22:16:26.944636218Z     at View.render (/opt/render/project/src/node_modules/express/lib/view.js:135:8)
+2025-09-23T22:16:26.944640908Z     at tryRender (/opt/render/project/src/node_modules/express/lib/application.js:657:10)
+2025-09-23T22:16:26.944643968Z     at Function.render (/opt/render/project/src/node_modules/express/lib/application.js:609:3)
+2025-09-23T22:16:26.944646798Z     at ServerResponse.render (/opt/render/project/src/node_modules/express/lib/response.js:1049:7)
+2025-09-23T22:16:26.944660828Z     at /opt/render/project/src/node_modules/express-ejs-layouts/lib/express-layouts.js:113:20
+2025-09-23T22:16:26.944662708Z     at tryHandleCache (/opt/render/project/src/node_modules/ejs/lib/ejs.js:280:5)
+2025-09-23T22:16:26.94631721Z ⚠️ Database client removed from pool
+2025-09-23T22:16:26.949772908Z ✅ New database client connected
+2025-09-23T22:16:39.406976602Z Error loading CRM integrations: error: column crm.auth_type does not exist
+2025-09-23T22:16:39.407091194Z     at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+2025-09-23T22:16:39.407105594Z     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-09-23T22:16:39.407108664Z     at async /opt/render/project/src/routes/crmIntegrations.js:14:35 {
+2025-09-23T22:16:39.407111414Z   length: 112,
+2025-09-23T22:16:39.407114274Z   severity: 'ERROR',
+2025-09-23T22:16:39.407145835Z   code: '42703',
+2025-09-23T22:16:39.407148835Z   detail: undefined,
+2025-09-23T22:16:39.407151375Z   hint: undefined,
+2025-09-23T22:16:39.407153775Z   position: '313',
+2025-09-23T22:16:39.407156565Z   internalPosition: undefined,
+2025-09-23T22:16:39.407158945Z   internalQuery: undefined,
+2025-09-23T22:16:39Z clientIP="213.252.230.25" requestID="c5220137-9482-40fd" responseTimeMS=24 responseBytes=434 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:39.407161255Z   where: undefined,
+2025-09-23T22:16:39.407163725Z   schema: undefined,
+2025-09-23T22:16:39.407166155Z   table: undefined,
+2025-09-23T22:16:39.407168645Z   column: undefined,
+2025-09-23T22:16:39.407170966Z   dataType: undefined,
+2025-09-23T22:16:39.407173275Z   constraint: undefined,
+2025-09-23T22:16:39.407175655Z   file: 'parse_relation.c',
+2025-09-23T22:16:39.407178295Z   line: '3716',
+2025-09-23T22:16:39.407180736Z   routine: 'errorMissingColumn'
+2025-09-23T22:16:39.407183096Z }
+2025-09-23T22:16:39.408339948Z ReferenceError: /opt/render/project/src/views/layout.ejs:6
+2025-09-23T22:16:39.408353158Z     4|     <meta charset="UTF-8">
+2025-09-23T22:16:39.408356729Z     5|     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+2025-09-23T22:16:39.408359469Z  >> 6|     <title><%= title || 'Lead Distribution Platform' %></title>
+2025-09-23T22:16:39.408362169Z     7|     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+2025-09-23T22:16:39.408364639Z     8|     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+2025-09-23T22:16:39.408367039Z     9|     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+2025-09-23T22:16:39.408369029Z 
+2025-09-23T22:16:39.408371969Z title is not defined
+2025-09-23T22:16:39.408374159Z     at eval ("/opt/render/project/src/views/layout.ejs":12:26)
+2025-09-23T22:16:39.408376469Z     at layout (/opt/render/project/src/node_modules/ejs/lib/ejs.js:703:17)
+2025-09-23T22:16:39.408378689Z     at tryHandleCache (/opt/render/project/src/node_modules/ejs/lib/ejs.js:274:36)
+2025-09-23T22:16:39.408380859Z     at exports.renderFile [as engine] (/opt/render/project/src/node_modules/ejs/lib/ejs.js:491:10)
+2025-09-23T22:16:39.408383129Z     at View.render (/opt/render/project/src/node_modules/express/lib/view.js:135:8)
+2025-09-23T22:16:39.408385279Z     at tryRender (/opt/render/project/src/node_modules/express/lib/application.js:657:10)
+2025-09-23T22:16:39.408387569Z     at Function.render (/opt/render/project/src/node_modules/express/lib/application.js:609:3)
+2025-09-23T22:16:39.408389879Z     at ServerResponse.render (/opt/render/project/src/node_modules/express/lib/response.js:1049:7)
+2025-09-23T22:16:39.408392069Z     at /opt/render/project/src/node_modules/express-ejs-layouts/lib/express-layouts.js:113:20
+2025-09-23T22:16:39.408403459Z     at tryHandleCache (/opt/render/project/src/node_modules/ejs/lib/ejs.js:280:5)
+2025-09-23T22:16:39.40996843Z ⚠️ Database client removed from pool
+2025-09-23T22:16:39.414525119Z ✅ New database client connected
+2025-09-23T22:16:43.372379235Z Error loading CRM integrations: error: column crm.auth_type does not exist
+2025-09-23T22:16:43.372400726Z     at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+2025-09-23T22:16:43.372404796Z     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-09-23T22:16:43.372407786Z     at async /opt/render/project/src/routes/crmIntegrations.js:14:35 {
+2025-09-23T22:16:43.372410796Z   length: 112,
+2025-09-23T22:16:43.372414676Z   severity: 'ERROR',
+2025-09-23T22:16:43.372419596Z   code: '42703',
+2025-09-23T22:16:43.372423926Z   detail: undefined,
+2025-09-23T22:16:43.372428336Z   hint: undefined,
+2025-09-23T22:16:43.372432966Z   position: '313',
+2025-09-23T22:16:43.372438006Z   internalPosition: undefined,
+2025-09-23T22:16:43.372442367Z   internalQuery: undefined,
+2025-09-23T22:16:43.372447087Z   where: undefined,
+2025-09-23T22:16:43.372450357Z   schema: undefined,
+2025-09-23T22:16:43.372453107Z   table: undefined,
+2025-09-23T22:16:43.372455837Z   column: undefined,
+2025-09-23T22:16:43.372458627Z   dataType: undefined,
+2025-09-23T22:16:43.372461357Z   constraint: undefined,
+2025-09-23T22:16:43Z clientIP="213.252.230.25" requestID="f4d0e5bd-184d-401d" responseTimeMS=15 responseBytes=434 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:43.372464327Z   file: 'parse_relation.c',
+2025-09-23T22:16:43.372467157Z   line: '3716',
+2025-09-23T22:16:43.372469977Z   routine: 'errorMissingColumn'
+2025-09-23T22:16:43.372472747Z }
+2025-09-23T22:16:43.37364607Z ReferenceError: /opt/render/project/src/views/layout.ejs:6
+2025-09-23T22:16:43.37366235Z     4|     <meta charset="UTF-8">
+2025-09-23T22:16:43.373667941Z     5|     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+2025-09-23T22:16:43.373672591Z  >> 6|     <title><%= title || 'Lead Distribution Platform' %></title>
+2025-09-23T22:16:43.373677451Z     7|     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+2025-09-23T22:16:43.373719711Z     8|     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+2025-09-23T22:16:43.373728732Z     9|     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+2025-09-23T22:16:43.373733992Z 
+2025-09-23T22:16:43.373738742Z title is not defined
+2025-09-23T22:16:43.373743592Z     at eval ("/opt/render/project/src/views/layout.ejs":12:26)
+2025-09-23T22:16:43.373747852Z     at layout (/opt/render/project/src/node_modules/ejs/lib/ejs.js:703:17)
+2025-09-23T22:16:43.373754722Z     at tryHandleCache (/opt/render/project/src/node_modules/ejs/lib/ejs.js:274:36)
+2025-09-23T22:16:43.373759142Z     at exports.renderFile [as engine] (/opt/render/project/src/node_modules/ejs/lib/ejs.js:491:10)
+2025-09-23T22:16:43.373763462Z     at View.render (/opt/render/project/src/node_modules/express/lib/view.js:135:8)
+2025-09-23T22:16:43.373767812Z     at tryRender (/opt/render/project/src/node_modules/express/lib/application.js:657:10)
+2025-09-23T22:16:43.373771812Z     at Function.render (/opt/render/project/src/node_modules/express/lib/application.js:609:3)
+2025-09-23T22:16:43.373775613Z     at ServerResponse.render (/opt/render/project/src/node_modules/express/lib/response.js:1049:7)
+2025-09-23T22:16:43.373779403Z     at /opt/render/project/src/node_modules/express-ejs-layouts/lib/express-layouts.js:113:20
+2025-09-23T22:16:43.373783463Z     at tryHandleCache (/opt/render/project/src/node_modules/ejs/lib/ejs.js:280:5)
+2025-09-23T22:16:43.376667519Z ⚠️ Database client removed from pool
+2025-09-23T22:16:43.379692348Z ✅ New database client connected
+2025-09-23T22:16:44.324743363Z Error loading CRM integrations: error: column crm.auth_type does not exist
+2025-09-23T22:16:44.324761363Z     at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+2025-09-23T22:16:44.324765943Z     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-09-23T22:16:44.324768934Z     at async /opt/render/project/src/routes/crmIntegrations.js:14:35 {
+2025-09-23T22:16:44.324771714Z   length: 112,
+2025-09-23T22:16:44.324775074Z   severity: 'ERROR',
+2025-09-23T22:16:44.324776814Z   code: '42703',
+2025-09-23T22:16:44.324778444Z   detail: undefined,
+2025-09-23T22:16:44.324780064Z   hint: undefined,
+2025-09-23T22:16:44.324782144Z   position: '313',
+2025-09-23T22:16:44.324784364Z   internalPosition: undefined,
+2025-09-23T22:16:44.324786054Z   internalQuery: undefined,
+2025-09-23T22:16:44.324788064Z   where: undefined,
+2025-09-23T22:16:44.324789664Z   schema: undefined,
+2025-09-23T22:16:44.324791274Z   table: undefined,
+2025-09-23T22:16:44.324792884Z   column: undefined,
+2025-09-23T22:16:44.324794514Z   dataType: undefined,
+2025-09-23T22:16:44.324796444Z   constraint: undefined,
+2025-09-23T22:16:44.324798974Z   file: 'parse_relation.c',
+2025-09-23T22:16:44.324802174Z   line: '3716',
+2025-09-23T22:16:44.324804764Z   routine: 'errorMissingColumn'
+2025-09-23T22:16:44.324807484Z }
+2025-09-23T22:16:44.326021128Z ReferenceError: /opt/render/project/src/views/layout.ejs:6
+2025-09-23T22:16:44.326038548Z     4|     <meta charset="UTF-8">
+2025-09-23T22:16:44Z clientIP="213.252.230.25" requestID="714fdf22-8365-439e" responseTimeMS=16 responseBytes=434 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:44.326042259Z     5|     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+2025-09-23T22:16:44.326045619Z  >> 6|     <title><%= title || 'Lead Distribution Platform' %></title>
+2025-09-23T22:16:44.326049099Z     7|     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+2025-09-23T22:16:44.326052089Z     8|     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+2025-09-23T22:16:44.326055149Z     9|     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+2025-09-23T22:16:44.326071939Z 
+2025-09-23T22:16:44.326078489Z title is not defined
+2025-09-23T22:16:44.326081649Z     at eval ("/opt/render/project/src/views/layout.ejs":12:26)
+2025-09-23T22:16:44.326084549Z     at layout (/opt/render/project/src/node_modules/ejs/lib/ejs.js:703:17)
+2025-09-23T22:16:44.326087369Z     at tryHandleCache (/opt/render/project/src/node_modules/ejs/lib/ejs.js:274:36)
+2025-09-23T22:16:44.32609004Z     at exports.renderFile [as engine] (/opt/render/project/src/node_modules/ejs/lib/ejs.js:491:10)
+2025-09-23T22:16:44.32609276Z     at View.render (/opt/render/project/src/node_modules/express/lib/view.js:135:8)
+2025-09-23T22:16:44.326095369Z     at tryRender (/opt/render/project/src/node_modules/express/lib/application.js:657:10)
+2025-09-23T22:16:44.3260982Z     at Function.render (/opt/render/project/src/node_modules/express/lib/application.js:609:3)
+2025-09-23T22:16:44.32610061Z     at ServerResponse.render (/opt/render/project/src/node_modules/express/lib/response.js:1049:7)
+2025-09-23T22:16:44.32610304Z     at /opt/render/project/src/node_modules/express-ejs-layouts/lib/express-layouts.js:113:20
+2025-09-23T22:16:44.32610586Z     at tryHandleCache (/opt/render/project/src/node_modules/ejs/lib/ejs.js:280:5)
+2025-09-23T22:16:44.327924785Z ⚠️ Database client removed from pool
+2025-09-23T22:16:44.330977715Z ✅ New database client connected
+2025-09-23T22:16:46Z clientIP="213.252.230.25" requestID="6a77cdb3-d5d7-4cad" responseTimeMS=6 responseBytes=435 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:50Z clientIP="213.252.230.25" requestID="819c4eda-3efc-493f" responseTimeMS=2 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:50Z clientIP="213.252.230.25" requestID="616167aa-90f7-41a4" responseTimeMS=21 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:50Z clientIP="213.252.230.25" requestID="8a066cbc-eab3-489f" responseTimeMS=9 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:51Z clientIP="213.252.230.25" requestID="85044357-9d7d-4991" responseTimeMS=9 responseBytes=505 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:56Z clientIP="213.252.230.25" requestID="a16da311-4247-4ba8" responseTimeMS=2 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:56Z clientIP="213.252.230.25" requestID="175734f8-e163-473b" responseTimeMS=22 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:56Z clientIP="213.252.230.25" requestID="2f9a45b7-4959-429f" responseTimeMS=2 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:57Z clientIP="213.252.230.25" requestID="1f758fa9-c9df-48f8" responseTimeMS=21 responseBytes=3509 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:58Z clientIP="213.252.230.25" requestID="800fa389-1194-4391" responseTimeMS=3 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:58Z clientIP="213.252.230.25" requestID="bc68fccc-eda7-42da" responseTimeMS=3 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:59Z clientIP="213.252.230.25" requestID="90a1b77d-ff26-499b" responseTimeMS=45 responseBytes=213 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:59Z clientIP="213.252.230.25" requestID="7196f03a-f1cc-45f2" responseTimeMS=2 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:16:59Z clientIP="213.252.230.25" requestID="7259f18c-72ab-4571" responseTimeMS=1 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:17:00Z clientIP="213.252.230.25" requestID="00c7197d-d999-437b" responseTimeMS=3 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:17:00Z clientIP="213.252.230.25" requestID="81d278ba-510d-428a" responseTimeMS=2 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:17:00Z clientIP="213.252.230.25" requestID="89e317fa-2afe-41e6" responseTimeMS=16 responseBytes=1702 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:17:01Z clientIP="213.252.230.25" requestID="4e3c67ef-1c0c-4622" responseTimeMS=2 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:17:01Z clientIP="213.252.230.25" requestID="8c9832b1-6167-44bc" responseTimeMS=1 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:17:01Z clientIP="213.252.230.25" requestID="d0b38c98-2fee-42fc" responseTimeMS=25 responseBytes=4781 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:17:03Z clientIP="213.252.230.25" requestID="739b78cb-a016-4325" responseTimeMS=13 responseBytes=4395 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:17:04Z clientIP="213.252.230.25" requestID="2209feb6-1b0f-4129" responseTimeMS=3 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:17:04Z clientIP="213.252.230.25" requestID="1bc8f09c-c624-4154" responseTimeMS=3 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-23T22:18:00.450000574Z Business Hours Cron: Processed 0 scheduled deliveries
+2025-09-23T22:20:00.566027321Z Processing promotional email queue...
+2025-09-23T22:20:00.567377467Z Business Hours Cron: Processed 0 scheduled deliveries
+2025-09-23T22:20:00.572874875Z ✅ New database client connected
+2025-09-23T22:20:00.576668689Z Processing 0 pending promotional emails
+2025-09-23T22:20:30.573012424Z ⚠️ Database client removed from pool
+2025-09-23T22:20:30.580723524Z ⚠️ Database client removed from pool
+2025-09-23T22:20:49.015745124Z ==> Detected service running on port 10000
+2025-09-23T22:20:49.180669153Z ==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+2025-09-23T22:22:00.693808691Z ✅ New database client connected
+2025-09-23T22:22:00.696940053Z Business Hours Cron: Processed 0 scheduled deliveries

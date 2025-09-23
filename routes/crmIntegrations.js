@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
                 p.niche as partner_niche,
                 crm.crm_name as platform_name,
                 '' as platform_version,
-                crm.auth_type as auth_method,
+                COALESCE(crm.auth_type, 'none') as auth_method,
                 crm.is_active,
                 crm.last_status_pull as last_sync_at,
                 0 as custom_headers_count,
@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
         });
     } catch (error) {
         console.error('Error loading CRM integrations:', error);
-        res.status(500).render('error', { error: 'Failed to load CRM integrations' });
+        res.status(500).render('error', { title: 'Error', error: 'Failed to load CRM integrations' });
     }
 });
 
@@ -65,7 +65,7 @@ router.get('/partner/:partnerId', async (req, res) => {
                 p.niche as partner_niche,
                 crm.crm_name as platform_name,
                 '' as platform_version,
-                crm.auth_type as auth_method,
+                COALESCE(crm.auth_type, 'none') as auth_method,
                 crm.is_active,
                 crm.api_endpoint as webhook_url,
                 crm.auth_config,
@@ -85,7 +85,7 @@ router.get('/partner/:partnerId', async (req, res) => {
         `, [partnerId]);
 
         if (integrationResult.rows.length === 0) {
-            return res.status(404).render('error', { error: 'CRM integration not found for this partner' });
+            return res.status(404).render('error', { title: 'Not Found', error: 'CRM integration not found for this partner' });
         }
 
         const integration = integrationResult.rows[0];
@@ -117,7 +117,7 @@ router.get('/partner/:partnerId', async (req, res) => {
         });
     } catch (error) {
         console.error('Error loading CRM integration detail:', error);
-        res.status(500).render('error', { error: 'Failed to load CRM integration' });
+        res.status(500).render('error', { title: 'Error', error: 'Failed to load CRM integration' });
     }
 });
 
@@ -136,7 +136,7 @@ router.get('/:integrationId', async (req, res) => {
                 p.niche as partner_niche,
                 crm.crm_name as platform_name,
                 '' as platform_version,
-                crm.auth_type as auth_method,
+                COALESCE(crm.auth_type, 'none') as auth_method,
                 crm.is_active,
                 crm.api_endpoint as webhook_url,
                 crm.auth_config,
@@ -156,7 +156,7 @@ router.get('/:integrationId', async (req, res) => {
         `, [integrationId]);
 
         if (integrationResult.rows.length === 0) {
-            return res.status(404).render('error', { error: 'CRM integration not found' });
+            return res.status(404).render('error', { title: 'Not Found', error: 'CRM integration not found' });
         }
 
         const integration = integrationResult.rows[0];
@@ -188,7 +188,7 @@ router.get('/:integrationId', async (req, res) => {
         });
     } catch (error) {
         console.error('Error loading CRM integration detail:', error);
-        res.status(500).render('error', { error: 'Failed to load CRM integration' });
+        res.status(500).render('error', { title: 'Error', error: 'Failed to load CRM integration' });
     }
 });
 
