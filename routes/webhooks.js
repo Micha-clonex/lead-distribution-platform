@@ -7,6 +7,7 @@ const crypto = require('crypto');
 // Apply authentication to all webhook routes
 router.use(requireAuth);
 
+
 // Get webhook sources and deliveries
 router.get('/', async (req, res) => {
     try {
@@ -21,18 +22,16 @@ router.get('/', async (req, res) => {
         const deliveriesResult = await pool.query(`
             SELECT wd.*, p.name as partner_name, l.email as lead_email 
             FROM webhook_deliveries wd
-            JOIN partners p ON wd.partner_id = p.id
-            JOIN leads l ON wd.lead_id = l.id
-            WHERE wd.webhook_url NOT LIKE 'internal://%' 
-              AND wd.status != 'migrated'
+            LEFT JOIN partners p ON wd.partner_id = p.id
+            LEFT JOIN leads l ON wd.lead_id = l.id
             ORDER BY wd.created_at DESC
             LIMIT 100
         `);
         
         res.render('webhooks/index', {
             title: 'Webhook Management',
-            sources: sourcesResult.rows,
-            deliveries: deliveriesResult.rows
+            sources: sourcesResult.rows || [],
+            deliveries: deliveriesResult.rows || []
         });
     } catch (error) {
         console.error('Webhooks fetch error:', error);
