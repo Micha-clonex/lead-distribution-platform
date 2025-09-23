@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: lead-distribution-platform
+    env: node
+    plan: starter
+    buildCommand: npm install && npm run migrate
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lead-platform-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: PORT
+        value: 10000
+
+databases:
+  - name: lead-platform-db
+    databaseName: lead_distribution
+    user: lead_admin
