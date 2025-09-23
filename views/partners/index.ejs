@@ -156,16 +156,16 @@
                             <td><%= new Date(partner.created_at).toLocaleDateString() %></td>
                             <td>
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-primary" onclick="editPartner(<%= partner.id %>)" title="Edit">
+                                    <button class="btn btn-outline-primary" data-action="edit-partner" data-id="<%= partner.id %>" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="btn btn-outline-success" onclick="manageCRM(<%= partner.id %>)" title="CRM Integration">
+                                    <button class="btn btn-outline-success" data-action="manage-crm" data-id="<%= partner.id %>" title="CRM Integration">
                                         <i class="fas fa-cog"></i>
                                     </button>
-                                    <button class="btn btn-outline-info" onclick="viewStatus(<%= partner.id %>)" title="Status Tracking">
+                                    <button class="btn btn-outline-info" data-action="view-status" data-id="<%= partner.id %>" title="Status Tracking">
                                         <i class="fas fa-chart-line"></i>
                                     </button>
-                                    <button class="btn btn-outline-danger" onclick="deletePartner(<%= partner.id %>)" title="Delete">
+                                    <button class="btn btn-outline-danger" data-action="delete-partner" data-id="<%= partner.id %>" title="Delete">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -1652,6 +1652,9 @@ function getStatusColor(status) {
         default: return 'secondary';
     }
 }
+
+// Make partners data available globally for centralized JS
+window.partners = <%- JSON.stringify(partners) %>;
 </script>
 
 <style>
