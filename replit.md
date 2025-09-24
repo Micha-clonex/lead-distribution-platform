@@ -1,8 +1,15 @@
 # Overview
 
-The Lead Distribution Platform is a multi-country lead management system designed for distributing leads between partners in the forex and recovery niches. The platform serves as a central hub that receives leads from various sources (Facebook, landing pages, etc.) and intelligently distributes them to active partners based on country, niche, daily limits, and premium/raw lead ratios.
+The Lead Distribution Platform V2 is a production-hardened multi-country lead management system designed for distributing leads between partners in the forex and recovery niches. The platform serves as a central hub that receives leads from various sources (Facebook, landing pages, etc.) and intelligently distributes them to active partners based on country, niche, daily limits, and premium/raw lead ratios.
 
 The system features a web-based admin dashboard for managing partners, monitoring lead distribution, tracking performance analytics, and managing webhook integrations. It includes automated webhook delivery with retry mechanisms, session-based authentication, and comprehensive analytics reporting.
+
+**V2 Optimizations:**
+- Bulletproof database connection management with auto-recovery
+- Optimized background task scheduling to prevent resource conflicts
+- Production-ready SSL handling and security configurations
+- Comprehensive migration system with schema verification
+- Enhanced error handling and logging throughout the system
 
 # User Preferences
 
