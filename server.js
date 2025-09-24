@@ -61,13 +61,21 @@ app.use((req, res, next) => {
 });
 
 // Session configuration - Using signed cookies for stability (no DB dependency)
+// Production session security
+if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+    throw new Error('SESSION_SECRET environment variable is required for production');
+}
+
+// Trust proxy for HTTPS
+app.set('trust proxy', 1);
+
 app.use(session({
     // No store = uses memory store (signed cookies)
     secret: process.env.SESSION_SECRET || 'your-fallback-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: false, // Set to true in production with HTTPS
+        secure: process.env.NODE_ENV === 'production', // HTTPS in production
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     },
