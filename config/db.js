@@ -5,20 +5,20 @@ require('dotenv').config();
 let pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgres://') ? { rejectUnauthorized: false } : false,
-    max: 8, // Connection pool size
-    min: 2,  // Keep minimum connections alive
-    idleTimeoutMillis: 60000, // Keep connections alive longer (60 seconds)
-    connectionTimeoutMillis: 10000, // Allow more time for connections
-    acquireTimeoutMillis: 15000, // Allow more time to acquire connections
-    createTimeoutMillis: 10000,
-    destroyTimeoutMillis: 5000,
-    reapIntervalMillis: 1000, // Check pool health frequently
-    createRetryIntervalMillis: 2000,
+    max: 4, // Reduced pool size for stability
+    min: 1,  // Minimum connections
+    idleTimeoutMillis: 30000, // Shorter idle timeout
+    connectionTimeoutMillis: 8000, // Faster timeout
+    acquireTimeoutMillis: 10000, // Shorter acquire timeout
+    createTimeoutMillis: 8000,
+    destroyTimeoutMillis: 3000,
+    reapIntervalMillis: 5000, // Less frequent health checks
+    createRetryIntervalMillis: 3000,
     // CRITICAL: Add keepalive to prevent connection termination
     keepAlive: true,
-    keepAliveInitialDelayMillis: 10000,
+    keepAliveInitialDelayMillis: 5000,
     // Add application name for monitoring
-    application_name: 'lead_distribution_platform'
+    application_name: 'lead_distribution_platform_v2'
 });
 
 // Pool recreation function for fatal errors
@@ -33,18 +33,18 @@ async function recreatePool() {
         pool = new Pool({
             connectionString: process.env.DATABASE_URL,
             ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgres://') ? { rejectUnauthorized: false } : false,
-            max: 8,
-            min: 2,
-            idleTimeoutMillis: 60000,
-            connectionTimeoutMillis: 10000,
-            acquireTimeoutMillis: 15000,
-            createTimeoutMillis: 10000,
-            destroyTimeoutMillis: 5000,
-            reapIntervalMillis: 1000,
-            createRetryIntervalMillis: 2000,
+            max: 4,
+            min: 1,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 8000,
+            acquireTimeoutMillis: 10000,
+            createTimeoutMillis: 8000,
+            destroyTimeoutMillis: 3000,
+            reapIntervalMillis: 5000,
+            createRetryIntervalMillis: 3000,
             keepAlive: true,
-            keepAliveInitialDelayMillis: 10000,
-            application_name: 'lead_distribution_platform'
+            keepAliveInitialDelayMillis: 5000,
+            application_name: 'lead_distribution_platform_v2'
         });
         
         setupPoolEventHandlers();
