@@ -1,4 +1,5 @@
-const { pool } = require('../config/db');
+const { pool, safeQuery } = require('../config/db');
+const queuedWebhook = require('./queuedWebhook');
 
 // Simple, working lead distribution without business hours complexity
 async function distributeLead(leadId) {
@@ -73,62 +74,46 @@ async function distributeLead(leadId) {
         
         console.log(`✅ Lead ${leadId} successfully distributed to ${selectedPartner.name}`);
         
-        // Smart Webhook Delivery with Partner-Specific Transformation
-        setImmediate(async () => {
-            try {
-                // Try smart webhook delivery first (with transformation)
-                const { sendWebhook } = require('./webhook');
-                const webhookResult = await sendWebhook(lead, selectedPartner);
-                
-                if (webhookResult) {
-                    console.log(`✅ Smart Webhook Delivery Success: Lead ${leadId} to ${selectedPartner.name}`);
-                } else {
-                    console.log(`⚠️ Smart Webhook failed, trying CRM delivery...`);
-                    
-                    // Fallback to CRM delivery for complex integrations
-                    const crmResult = await deliverToCRM(leadId, selectedPartner.id, {
-                        first_name: lead.first_name,
-                        last_name: lead.last_name,
-                        email: lead.email,
-                        phone: lead.phone,
-                        country: lead.country,
-                        niche: lead.niche,
-                        type: lead.type,
-                        source: lead.source
-                    });
-                    
-                    if (crmResult.success) {
-                        console.log(`✅ CRM Delivery Success: ${crmResult.message}`);
-                    } else {
-                        console.error(`❌ Both delivery methods failed: Webhook + CRM`);
-                    }
-                }
-            } catch (error) {
-                console.error(`Lead delivery failed for lead ${leadId}:`, error);
-                
-                // Final fallback to CRM if webhook system completely fails
+        // Queue webhook delivery for reliable processing with retries
+        try {
+            const { transformLeadData } = require('./webhook');
+            const transformedPayload = transformLeadData(lead, selectedPartner);
+            
+            // Prepare webhook job data
+            const webhookData = {
+                leadId: leadId,
+                partnerId: selectedPartner.id,
+                webhookUrl: selectedPartner.webhook_url,
+                payload: transformedPayload,
+                authConfig: selectedPartner.auth_config ? {
+                    type: selectedPartner.auth_type,
+                    config: selectedPartner.auth_config
+                } : { type: 'none' },
+                contentType: selectedPartner.content_type || 'application/json'
+            };
+            
+            // Enqueue webhook for reliable delivery
+            const jobId = await queuedWebhook.enqueueWebhook(webhookData);
+            console.log(`📤 Webhook delivery queued: Job ${jobId} for lead ${leadId} → ${selectedPartner.name}`);
+            
+        } catch (queueError) {
+            console.error(`Failed to queue webhook for lead ${leadId}:`, queueError.message);
+            
+            // Emergency fallback to immediate delivery if queue fails
+            setImmediate(async () => {
                 try {
-                    const crmResult = await deliverToCRM(leadId, selectedPartner.id, {
-                        first_name: lead.first_name,
-                        last_name: lead.last_name,
-                        email: lead.email,
-                        phone: lead.phone,
-                        country: lead.country,
-                        niche: lead.niche,
-                        type: lead.type,
-                        source: lead.source
-                    });
-                    
-                    if (crmResult.success) {
-                        console.log(`✅ CRM Fallback Success: ${crmResult.message}`);
+                    const { sendWebhook } = require('./webhook');
+                    const webhookResult = await sendWebhook(lead, selectedPartner);
+                    if (webhookResult) {
+                        console.log(`✅ Emergency webhook delivery succeeded for lead ${leadId}`);
                     } else {
-                        console.error(`❌ Complete delivery failure for lead ${leadId}`);
+                        console.log(`⚠️ Emergency webhook delivery failed for lead ${leadId}`);
                     }
-                } catch (fallbackError) {
-                    console.error(`Complete delivery system failure for lead ${leadId}:`, fallbackError);
+                } catch (emergencyError) {
+                    console.error(`Emergency webhook delivery failed for lead ${leadId}:`, emergencyError.message);
                 }
-            }
-        });
+            });
+        }
         
     } catch (error) {
         try {

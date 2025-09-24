@@ -3,11 +3,13 @@ const cors = require('cors');
 const path = require('path');
 const cron = require('node-cron');
 const session = require('express-session');
-const pgSession = require('connect-pg-simple')(session);
+// Remove PostgreSQL session dependency for stability
+// const pgSession = require('connect-pg-simple')(session);
 const expressLayouts = require('express-ejs-layouts');
 require('dotenv').config();
 
 const { pool, initDatabase, getPoolHealth, testConnection } = require('./config/db');
+const { initRedis, getRedisHealth } = require('./config/redis');
 const { retryFailedWebhooks } = require('./services/webhook');
 const { requireAuth } = require('./middleware/auth');
 const { pullPartnerStatuses } = require('./services/statusPuller');
@@ -34,13 +36,9 @@ app.use((req, res, next) => {
     next();
 });
 
-// Session configuration
+// Session configuration - Using signed cookies for stability (no DB dependency)
 app.use(session({
-    store: new pgSession({
-        pool: pool,
-        createTableIfMissing: false,
-        tableName: 'sessions'
-    }),
+    // No store = uses memory store (signed cookies)
     secret: process.env.SESSION_SECRET || 'your-fallback-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
@@ -48,7 +46,8 @@ app.use(session({
         secure: false, // Set to true in production with HTTPS
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+    },
+    name: 'lead.session' // Custom session name
 }));
 
 // Make session data available to all templates
@@ -100,6 +99,9 @@ app.get('/health', async (req, res) => {
             dbStatus = 'error';
             console.error('Health check DB error:', dbError.message);
         }
+
+        // Test Redis connectivity
+        const redisHealth = await getRedisHealth();
         
         const totalTime = Date.now() - startTime;
         
@@ -113,6 +115,7 @@ app.get('/health', async (req, res) => {
                 latency_ms: dbLatency,
                 pool: poolHealth
             },
+            redis: redisHealth,
             response_time_ms: totalTime,
             environment: process.env.NODE_ENV || 'development'
         };
@@ -253,13 +256,19 @@ app.listen(PORT, '0.0.0.0', async () => {
         // Initialize main database tables first
         await initDatabase();
         
+        // Initialize Redis queue system
+        await initRedis();
+        
         // Initialize AlertSystem after main database is ready
         const alertSystem = require('./services/alertSystem');
         await alertSystem.initializeDatabase();
         
-        console.log('✅ All database systems initialized successfully');
+        // Initialize queued webhook service
+        require('./services/queuedWebhook');
+        
+        console.log('✅ All database and queue systems initialized successfully');
     } catch (error) {
-        console.error('❌ Database initialization failed:', error);
+        console.error('❌ System initialization failed:', error);
         console.log('⚠️ Server will continue running with limited functionality');
         // Don't exit - let health checks handle monitoring
         // Server stays alive for debugging and recovery attempts

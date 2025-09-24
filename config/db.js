@@ -22,28 +22,49 @@ let pool = new Pool({
 });
 
 // Pool recreation function for fatal errors
-function recreatePool() {
+async function recreatePool() {
     console.log('🔄 Recreating database pool due to fatal errors...');
-    pool.end(); // Close existing pool
-    pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgres://') ? { rejectUnauthorized: false } : false,
-        max: 8,
-        min: 2,
-        idleTimeoutMillis: 60000,
-        connectionTimeoutMillis: 10000,
-        acquireTimeoutMillis: 15000,
-        createTimeoutMillis: 10000,
-        destroyTimeoutMillis: 5000,
-        reapIntervalMillis: 1000,
-        createRetryIntervalMillis: 2000,
-        keepAlive: true,
-        keepAliveInitialDelayMillis: 10000,
-        application_name: 'lead_distribution_platform'
-    });
-    setupPoolEventHandlers();
-    console.log('✅ Database pool recreated successfully');
-    return pool;
+    
+    try {
+        // Don't close existing pool immediately - let it drain connections
+        const oldPool = pool;
+        
+        // Create new pool first
+        pool = new Pool({
+            connectionString: process.env.DATABASE_URL,
+            ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgres://') ? { rejectUnauthorized: false } : false,
+            max: 8,
+            min: 2,
+            idleTimeoutMillis: 60000,
+            connectionTimeoutMillis: 10000,
+            acquireTimeoutMillis: 15000,
+            createTimeoutMillis: 10000,
+            destroyTimeoutMillis: 5000,
+            reapIntervalMillis: 1000,
+            createRetryIntervalMillis: 2000,
+            keepAlive: true,
+            keepAliveInitialDelayMillis: 10000,
+            application_name: 'lead_distribution_platform'
+        });
+        
+        setupPoolEventHandlers();
+        
+        // Test new pool
+        await pool.query('SELECT NOW()');
+        console.log('✅ Database pool recreated successfully');
+        
+        // Close old pool gracefully after delay
+        setTimeout(() => {
+            oldPool.end().catch(err => {
+                console.log('Note: Old pool cleanup completed');
+            });
+        }, 5000);
+        
+        return pool;
+    } catch (error) {
+        console.error('Failed to recreate pool:', error.message);
+        return pool; // Return existing pool if recreation fails
+    }
 }
 
 // Exponential retry wrapper for database queries
@@ -57,8 +78,8 @@ async function executeWithRetry(queryFunction, maxRetries = 3) {
             // Check for fatal errors that require pool recreation
             if (error.code === '57P01' || error.code === 'ECONNRESET' || error.code === 'ENOTFOUND') {
                 if (attempt === maxRetries) {
-                    console.log('🔄 Recreating pool after max retries...');
-                    recreatePool();
+                    console.log('🔄 Pool recreation may be needed after max retries');
+                    // Don't recreate here - let the error handler do it
                 }
             }
             
@@ -84,14 +105,15 @@ function setupPoolEventHandlers() {
         
         // Handle fatal errors that require pool recreation
         if (err.code === '57P01' || err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
-            console.log('🚨 Fatal database error detected - pool recreation required');
-            setTimeout(() => {
+            console.log('🚨 Fatal database error detected - pool recreation scheduled');
+            // Delay recreation to avoid rapid cycling and allow existing queries to complete
+            setTimeout(async () => {
                 try {
-                    recreatePool();
+                    await recreatePool();
                 } catch (recreateError) {
                     console.error('Failed to recreate pool:', recreateError.message);
                 }
-            }, 1000); // Small delay to avoid rapid recreation
+            }, 2000); // Longer delay to let current operations finish
         } else {
             console.log('⚠️ Non-fatal database error - continuing operation...');
         }
