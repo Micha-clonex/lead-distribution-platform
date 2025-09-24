@@ -2,6 +2,7 @@ const axios = require('axios');
 const { getQueue } = require('../config/redis');
 const { pool, safeQuery } = require('../config/db');
 const { applyAuthentication } = require('./universalAuth');
+const { logger } = require('../utils/logger');
 
 // Memory-based fallback for webhook delivery when Redis is not available
 const memoryQueue = [];
@@ -15,11 +16,28 @@ class QueuedWebhookService {
 
     // Add webhook delivery job to queue (Redis or memory fallback)
     async enqueueWebhook(webhookData) {
+        // Validate webhook URL for SSRF protection with DNS resolution
+        if (!(await this.validateWebhookUrl(webhookData.webhookUrl))) {
+            logger.error('Invalid webhook URL blocked for security', {
+                leadId: webhookData.leadId,
+                partnerId: webhookData.partnerId,
+                url: webhookData.webhookUrl
+            });
+            throw new Error('Invalid or unsafe webhook URL');
+        }
+
         const queue = getQueue();
         
+        // Create deterministic job ID for idempotency
+        const jobId = `${webhookData.leadId}:${webhookData.partnerId}`;
+        
         if (queue) {
-            // Use Redis queue
-            const job = await queue.add('deliver-webhook', webhookData, {
+            // Use Redis queue with idempotent job ID
+            const job = await queue.add('deliver-webhook', {
+                ...webhookData,
+                requestId: webhookData.requestId || logger.requestId
+            }, {
+                jobId: jobId, // Prevents duplicate jobs
                 attempts: 5,
                 backoff: {
                     type: 'exponential',
@@ -29,19 +47,40 @@ class QueuedWebhookService {
                 removeOnFail: 5
             });
             
-            console.log(`📤 Webhook queued (Redis): Job ${job.id} for lead ${webhookData.leadId}`);
+            logger.info('Webhook queued successfully', {
+                component: 'webhook-queue',
+                jobId: job.id,
+                leadId: webhookData.leadId,
+                partnerId: webhookData.partnerId
+            });
             return job.id;
         } else {
-            // Use memory fallback
-            const jobId = `mem_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            // Use memory fallback with deduplication
+            const existingJob = memoryQueue.find(job => job.id === jobId);
+            if (existingJob) {
+                logger.warn('Duplicate webhook job prevented', {
+                    component: 'webhook-queue',
+                    jobId: jobId,
+                    leadId: webhookData.leadId
+                });
+                return jobId;
+            }
+            
             memoryQueue.push({
                 id: jobId,
-                data: webhookData,
+                data: {
+                    ...webhookData,
+                    requestId: webhookData.requestId || logger.requestId
+                },
                 attempts: 0,
                 createdAt: new Date()
             });
             
-            console.log(`📤 Webhook queued (memory): Job ${jobId} for lead ${webhookData.leadId}`);
+            logger.info('Webhook queued in memory', {
+                component: 'webhook-queue',
+                jobId: jobId,
+                leadId: webhookData.leadId
+            });
             this.processMemoryQueue(); // Start processing if not already running
             return jobId;
         }
@@ -101,23 +140,126 @@ class QueuedWebhookService {
         }
     }
 
+    // SSRF protection - validate webhook URLs with DNS resolution
+    async validateWebhookUrl(url) {
+        try {
+            if (!url || typeof url !== 'string') return false;
+            
+            const parsedUrl = new URL(url);
+            
+            // Only allow HTTPS (HTTP allowed for development)
+            if (process.env.NODE_ENV === 'production' && parsedUrl.protocol !== 'https:') {
+                return false;
+            }
+            
+            if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+                return false;
+            }
+            
+            const hostname = parsedUrl.hostname.toLowerCase();
+            
+            // Block obvious private hostnames first
+            const forbiddenHosts = [
+                'localhost', '127.0.0.1', '0.0.0.0', '::1',
+                'metadata.google.internal', 'metadata.amazonaws.com'
+            ];
+            
+            for (const forbidden of forbiddenHosts) {
+                if (hostname === forbidden || hostname.includes(forbidden)) {
+                    return false;
+                }
+            }
+            
+            // Resolve DNS and check IPs
+            const dns = require('dns');
+            const { promisify } = require('util');
+            const lookup = promisify(dns.lookup);
+            
+            try {
+                const { address } = await lookup(hostname);
+                if (this.isPrivateIP(address)) {
+                    logger.warn('Webhook URL resolves to private IP - blocked', {
+                        hostname,
+                        resolvedIP: address
+                    });
+                    return false;
+                }
+            } catch (dnsError) {
+                logger.warn('DNS lookup failed for webhook URL', {
+                    hostname,
+                    error: dnsError.message
+                });
+                return false;
+            }
+            
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    // Check if IP address is private/internal
+    isPrivateIP(ip) {
+        // IPv4 private ranges
+        const ipv4Private = [
+            /^10\./,                     // 10.0.0.0/8
+            /^172\.(1[6-9]|2[0-9]|3[01])\./, // 172.16.0.0/12
+            /^192\.168\./,               // 192.168.0.0/16
+            /^127\./,                    // 127.0.0.0/8 (localhost)
+            /^169\.254\./,               // 169.254.0.0/16 (link-local)
+            /^0\./                       // 0.0.0.0/8
+        ];
+        
+        // Check IPv4
+        for (const pattern of ipv4Private) {
+            if (pattern.test(ip)) {
+                return true;
+            }
+        }
+        
+        // Basic IPv6 private/local checks
+        if (ip.startsWith('::1') || ip.startsWith('fc00') || ip.startsWith('fe80')) {
+            return true;
+        }
+        
+        return false;
+    }
+
     // Process individual webhook job
     async processWebhookJob(webhookData) {
-        const { leadId, partnerId, webhookUrl, payload, authConfig, contentType } = webhookData;
+        const { leadId, partnerId, webhookUrl, payload, authConfig, contentType, requestId } = webhookData;
+        
+        // Create logger with request context
+        const jobLogger = requestId ? new (require('../utils/logger')).Logger(requestId) : logger;
+        
+        const startTime = Date.now();
         
         try {
-            console.log(`🔄 Processing webhook for lead ${leadId} to partner ${partnerId}`);
+            jobLogger.info('Processing webhook delivery', {
+                component: 'webhook-delivery',
+                leadId,
+                partnerId,
+                webhookUrl
+            });
             
-            // Prepare request configuration
+            // Double-check URL validation at processing time with DNS resolution
+            if (!(await this.validateWebhookUrl(webhookUrl))) {
+                throw new Error('Webhook URL failed security validation');
+            }
+            
+            // Prepare request configuration with redirect prevention
             const requestConfig = {
                 method: 'POST',
                 url: webhookUrl,
                 data: payload,
                 headers: {
                     'Content-Type': contentType || 'application/json',
-                    'User-Agent': 'Lead-Distribution-Platform/1.0'
+                    'User-Agent': 'Lead-Distribution-Platform/1.0',
+                    'Idempotency-Key': `lead-${leadId}-partner-${partnerId}`, // Idempotency protection
+                    'X-Event-ID': `${leadId}:${partnerId}:${Date.now()}`
                 },
                 timeout: 30000, // 30 second timeout
+                maxRedirects: 0, // Prevent redirect-based SSRF
                 validateStatus: function (status) {
                     return status >= 200 && status < 300; // Accept 2xx status codes
                 }
@@ -128,21 +270,35 @@ class QueuedWebhookService {
                 requestConfig.headers = applyAuthentication(requestConfig.headers, authConfig);
             }
 
-            const startTime = Date.now();
             const response = await axios(requestConfig);
             const responseTime = Date.now() - startTime;
 
             // Log successful delivery
             await this.logWebhookDelivery(leadId, partnerId, webhookUrl, payload, response, responseTime, 'success');
             
-            console.log(`✅ Webhook delivered successfully to ${webhookUrl} (${responseTime}ms)`);
+            jobLogger.info('Webhook delivered successfully', {
+                component: 'webhook-delivery',
+                leadId,
+                partnerId,
+                responseTime,
+                status: response.status
+            });
+            
             return { success: true, status: response.status, responseTime };
 
         } catch (error) {
-            const responseTime = Date.now() - (webhookData.startTime || Date.now());
+            const responseTime = Date.now() - startTime;
             
             // Log failed delivery
             await this.logWebhookDelivery(leadId, partnerId, webhookUrl, payload, error.response, responseTime, 'failed', error.message);
+            
+            jobLogger.error('Webhook delivery failed', {
+                component: 'webhook-delivery',
+                leadId,
+                partnerId,
+                error: error.message,
+                responseTime
+            });
             
             throw error; // Let queue handle retries
         }

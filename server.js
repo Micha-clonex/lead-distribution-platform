@@ -10,12 +10,36 @@ require('dotenv').config();
 
 const { pool, initDatabase, getPoolHealth, testConnection } = require('./config/db');
 const { initRedis, getRedisHealth } = require('./config/redis');
+const { requestLogger } = require('./utils/logger');
 const { retryFailedWebhooks } = require('./services/webhook');
 const { requireAuth } = require('./middleware/auth');
 const { pullPartnerStatuses } = require('./services/statusPuller');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Add structured logging middleware early
+app.use(requestLogger);
+
+// Add response completion logging
+app.use((req, res, next) => {
+    const originalSend = res.send;
+    const startTime = Date.now();
+    
+    res.send = function(body) {
+        const duration = Date.now() - startTime;
+        req.logger.info('Request completed', {
+            method: req.method,
+            url: req.originalUrl,
+            status: res.statusCode,
+            duration_ms: duration,
+            contentLength: body ? body.length : 0
+        });
+        return originalSend.call(this, body);
+    };
+    
+    next();
+});
 
 // Middleware
 app.use(cors());

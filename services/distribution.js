@@ -1,8 +1,10 @@
 const { pool, safeQuery } = require('../config/db');
 const queuedWebhook = require('./queuedWebhook');
+const { logger } = require('../utils/logger');
 
 // Simple, working lead distribution without business hours complexity
-async function distributeLead(leadId) {
+async function distributeLead(leadId, requestId = null) {
+    const distributionLogger = requestId ? new (require('../utils/logger')).Logger(requestId) : logger;
     const client = await pool.connect();
     
     try {
@@ -23,7 +25,12 @@ async function distributeLead(leadId) {
             return;
         }
         
-        console.log(`Distributing lead ${leadId} - Country: ${lead.country}, Niche: ${lead.niche || 'all'}`);
+        distributionLogger.info('Distributing lead', {
+            component: 'distribution',
+            leadId: leadId,
+            country: lead.country,
+            niche: lead.niche || 'all'
+        });
         
         // Find available partners
         const partnersQuery = `
@@ -42,7 +49,12 @@ async function distributeLead(leadId) {
         const partnersResult = await client.query(partnersQuery, [lead.country, lead.niche]);
         
         if (partnersResult.rows.length === 0) {
-            console.log(`No available partners for ${lead.country}/${lead.niche} - marking as failed`);
+            distributionLogger.warn('No available partners found', {
+                component: 'distribution',
+                leadId: leadId,
+                country: lead.country,
+                niche: lead.niche
+            });
             await client.query('UPDATE leads SET status = $1 WHERE id = $2', ['failed', leadId]);
             await client.query('COMMIT');
             return;
@@ -50,7 +62,12 @@ async function distributeLead(leadId) {
         
         // Select first available partner (round-robin by load)
         const selectedPartner = partnersResult.rows[0];
-        console.log(`Distributing lead ${leadId} to partner ${selectedPartner.name} (${selectedPartner.id})`);
+        distributionLogger.info('Partner selected for lead distribution', {
+            component: 'distribution',
+            leadId: leadId,
+            partnerId: selectedPartner.id,
+            partnerName: selectedPartner.name
+        });
         
         // Update lead with assigned partner
         await client.query(`
@@ -72,45 +89,82 @@ async function distributeLead(leadId) {
         
         await client.query('COMMIT');
         
-        console.log(`✅ Lead ${leadId} successfully distributed to ${selectedPartner.name}`);
+        distributionLogger.info('Lead distribution successful', {
+            component: 'distribution',
+            leadId: leadId,
+            partnerId: selectedPartner.id,
+            partnerName: selectedPartner.name
+        });
         
         // Queue webhook delivery for reliable processing with retries
         try {
+            // Validate webhook URL presence first
+            if (!selectedPartner.webhook_url || selectedPartner.webhook_url.trim() === '') {
+                distributionLogger.warn('Partner has no webhook URL configured', {
+                    component: 'distribution',
+                    leadId: leadId,
+                    partnerId: selectedPartner.id,
+                    partnerName: selectedPartner.name
+                });
+                return; // Skip webhook delivery for partners without URLs
+            }
+            
             const { transformLeadData } = require('./webhook');
             const transformedPayload = transformLeadData(lead, selectedPartner);
             
-            // Prepare webhook job data
+            // Prepare webhook job data with request context
             const webhookData = {
                 leadId: leadId,
                 partnerId: selectedPartner.id,
-                webhookUrl: selectedPartner.webhook_url,
+                webhookUrl: selectedPartner.webhook_url.trim(),
                 payload: transformedPayload,
                 authConfig: selectedPartner.auth_config ? {
                     type: selectedPartner.auth_type,
                     config: selectedPartner.auth_config
                 } : { type: 'none' },
-                contentType: selectedPartner.content_type || 'application/json'
+                contentType: selectedPartner.content_type || 'application/json',
+                requestId: requestId // Pass request ID for logging correlation
             };
             
             // Enqueue webhook for reliable delivery
             const jobId = await queuedWebhook.enqueueWebhook(webhookData);
-            console.log(`📤 Webhook delivery queued: Job ${jobId} for lead ${leadId} → ${selectedPartner.name}`);
+            distributionLogger.info('Webhook delivery queued successfully', {
+                component: 'distribution',
+                jobId: jobId,
+                leadId: leadId,
+                partnerId: selectedPartner.id,
+                partnerName: selectedPartner.name
+            });
             
         } catch (queueError) {
-            console.error(`Failed to queue webhook for lead ${leadId}:`, queueError.message);
+            distributionLogger.error('Failed to queue webhook for lead', {
+                component: 'distribution',
+                leadId: leadId,
+                error: queueError.message
+            });
             
-            // Emergency fallback to immediate delivery if queue fails
+            // Emergency fallback to immediate delivery if queue fails (includes validation)
             setImmediate(async () => {
                 try {
                     const { sendWebhook } = require('./webhook');
                     const webhookResult = await sendWebhook(lead, selectedPartner);
                     if (webhookResult) {
-                        console.log(`✅ Emergency webhook delivery succeeded for lead ${leadId}`);
+                        distributionLogger.info('Emergency webhook delivery succeeded', {
+                            component: 'distribution',
+                            leadId: leadId
+                        });
                     } else {
-                        console.log(`⚠️ Emergency webhook delivery failed for lead ${leadId}`);
+                        distributionLogger.warn('Emergency webhook delivery failed', {
+                            component: 'distribution',
+                            leadId: leadId
+                        });
                     }
                 } catch (emergencyError) {
-                    console.error(`Emergency webhook delivery failed for lead ${leadId}:`, emergencyError.message);
+                    distributionLogger.error('Emergency webhook delivery error', {
+                        component: 'distribution',
+                        leadId: leadId,
+                        error: emergencyError.message
+                    });
                 }
             });
         }
