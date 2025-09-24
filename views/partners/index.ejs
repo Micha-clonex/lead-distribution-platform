@@ -1878,16 +1878,22 @@ function handleAuthTypeChange(selectElement, containerSelector) {
     const authType = selectElement.value;
     const container = document.querySelector(containerSelector);
     
+    console.log('Auth type changed to:', authType, 'Container:', containerSelector);
+    
     // Hide all auth config sections
     container.querySelectorAll('.auth-config').forEach(section => {
         section.classList.add('d-none');
     });
     
     // Show the selected auth type section
-    if (authType !== 'none') {
+    if (authType !== 'none' && authType !== '') {
         const targetSection = container.querySelector(`[data-auth="${authType}"]`);
+        console.log('Target section found:', targetSection);
         if (targetSection) {
             targetSection.classList.remove('d-none');
+            console.log('Showing auth fields for:', authType);
+        } else {
+            console.error('No section found for auth type:', authType);
         }
     }
 }
