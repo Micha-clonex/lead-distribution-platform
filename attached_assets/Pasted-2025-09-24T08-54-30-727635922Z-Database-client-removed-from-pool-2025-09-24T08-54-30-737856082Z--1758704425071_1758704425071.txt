@@ -1,0 +1,66 @@
+2025-09-24T08:54:30.727635922Z ⚠️ Database client removed from pool
+2025-09-24T08:54:30.737856082Z ⚠️ Database client removed from pool
+2025-09-24T08:55:00.409342393Z Processing promotional email queue...
+2025-09-24T08:55:00.42066845Z ✅ New database client connected
+2025-09-24T08:55:00.424018892Z Processing 0 pending promotional emails
+2025-09-24T08:55:28Z clientIP="142.160.191.28" requestID="2c9217e1-10ac-493c" responseTimeMS=1 responseBytes=332 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/22F76 [FBAN/FBIOS;FBAV/530.0.0.59.75;FBBV/790686474;FBDV/iPhone13,2;FBMD/iPhone;FBSN/iOS;FBSV/18.5;FBSS/3;FBID/phone;FBLC/en_US;FBOP/5;FBRV/795693027;IABMV/1]"
+2025-09-24T08:55:28Z clientIP="142.160.191.28" requestID="fd4784bf-5565-4ef7" responseTimeMS=10 responseBytes=501 userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/22F76 [FBAN/FBIOS;FBAV/530.0.0.59.75;FBBV/790686474;FBDV/iPhone13,2;FBMD/iPhone;FBSN/iOS;FBSV/18.5;FBSS/3;FBID/phone;FBLC/en_US;FBOP/5;FBRV/795693027;IABMV/1]"
+2025-09-24T08:55:28.382246194Z Lead enriched: 13 → 17 fields
+2025-09-24T08:55:28.388894946Z Promotional email scheduled for lead 63 (monkmanrichard22@gmail.com) at Wed Sep 24 2025 09:25:28 GMT+0000 (Coordinated Universal Time)
+2025-09-24T08:55:28.394366951Z ✅ New database client connected
+2025-09-24T08:55:28.396832641Z Distributing lead 63 - Country: canada, Niche: recovery
+2025-09-24T08:55:28.398656906Z No available partners for canada/recovery - marking as failed
+2025-09-24T08:55:45Z clientIP="213.252.230.25" requestID="06995e2e-9f4c-4b45" responseTimeMS=13 responseBytes=16053 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-24T08:55:45Z clientIP="213.252.230.25" requestID="83bf35ee-15da-43c3" responseTimeMS=11 responseBytes=609 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-24T08:55:45.774652312Z Partner creation error: error: column "phone_format" of relation "partners" does not exist
+2025-09-24T08:55:45.774687783Z     at /opt/render/project/src/node_modules/pg-pool/index.js:45:11
+2025-09-24T08:55:45.774693363Z     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-09-24T08:55:45.774698473Z     at async /opt/render/project/src/routes/partners.js:263:9 {
+2025-09-24T08:55:45.774702874Z   length: 134,
+2025-09-24T08:55:45.774708014Z   severity: 'ERROR',
+2025-09-24T08:55:45.774712664Z   code: '42703',
+2025-09-24T08:55:45.774716824Z   detail: undefined,
+2025-09-24T08:55:45.774721554Z   hint: undefined,
+2025-09-24T08:55:45.774726404Z   position: '149',
+2025-09-24T08:55:45.774731664Z   internalPosition: undefined,
+2025-09-24T08:55:45.774736214Z   internalQuery: undefined,
+2025-09-24T08:55:45.774740804Z   where: undefined,
+2025-09-24T08:55:45.774745195Z   schema: undefined,
+2025-09-24T08:55:45.774749525Z   table: undefined,
+2025-09-24T08:55:45.774753865Z   column: undefined,
+2025-09-24T08:55:45.774758115Z   dataType: undefined,
+2025-09-24T08:55:45.774762785Z   constraint: undefined,
+2025-09-24T08:55:45.774766745Z   file: 'parse_target.c',
+2025-09-24T08:55:45.774770465Z   line: '1065',
+2025-09-24T08:55:45.774775205Z   routine: 'checkInsertTargets'
+2025-09-24T08:55:45.774779395Z }
+2025-09-24T08:55:45.777256436Z ⚠️ Database client removed from pool
+2025-09-24T08:55:46Z clientIP="213.252.230.25" requestID="444dee68-371c-4e8b" responseTimeMS=4 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-24T08:55:46Z clientIP="213.252.230.25" requestID="184f0430-37ad-4cf1" responseTimeMS=3 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-24T08:55:57Z clientIP="213.252.230.25" requestID="6368a436-786e-4812" responseTimeMS=4 responseBytes=2803 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-24T08:55:57Z clientIP="213.252.230.25" requestID="94d6bb1d-60cd-473d" responseTimeMS=12 responseBytes=16053 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-24T08:55:57Z clientIP="213.252.230.25" requestID="7ce1728b-aeba-40b3" responseTimeMS=4 responseBytes=6106 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-24T08:55:57Z clientIP="213.252.230.25" requestID="4b2c70c1-293e-4356" responseTimeMS=7 responseBytes=435 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-24T08:56:00.4822853Z Business Hours Cron: Processed 0 scheduled deliveries
+2025-09-24T08:56:01Z clientIP="213.252.230.25" requestID="239c9865-c6e4-4ed9" responseTimeMS=2 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-24T08:56:01Z clientIP="213.252.230.25" requestID="6fd478e0-5930-44ad" responseTimeMS=2 responseBytes=299 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-24T08:56:01Z clientIP="213.252.230.25" requestID="c7a68ca3-86bd-499e" responseTimeMS=13 responseBytes=16053 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+2025-09-24T08:57:34.409707077Z ==> Detected service running on port 10000
+2025-09-24T08:57:34.527924196Z ==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+2025-09-24T08:58:00.589905923Z Business Hours Cron: Processed 0 scheduled deliveries
+2025-09-24T09:00:00.735672405Z Starting status pull from partner APIs...
+2025-09-24T09:00:00.735733706Z Processing promotional email queue...
+2025-09-24T09:00:00.737309755Z Found 0 partners ready for status pulling
+2025-09-24T09:00:00.737319695Z Status pulling cycle completed
+2025-09-24T09:00:00.74448298Z ✅ New database client connected
+2025-09-24T09:00:00.744686155Z ✅ New database client connected
+2025-09-24T09:00:00.748962299Z Processing 0 pending promotional emails
+2025-09-24T09:00:00.748975059Z Business Hours Cron: Processed 0 scheduled deliveries
+2025-09-24T09:00:00.735672405Z Starting status pull from partner APIs...
+2025-09-24T09:00:00.735733706Z Processing promotional email queue...
+2025-09-24T09:00:00.737309755Z Found 0 partners ready for status pulling
+2025-09-24T09:00:00.737319695Z Status pulling cycle completed
+2025-09-24T09:00:00.74448298Z ✅ New database client connected
+2025-09-24T09:00:00.744686155Z ✅ New database client connected
+2025-09-24T09:00:00.748962299Z Processing 0 pending promotional emails
+2025-09-24T09:00:00.748975059Z Business Hours Cron: Processed 0 scheduled deliveries
