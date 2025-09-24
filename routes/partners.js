@@ -161,6 +161,8 @@ router.get('/', async (req, res) => {
 
 // Add new partner
 router.post('/', async (req, res) => {
+    console.log('=== PARTNER CREATION STARTED ===');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
     try {
         const { name, email, country, niche, daily_limit, premium_ratio, timezone, 
                 webhook_url, phone_format, required_fields, default_values, field_mapping,
@@ -260,16 +262,30 @@ router.post('/', async (req, res) => {
             }
         }
         
-        await pool.query(`
+        console.log('=== INSERTING INTO DATABASE ===');
+        console.log('Final values to insert:', {
+            name, email, country, niche, 
+            daily_limit: daily_limit || 50, 
+            ratioDecimal, 
+            timezone: timezone || 'UTC',
+            finalWebhookUrl,
+            authType,
+            authConfig
+        });
+        
+        const insertResult = await pool.query(`
             INSERT INTO partners (name, email, country, niche, daily_limit, premium_ratio, timezone, 
                                 webhook_url, phone_format, required_fields, default_values, field_mapping,
                                 auth_type, auth_config, content_type)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            RETURNING id, name
         `, [name, email, country, niche, daily_limit || 50, ratioDecimal, timezone || 'UTC', 
             finalWebhookUrl, phone_format || 'with_plus', parsedRequiredFields, 
             JSON.stringify(parsedDefaultValues), JSON.stringify(parsedFieldMapping),
             authType, JSON.stringify(authConfig), content_type || 'application/json']);
         
+        console.log('✅ PARTNER CREATED SUCCESSFULLY:', insertResult.rows[0]);
+        console.log('=== REDIRECTING TO PARTNERS PAGE ===');
         res.redirect('/partners?success=Partner added successfully');
     } catch (error) {
         console.error('Partner creation error:', error);
