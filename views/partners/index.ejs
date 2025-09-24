@@ -283,7 +283,7 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Authentication Type</label>
-                                    <select class="form-select" name="auth_type" id="authType">
+                                    <select class="form-select" name="auth_type" id="authType" onchange="handleAuthTypeChange(this, '#authFields')">
                                         <option value="none">No Authentication</option>
                                         <option value="bearer_token">Bearer Token</option>
                                         <option value="api_key">API Key Header</option>
@@ -476,7 +476,7 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Authentication Type</label>
-                                    <select class="form-select" name="auth_type" id="editAuthType">
+                                    <select class="form-select" name="auth_type" id="editAuthType" onchange="handleAuthTypeChange(this, '#editAuthFields')">
                                         <option value="none">No Authentication</option>
                                         <option value="bearer_token">Bearer Token</option>
                                         <option value="api_key">API Key Header</option>
@@ -1878,8 +1878,6 @@ function handleAuthTypeChange(selectElement, containerSelector) {
     const authType = selectElement.value;
     const container = document.querySelector(containerSelector);
     
-    console.log('Auth type changed to:', authType, 'Container:', containerSelector);
-    
     // Hide all auth config sections
     container.querySelectorAll('.auth-config').forEach(section => {
         section.classList.add('d-none');
@@ -1888,12 +1886,8 @@ function handleAuthTypeChange(selectElement, containerSelector) {
     // Show the selected auth type section
     if (authType !== 'none' && authType !== '') {
         const targetSection = container.querySelector(`[data-auth="${authType}"]`);
-        console.log('Target section found:', targetSection);
         if (targetSection) {
             targetSection.classList.remove('d-none');
-            console.log('Showing auth fields for:', authType);
-        } else {
-            console.error('No section found for auth type:', authType);
         }
     }
 }
