@@ -614,7 +614,7 @@ async function setupProductionData() {
 }
 
 module.exports = { 
-    pool, 
+    get pool() { return pool; }, // Always return current pool instance
     initDatabase, 
     testConnection, 
     getPoolHealth, 
