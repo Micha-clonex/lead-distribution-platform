@@ -283,25 +283,7 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Authentication Type</label>
-                                    <select class="form-select" name="auth_type" id="authType" onchange="
-                                        console.log('Auth type changed:', this.value);
-                                        const authFields = document.getElementById('authFields');
-                                        const authConfigs = authFields.querySelectorAll('.auth-config');
-                                        
-                                        // Hide all sections
-                                        authConfigs.forEach(section => section.classList.add('d-none'));
-                                        
-                                        // Show selected section
-                                        if (this.value !== 'none' && this.value !== '') {
-                                            const targetSection = authFields.querySelector('[data-auth=&quot;' + this.value + '&quot;]');
-                                            if (targetSection) {
-                                                targetSection.classList.remove('d-none');
-                                                console.log('Showing section for:', this.value);
-                                            } else {
-                                                console.error('No section found for:', this.value);
-                                            }
-                                        }
-                                    ">
+                                    <select class="form-select" name="auth_type" id="authType" onchange="showAuthFields(this.value)">
                                         <option value="none">No Authentication</option>
                                         <option value="bearer_token">Bearer Token</option>
                                         <option value="api_key">API Key Header</option>
@@ -322,10 +304,10 @@
                             <!-- Dynamic Authentication Fields -->
                             <div id="authFields">
                                 <!-- Bearer Token -->
-                                <div class="auth-config" data-auth="bearer_token" style="border: 2px solid red; padding: 10px; margin: 10px 0;"
+                                <div class="auth-config d-none" data-auth="bearer_token">
                                     <div class="mb-3">
-                                        <label class="form-label">Bearer Token</label>
-                                        <input type="password" class="form-control" name="auth_bearer_token" placeholder="your-bearer-token-here">
+                                        <label class="form-label">Bearer Token *</label>
+                                        <input type="password" class="form-control" name="auth_bearer_token" placeholder="your-bearer-token-here" required>
                                         <div class="form-text">Token for Authorization: Bearer {token}</div>
                                     </div>
                                 </div>
@@ -334,12 +316,12 @@
                                 <div class="auth-config d-none" data-auth="api_key">
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label">Header Name</label>
-                                            <input type="text" class="form-control" name="auth_header_name" placeholder="X-API-Key" value="X-API-Key">
+                                            <label class="form-label">Header Name *</label>
+                                            <input type="text" class="form-control" name="auth_header_name" placeholder="X-API-Key" value="X-API-Key" required>
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label">API Key</label>
-                                            <input type="password" class="form-control" name="auth_api_key" placeholder="your-api-key-here">
+                                            <label class="form-label">API Key *</label>
+                                            <input type="password" class="form-control" name="auth_api_key" placeholder="your-api-key-here" required>
                                         </div>
                                     </div>
                                 </div>
@@ -348,12 +330,12 @@
                                 <div class="auth-config d-none" data-auth="basic_auth">
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label">Username</label>
-                                            <input type="text" class="form-control" name="auth_username" placeholder="username">
+                                            <label class="form-label">Username *</label>
+                                            <input type="text" class="form-control" name="auth_username" placeholder="username" required>
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label">Password</label>
-                                            <input type="password" class="form-control" name="auth_password" placeholder="password">
+                                            <label class="form-label">Password *</label>
+                                            <input type="password" class="form-control" name="auth_password" placeholder="password" required>
                                         </div>
                                     </div>
                                 </div>
@@ -361,8 +343,8 @@
                                 <!-- Custom Headers -->
                                 <div class="auth-config d-none" data-auth="custom_header">
                                     <div class="mb-3">
-                                        <label class="form-label">Custom Headers (JSON Format)</label>
-                                        <textarea class="form-control" name="auth_custom_headers" rows="3" placeholder='{"X-Custom-Auth": "value", "X-Client-ID": "client123"}'></textarea>
+                                        <label class="form-label">Custom Headers (JSON Format) *</label>
+                                        <textarea class="form-control" name="auth_custom_headers" rows="3" placeholder='{"X-Custom-Auth": "value", "X-Client-ID": "client123"}' required></textarea>
                                         <div class="form-text">JSON object with custom header names and values</div>
                                     </div>
                                 </div>
@@ -494,7 +476,7 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Authentication Type</label>
-                                    <select class="form-select" name="auth_type" id="editAuthType" onchange="handleAuthTypeChange(this, '#editAuthFields')">
+                                    <select class="form-select" name="auth_type" id="editAuthType" onchange="showEditAuthFields(this.value)">
                                         <option value="none">No Authentication</option>
                                         <option value="bearer_token">Bearer Token</option>
                                         <option value="api_key">API Key Header</option>
@@ -1892,18 +1874,36 @@ function getStatusColor(status) {
 }
 
 // Handle authentication type changes
-function handleAuthTypeChange(selectElement, containerSelector) {
-    const authType = selectElement.value;
-    const container = document.querySelector(containerSelector);
+function showAuthFields(authType) {
+    const authFields = document.getElementById('authFields');
+    if (!authFields) return;
     
     // Hide all auth config sections
-    container.querySelectorAll('.auth-config').forEach(section => {
+    authFields.querySelectorAll('.auth-config').forEach(section => {
         section.classList.add('d-none');
     });
     
     // Show the selected auth type section
     if (authType !== 'none' && authType !== '') {
-        const targetSection = container.querySelector(`[data-auth="${authType}"]`);
+        const targetSection = authFields.querySelector(`[data-auth="${authType}"]`);
+        if (targetSection) {
+            targetSection.classList.remove('d-none');
+        }
+    }
+}
+
+function showEditAuthFields(authType) {
+    const authFields = document.getElementById('editAuthFields');
+    if (!authFields) return;
+    
+    // Hide all auth config sections
+    authFields.querySelectorAll('.auth-config').forEach(section => {
+        section.classList.add('d-none');
+    });
+    
+    // Show the selected auth type section
+    if (authType !== 'none' && authType !== '') {
+        const targetSection = authFields.querySelector(`[data-auth="${authType}"]`);
         if (targetSection) {
             targetSection.classList.remove('d-none');
         }

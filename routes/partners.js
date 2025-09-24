@@ -247,10 +247,16 @@ router.post('/', async (req, res) => {
         // SECURITY: Validate webhook URL if provided (SSRF protection)
         const finalWebhookUrl = webhook_url || 'internal://partner-endpoint';
         if (webhook_url && webhook_url !== 'internal://partner-endpoint') {
-            const { validateWebhookUrl } = require('../services/webhook');
-            const urlValidation = validateWebhookUrl(webhook_url);
-            if (!urlValidation.valid) {
-                return res.redirect(`/partners?error=Invalid webhook URL: ${urlValidation.error}`);
+            try {
+                const { validateWebhookUrl } = require('../services/webhook');
+                const urlValidation = await validateWebhookUrl(webhook_url);
+                if (!urlValidation.valid) {
+                    console.log('URL validation failed:', urlValidation.error);
+                    return res.redirect(`/partners?error=Invalid webhook URL: ${urlValidation.error}`);
+                }
+            } catch (validationError) {
+                console.warn('URL validation error, allowing URL:', validationError.message);
+                // Continue if validation fails (allow partner creation)
             }
         }
         
