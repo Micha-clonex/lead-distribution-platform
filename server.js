@@ -241,37 +241,40 @@ cron.schedule('0 0 * * *', async () => {
 // const { retryFailedLeads } = require('./services/distribution');
 // cron.schedule('*/10 * * * *', retryFailedLeads);
 
-// Partner status pulling cron job (every 15 minutes)
-cron.schedule('*/15 * * * *', pullPartnerStatuses);
+// TEMPORARILY DISABLED: Background tasks causing database pool conflicts
+// These will be re-enabled after pool management is fixed
 
-// Automated partner management cron job (every 2 hours)
-const partnerManager = require('./services/partnerManager');
-cron.schedule('0 */2 * * *', async () => {
-    console.log('🤖 Running automated partner management...');
-    try {
-        const summary = await partnerManager.runAutomatedManagement();
-        console.log('✅ Automated partner management completed:', summary);
-    } catch (error) {
-        console.error('❌ Automated partner management failed:', error.message);
-    }
-});
+// Partner status pulling cron job (every 15 minutes) - DISABLED
+// cron.schedule('*/15 * * * *', pullPartnerStatuses);
 
-// **NEW: Business Hours Scheduled Delivery Processing (every 2 minutes)**
-cron.schedule('*/2 * * * *', async () => {
-    try {
-        const businessHoursIntelligence = require('./services/businessHoursIntelligence');
-        const processedCount = await businessHoursIntelligence.processScheduledDeliveries();
-        if (processedCount > 0) {
-            console.log(`🕐 Processed ${processedCount} business hours scheduled deliveries`);
-        }
-    } catch (error) {
-        console.error('❌ Business hours processing failed:', error.message);
-    }
-});
+// Automated partner management cron job (every 2 hours) - DISABLED  
+// const partnerManager = require('./services/partnerManager');
+// cron.schedule('0 */2 * * *', async () => {
+//     console.log('🤖 Running automated partner management...');
+//     try {
+//         const summary = await partnerManager.runAutomatedManagement();
+//         console.log('✅ Automated partner management completed:', summary);
+//     } catch (error) {
+//         console.error('❌ Automated partner management failed:', error.message);
+//     }
+// });
 
-// **NEW: Email Marketing System - Initialize email scheduler**
-const { initEmailScheduler } = require('./services/emailScheduler');
-initEmailScheduler();
+// Business Hours Scheduled Delivery Processing - DISABLED
+// cron.schedule('*/2 * * * *', async () => {
+//     try {
+//         const businessHoursIntelligence = require('./services/businessHoursIntelligence');
+//         const processedCount = await businessHoursIntelligence.processScheduledDeliveries();
+//         if (processedCount > 0) {
+//             console.log(`🕐 Processed ${processedCount} business hours scheduled deliveries`);
+//         }
+//     } catch (error) {
+//         console.error('❌ Business hours processing failed:', error.message);
+//     }
+// });
+
+// Email Marketing System - DISABLED
+// const { initEmailScheduler } = require('./services/emailScheduler');
+// initEmailScheduler();
 
 // Start server
 app.listen(PORT, '0.0.0.0', async () => {
