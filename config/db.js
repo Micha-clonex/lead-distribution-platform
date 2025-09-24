@@ -1,58 +1,143 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Database connection singleton - Production optimized with crash prevention
-const pool = new Pool({
+// Database connection singleton - Production hardened with auto-recovery
+let pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgres://') ? { rejectUnauthorized: false } : false,
-    max: 8, // Further reduced for stability
-    min: 1,  // Reduced minimum to prevent too many idle connections
-    idleTimeoutMillis: 30000, // Shorter idle timeout (30 seconds)
-    connectionTimeoutMillis: 8000, // Shorter connection timeout
-    acquireTimeoutMillis: 10000, // Reduced wait time
-    createTimeoutMillis: 8000,
-    destroyTimeoutMillis: 3000,
-    reapIntervalMillis: 2000, // More frequent cleanup
-    createRetryIntervalMillis: 500
+    max: 8, // Connection pool size
+    min: 2,  // Keep minimum connections alive
+    idleTimeoutMillis: 60000, // Keep connections alive longer (60 seconds)
+    connectionTimeoutMillis: 10000, // Allow more time for connections
+    acquireTimeoutMillis: 15000, // Allow more time to acquire connections
+    createTimeoutMillis: 10000,
+    destroyTimeoutMillis: 5000,
+    reapIntervalMillis: 1000, // Check pool health frequently
+    createRetryIntervalMillis: 2000,
+    // CRITICAL: Add keepalive to prevent connection termination
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10000,
+    // Add application name for monitoring
+    application_name: 'lead_distribution_platform'
 });
 
-// Add error event handlers to prevent crashes
-pool.on('error', (err, client) => {
-    console.error('❌ Database pool error:', err.message);
-    console.error('Error code:', err.code);
-    
-    // Don't let pool errors crash the application
-    if (err.code === '57P01' || err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
-        console.log('⚠️ Database connection issue detected, but continuing operation...');
-        // The pool will automatically attempt to recreate connections
-    }
-});
+// Pool recreation function for fatal errors
+function recreatePool() {
+    console.log('🔄 Recreating database pool due to fatal errors...');
+    pool.end(); // Close existing pool
+    pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgres://') ? { rejectUnauthorized: false } : false,
+        max: 8,
+        min: 2,
+        idleTimeoutMillis: 60000,
+        connectionTimeoutMillis: 10000,
+        acquireTimeoutMillis: 15000,
+        createTimeoutMillis: 10000,
+        destroyTimeoutMillis: 5000,
+        reapIntervalMillis: 1000,
+        createRetryIntervalMillis: 2000,
+        keepAlive: true,
+        keepAliveInitialDelayMillis: 10000,
+        application_name: 'lead_distribution_platform'
+    });
+    setupPoolEventHandlers();
+    console.log('✅ Database pool recreated successfully');
+    return pool;
+}
 
-pool.on('connect', (client) => {
-    console.log('✅ New database client connected');
-});
-
-pool.on('remove', (client) => {
-    console.log('⚠️ Database client removed from pool');
-});
-
-// Test database connection with retry
-async function testConnection(retries = 3) {
-    for (let i = 0; i < retries; i++) {
+// Exponential retry wrapper for database queries
+async function executeWithRetry(queryFunction, maxRetries = 3) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            await pool.query('SELECT NOW()');
-            console.log('✅ Database connection successful');
-            return true;
+            return await queryFunction();
         } catch (error) {
-            console.error(`❌ Database connection attempt ${i + 1}/${retries} failed:`, error.message);
-            if (i === retries - 1) {
-                console.error('Database URL format:', process.env.DATABASE_URL ? 'Available' : 'Missing');
-                throw error;
+            console.error(`Query attempt ${attempt}/${maxRetries} failed:`, error.message);
+            
+            // Check for fatal errors that require pool recreation
+            if (error.code === '57P01' || error.code === 'ECONNRESET' || error.code === 'ENOTFOUND') {
+                if (attempt === maxRetries) {
+                    console.log('🔄 Recreating pool after max retries...');
+                    recreatePool();
+                }
             }
-            // Wait before retry
-            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+            
+            if (attempt === maxRetries) {
+                throw error; // Final attempt failed
+            }
+            
+            // Exponential backoff: 1s, 2s, 4s
+            const delayMs = Math.pow(2, attempt - 1) * 1000;
+            console.log(`⏳ Retrying in ${delayMs}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delayMs));
         }
     }
+}
+
+// Setup pool event handlers
+function setupPoolEventHandlers() {
+
+    // Enhanced error handling with automatic recovery
+    pool.on('error', (err, client) => {
+        console.error('❌ Database pool error:', err.message);
+        console.error('Error code:', err.code);
+        
+        // Handle fatal errors that require pool recreation
+        if (err.code === '57P01' || err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
+            console.log('🚨 Fatal database error detected - pool recreation required');
+            setTimeout(() => {
+                try {
+                    recreatePool();
+                } catch (recreateError) {
+                    console.error('Failed to recreate pool:', recreateError.message);
+                }
+            }, 1000); // Small delay to avoid rapid recreation
+        } else {
+            console.log('⚠️ Non-fatal database error - continuing operation...');
+        }
+    });
+
+    pool.on('connect', (client) => {
+        console.log('✅ New database client connected');
+        // Set client-level application name (without parameterized query in event handler)
+        client.query("SET application_name TO 'lead_distribution_platform'").catch(err => {
+            console.log('Note: Could not set application name:', err.message);
+        });
+    });
+
+    pool.on('remove', (client) => {
+        console.log('⚠️ Database client removed from pool');
+    });
+}
+
+// Initialize pool event handlers
+setupPoolEventHandlers();
+
+// Enhanced database connection test with retry and recovery
+async function testConnection(retries = 5) {
+    return await executeWithRetry(async () => {
+        const result = await pool.query('SELECT NOW() as current_time, version() as pg_version');
+        console.log('✅ Database connection successful');
+        console.log(`Database time: ${result.rows[0].current_time}`);
+        return true;
+    }, retries);
+}
+
+// Health check function for monitoring
+async function getPoolHealth() {
+    return {
+        totalCount: pool.totalCount,
+        idleCount: pool.idleCount,
+        waitingCount: pool.waitingCount,
+        timestamp: new Date().toISOString()
+    };
+}
+
+// Safe query wrapper that uses retry logic
+async function safeQuery(text, params) {
+    return await executeWithRetry(async () => {
+        return await pool.query(text, params);
+    });
 }
 
 // Database initialization function
@@ -506,4 +591,11 @@ async function setupProductionData() {
     }
 }
 
-module.exports = { pool, initDatabase, testConnection };
+module.exports = { 
+    pool, 
+    initDatabase, 
+    testConnection, 
+    getPoolHealth, 
+    safeQuery, 
+    executeWithRetry 
+};

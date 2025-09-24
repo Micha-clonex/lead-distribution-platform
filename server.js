@@ -7,7 +7,7 @@ const pgSession = require('connect-pg-simple')(session);
 const expressLayouts = require('express-ejs-layouts');
 require('dotenv').config();
 
-const { pool, initDatabase } = require('./config/db');
+const { pool, initDatabase, getPoolHealth, testConnection } = require('./config/db');
 const { retryFailedWebhooks } = require('./services/webhook');
 const { requireAuth } = require('./middleware/auth');
 const { pullPartnerStatuses } = require('./services/statusPuller');
@@ -79,6 +79,56 @@ const authRoutes = require('./routes/auth');
 
 // Authentication routes (public)
 app.use('/admin', authRoutes);
+
+// Health check endpoint (public, no auth required)
+app.get('/health', async (req, res) => {
+    try {
+        const startTime = Date.now();
+        
+        // Test database connectivity
+        let dbStatus = 'unknown';
+        let dbLatency = 0;
+        let poolHealth = null;
+        
+        try {
+            const dbStart = Date.now();
+            await testConnection(1); // Quick connection test
+            dbLatency = Date.now() - dbStart;
+            dbStatus = 'connected';
+            poolHealth = await getPoolHealth();
+        } catch (dbError) {
+            dbStatus = 'error';
+            console.error('Health check DB error:', dbError.message);
+        }
+        
+        const totalTime = Date.now() - startTime;
+        
+        const health = {
+            status: dbStatus === 'connected' ? 'healthy' : 'unhealthy',
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+            memory: process.memoryUsage(),
+            database: {
+                status: dbStatus,
+                latency_ms: dbLatency,
+                pool: poolHealth
+            },
+            response_time_ms: totalTime,
+            environment: process.env.NODE_ENV || 'development'
+        };
+        
+        const statusCode = health.status === 'healthy' ? 200 : 503;
+        res.status(statusCode).json(health);
+        
+    } catch (error) {
+        console.error('Health check error:', error);
+        res.status(503).json({
+            status: 'error',
+            timestamp: new Date().toISOString(),
+            error: error.message
+        });
+    }
+});
 
 // Protected routes
 app.use('/partners', requireAuth, partnerRoutes);
@@ -210,7 +260,9 @@ app.listen(PORT, '0.0.0.0', async () => {
         console.log('✅ All database systems initialized successfully');
     } catch (error) {
         console.error('❌ Database initialization failed:', error);
-        process.exit(1);
+        console.log('⚠️ Server will continue running with limited functionality');
+        // Don't exit - let health checks handle monitoring
+        // Server stays alive for debugging and recovery attempts
     }
 });
 

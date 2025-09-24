@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../config/db');
+const { pool, safeQuery, executeWithRetry } = require('../config/db');
 const axios = require('axios');
 
 /**
@@ -161,8 +161,6 @@ router.get('/', async (req, res) => {
 
 // Add new partner
 router.post('/', async (req, res) => {
-    console.log('=== PARTNER CREATION STARTED ===');
-    console.log('Request body:', JSON.stringify(req.body, null, 2));
     try {
         const { name, email, country, niche, daily_limit, premium_ratio, timezone, 
                 webhook_url, phone_format, required_fields, default_values, field_mapping,
@@ -262,30 +260,55 @@ router.post('/', async (req, res) => {
             }
         }
         
-        console.log('=== INSERTING INTO DATABASE ===');
-        console.log('Final values to insert:', {
-            name, email, country, niche, 
-            daily_limit: daily_limit || 50, 
-            ratioDecimal, 
-            timezone: timezone || 'UTC',
-            finalWebhookUrl,
-            authType,
-            authConfig
+        // Bulletproof partner creation with transaction and verification
+        
+        // Use transaction with retry logic for bulletproof creation
+        const result = await executeWithRetry(async () => {
+            const client = await pool.connect();
+            try {
+                await client.query('BEGIN');
+                
+                // Insert partner with RETURNING to get immediate confirmation
+                const insertResult = await client.query(`
+                    INSERT INTO partners (name, email, country, niche, daily_limit, premium_ratio, timezone, 
+                                        webhook_url, phone_format, required_fields, default_values, field_mapping,
+                                        auth_type, auth_config, content_type)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                    RETURNING id, name, email, country, niche, created_at
+                `, [name, email, country, niche, daily_limit || 50, ratioDecimal, timezone || 'UTC', 
+                    finalWebhookUrl, phone_format || 'with_plus', parsedRequiredFields, 
+                    JSON.stringify(parsedDefaultValues), JSON.stringify(parsedFieldMapping),
+                    authType, JSON.stringify(authConfig), content_type || 'application/json']);
+                
+                if (insertResult.rows.length === 0) {
+                    throw new Error('Partner creation failed - no rows returned');
+                }
+                
+                const newPartner = insertResult.rows[0];
+                
+                // Verify partner was created by reading it back
+                const verificationResult = await client.query(
+                    'SELECT id, name, email FROM partners WHERE id = $1', 
+                    [newPartner.id]
+                );
+                
+                if (verificationResult.rows.length === 0) {
+                    throw new Error('Partner creation verification failed');
+                }
+                
+                await client.query('COMMIT');
+                console.log(`✅ Partner "${newPartner.name}" created successfully (ID: ${newPartner.id})`);
+                return newPartner;
+                
+            } catch (error) {
+                await client.query('ROLLBACK');
+                throw error;
+            } finally {
+                client.release();
+            }
         });
         
-        const insertResult = await pool.query(`
-            INSERT INTO partners (name, email, country, niche, daily_limit, premium_ratio, timezone, 
-                                webhook_url, phone_format, required_fields, default_values, field_mapping,
-                                auth_type, auth_config, content_type)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-            RETURNING id, name
-        `, [name, email, country, niche, daily_limit || 50, ratioDecimal, timezone || 'UTC', 
-            finalWebhookUrl, phone_format || 'with_plus', parsedRequiredFields, 
-            JSON.stringify(parsedDefaultValues), JSON.stringify(parsedFieldMapping),
-            authType, JSON.stringify(authConfig), content_type || 'application/json']);
-        
-        console.log('✅ PARTNER CREATED SUCCESSFULLY:', insertResult.rows[0]);
-        console.log('=== REDIRECTING TO PARTNERS PAGE ===');
+        // Redirect to partners page without filters to ensure new partner is visible
         res.redirect('/partners?success=Partner added successfully');
     } catch (error) {
         console.error('Partner creation error:', error);
