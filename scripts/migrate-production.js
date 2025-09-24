@@ -11,7 +11,11 @@ require('dotenv').config();
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgres://') ? { rejectUnauthorized: false } : false,
+    max: 2,
+    min: 1,
+    connectionTimeoutMillis: 10000,
+    acquireTimeoutMillis: 15000
 });
 
 async function runMigrations() {
@@ -55,7 +59,7 @@ async function runMigrations() {
 
         await client.query(`
             ALTER TABLE partners 
-            ADD COLUMN IF NOT EXISTS phone_format VARCHAR(50) DEFAULT 'international'
+            ADD COLUMN IF NOT EXISTS phone_format VARCHAR(50) DEFAULT 'with_plus'
         `);
         console.log('✅ Added phone_format column to partners');
 

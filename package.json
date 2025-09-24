@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "node server.js",
     "migrate": "node scripts/migrate-production.js",
-    "build": "npm run migrate",
+    "build": "npm install",
     "deploy": "npm run migrate && npm start"
   },
   "dependencies": {
