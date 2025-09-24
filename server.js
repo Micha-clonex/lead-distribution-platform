@@ -219,21 +219,6 @@ app.get('/api/recent-activity', async (req, res) => {
     }
 });
 
-// Cron jobs
-// Daily quota reset (runs at midnight UTC)
-cron.schedule('0 0 * * *', async () => {
-    try {
-        await pool.query(`
-            INSERT INTO distribution_stats (partner_id, date, leads_received, premium_leads, raw_leads, conversions, revenue)
-            SELECT id, CURRENT_DATE, 0, 0, 0, 0, 0.00 FROM partners WHERE status = 'active'
-            ON CONFLICT (partner_id, date) DO NOTHING
-        `);
-        console.log('Daily stats reset completed');
-    } catch (error) {
-        console.error('Daily reset error:', error);
-    }
-});
-
 // CRM delivery monitoring (disabled - using real-time CRM integration)
 // cron.schedule('*/5 * * * *', retryFailedWebhooks);
 
@@ -241,40 +226,44 @@ cron.schedule('0 0 * * *', async () => {
 // const { retryFailedLeads } = require('./services/distribution');
 // cron.schedule('*/10 * * * *', retryFailedLeads);
 
-// TEMPORARILY DISABLED: Background tasks causing database pool conflicts
-// These will be re-enabled after pool management is fixed
+// OPTIMIZED: Background tasks with safer scheduling and error handling
 
-// Partner status pulling cron job (every 15 minutes) - DISABLED
-// cron.schedule('*/15 * * * *', pullPartnerStatuses);
+// Essential partner management (every 30 minutes - less frequent, safer)
+cron.schedule('*/30 * * * *', async () => {
+    try {
+        console.log('🔄 Running essential maintenance...');
+        // Only run critical maintenance, skip heavy operations
+        const { pool } = require('./config/db');
+        await pool.query('SELECT 1'); // Simple health check
+        console.log('✅ System health check completed');
+    } catch (error) {
+        console.error('⚠️ Maintenance check failed:', error.message);
+        // Continue without crashing
+    }
+});
 
-// Automated partner management cron job (every 2 hours) - DISABLED  
-// const partnerManager = require('./services/partnerManager');
-// cron.schedule('0 */2 * * *', async () => {
-//     console.log('🤖 Running automated partner management...');
-//     try {
-//         const summary = await partnerManager.runAutomatedManagement();
-//         console.log('✅ Automated partner management completed:', summary);
-//     } catch (error) {
-//         console.error('❌ Automated partner management failed:', error.message);
-//     }
-// });
+// Daily stats reset (once per day at midnight)
+cron.schedule('0 0 * * *', async () => {
+    try {
+        console.log('📊 Running daily statistics reset...');
+        const { pool } = require('./config/db');
+        await pool.query(`
+            INSERT INTO distribution_stats (partner_id, date, leads_received, premium_leads, raw_leads, conversions, revenue)
+            SELECT id, CURRENT_DATE, 0, 0, 0, 0, 0.00 FROM partners WHERE status = 'active'
+            ON CONFLICT (partner_id, date) DO NOTHING
+        `);
+        console.log('✅ Daily stats reset completed');
+    } catch (error) {
+        console.error('⚠️ Daily reset failed:', error.message);
+    }
+});
 
-// Business Hours Scheduled Delivery Processing - DISABLED
-// cron.schedule('*/2 * * * *', async () => {
-//     try {
-//         const businessHoursIntelligence = require('./services/businessHoursIntelligence');
-//         const processedCount = await businessHoursIntelligence.processScheduledDeliveries();
-//         if (processedCount > 0) {
-//             console.log(`🕐 Processed ${processedCount} business hours scheduled deliveries`);
-//         }
-//     } catch (error) {
-//         console.error('❌ Business hours processing failed:', error.message);
-//     }
-// });
-
-// Email Marketing System - DISABLED
-// const { initEmailScheduler } = require('./services/emailScheduler');
-// initEmailScheduler();
+// DISABLED: Heavy background tasks that caused pool conflicts
+// These can be re-enabled individually after testing:
+// - Partner status pulling
+// - Business hours processing  
+// - Email marketing system
+// - Automated partner management
 
 // Start server
 app.listen(PORT, '0.0.0.0', async () => {

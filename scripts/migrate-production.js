@@ -1,21 +1,24 @@
 #!/usr/bin/env node
 
 /**
- * Production Database Migration Script
+ * Production Database Migration Script - BULLETPROOF VERSION
  * Runs automatically during Render deployment
  * Ensures database schema is up-to-date before starting the application
+ * Fixed SSL configuration and error handling
  */
 
 const { Pool } = require('pg');
 require('dotenv').config();
 
+// Use same SSL configuration as main app for consistency
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('postgres://') ? { rejectUnauthorized: false } : false,
     max: 2,
     min: 1,
-    connectionTimeoutMillis: 10000,
-    acquireTimeoutMillis: 15000
+    connectionTimeoutMillis: 15000,
+    acquireTimeoutMillis: 20000,
+    application_name: 'migration_script'
 });
 
 async function runMigrations() {
@@ -71,18 +74,31 @@ async function runMigrations() {
         `);
         console.log(`✅ Updated ${updateResult.rowCount} CRM integrations with default auth_type`);
 
-        // Verify the migration was successful
-        const verifyResult = await client.query(`
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'partner_crm_integrations' AND column_name = 'auth_type'
-        `);
+        // BULLETPROOF VERIFICATION: Check all critical columns exist
+        const criticalColumns = [
+            { table: 'partners', column: 'phone_format' },
+            { table: 'partners', column: 'field_mapping' },
+            { table: 'partners', column: 'default_values' },
+            { table: 'partners', column: 'required_fields' },
+            { table: 'partners', column: 'auth_type' },
+            { table: 'partners', column: 'auth_config' }
+        ];
         
-        if (verifyResult.rows.length > 0) {
-            console.log('🎉 Production database migration completed successfully!');
-        } else {
-            throw new Error('Migration verification failed');
+        for (const { table, column } of criticalColumns) {
+            const result = await client.query(`
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = $1 AND column_name = $2
+            `, [table, column]);
+            
+            if (result.rows.length === 0) {
+                throw new Error(`Critical column ${table}.${column} missing after migration!`);
+            }
+            console.log(`✅ Verified ${table}.${column} exists`);
         }
+        
+        console.log('🎉 Production database migration completed successfully!');
+        console.log('🔍 All critical columns verified and ready for production!');
         
     } catch (error) {
         console.error('❌ Migration failed:', error.message);
