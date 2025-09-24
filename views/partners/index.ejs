@@ -283,7 +283,25 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Authentication Type</label>
-                                    <select class="form-select" name="auth_type" id="authType" onchange="handleAuthTypeChange(this, '#authFields')">
+                                    <select class="form-select" name="auth_type" id="authType" onchange="
+                                        console.log('Auth type changed:', this.value);
+                                        const authFields = document.getElementById('authFields');
+                                        const authConfigs = authFields.querySelectorAll('.auth-config');
+                                        
+                                        // Hide all sections
+                                        authConfigs.forEach(section => section.classList.add('d-none'));
+                                        
+                                        // Show selected section
+                                        if (this.value !== 'none' && this.value !== '') {
+                                            const targetSection = authFields.querySelector('[data-auth=&quot;' + this.value + '&quot;]');
+                                            if (targetSection) {
+                                                targetSection.classList.remove('d-none');
+                                                console.log('Showing section for:', this.value);
+                                            } else {
+                                                console.error('No section found for:', this.value);
+                                            }
+                                        }
+                                    ">
                                         <option value="none">No Authentication</option>
                                         <option value="bearer_token">Bearer Token</option>
                                         <option value="api_key">API Key Header</option>
@@ -304,7 +322,7 @@
                             <!-- Dynamic Authentication Fields -->
                             <div id="authFields">
                                 <!-- Bearer Token -->
-                                <div class="auth-config d-none" data-auth="bearer_token">
+                                <div class="auth-config" data-auth="bearer_token" style="border: 2px solid red; padding: 10px; margin: 10px 0;"
                                     <div class="mb-3">
                                         <label class="form-label">Bearer Token</label>
                                         <input type="password" class="form-control" name="auth_bearer_token" placeholder="your-bearer-token-here">
